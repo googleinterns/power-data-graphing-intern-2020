@@ -57,17 +57,17 @@ If you encountered "Permission denied (publickey), please set up SSH key followi
 https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account
 
 ## Build rules
-###Frontend:
+### Frontend:
 1. Make sure you have latest version of Node, npm, Angular-cli installed on your machine
 2. go to fronend folder, and run `ng serve` to build the project
 
-###Backend
+### Backend
 1. Make sure you have python2, virtualenv installed on your machine
 2. go to the backend folder, run the following commands to build the backend server
-    `source venv/bin/activate`,
-    `export FLASK_APP=hello.py`,
+    `source venv/bin/activate`
+    `export FLASK_APP=hello.py`
     `flask run`
-###Browser
+### Browser
 After finishing set up the frontend and backend, open the browser(recommend chrome) and visit "http://localhost:4200/", you should be able to see the website connected with the backend
 
 ## TBD: Commands to send out code review
