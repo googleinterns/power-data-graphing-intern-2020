@@ -31,16 +31,25 @@ Apache header:
     limitations under the License.
 
 ## Commands to checkout the code and push local changes.
-git init
-git remote add origin git@github.com:googleinterns/power-data-graphing-intern-2020.git
-got checkout master
-git pull
-...
-make local changes
-...
-git add your_file_name
-git commit -m "Changes description"
-git push -u origin master
+    git init
+
+    git remote add origin git@github.com:googleinterns/power-data-graphing-intern-2020.git
+
+    git checkout master
+
+    git pull
+
+    ...
+
+    make local changes
+
+    ...
+
+    git add your_file_name
+
+    git commit -m "Changes description"
+
+    git push -u origin master
 
 ## Adding a new SSH key to your GitHub account for first-time user.
 
