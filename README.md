@@ -64,9 +64,13 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
 ### Backend
 1. Make sure you have python2, virtualenv installed on your machine
 2. go to the backend folder, run the following commands to build the backend server
+
     `source venv/bin/activate`
-    `export FLASK_APP=hello.py`
+
+    `export FLASK_APP=main.py`
+
     `flask run`
+
 ### Browser
 After finishing set up the frontend and backend, open the browser(recommend chrome) and visit "http://localhost:4200/", you should be able to see the website connected with the backend
 
