@@ -29,3 +29,23 @@ Apache header:
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+
+## Commands to checkout the code and push local changes.
+git init
+git remote add origin git@github.com:googleinterns/power-data-graphing-intern-2020.git
+got checkout master
+git pull
+...
+make local changes
+...
+git add your_file_name
+git commit -m "Changes description"
+git push -u origin master
+
+## Adding a new SSH key to your GitHub account for first-time user.
+
+If you encountered "Permission denied (publickey), please set up SSH key following the instruction at:
+https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account
+
+## TBD: Commands to send out code review
+
