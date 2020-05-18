@@ -58,8 +58,30 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
 
 ## Build rules
 ### Frontend:
-1. Make sure you have latest version of Node, npm, Angular-cli installed on your machine
-2. go to fronend folder, and run `ng serve` to build the project
+1. Install Angular denpendencies
+    * Install [Node.js](https://nodejs.org/en/download/) & [npm](https://www.npmjs.com/get-npm)
+    * Check Node.js version and npm version by entering
+
+      `node -v`
+
+      `npm -v`
+2. Install [Angular-cli](https://cli.angular.io/)
+    * Check version by running
+    
+      `ng version`
+    * Below are the hello world project's Angular version
+    * @angular-devkit/architect    0.901.6
+    * @angular-devkit/core         9.1.6
+    * @angular-devkit/schematics   9.1.6
+    * @schematics/angular          9.1.6
+    * @schematics/update           0.901.6
+    * rxjs                         6.5.4
+
+3. go to fronend folder, and run following commands to build the frontend
+
+    `npm install`
+
+    `ng serve`
 
 ### Backend
 1. Make sure you have python2, virtualenv installed on your machine
