@@ -70,12 +70,12 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
     
       `ng version`
     * Below are the hello world project's Angular version
-    * @angular-devkit/architect    0.901.6
-    * @angular-devkit/core         9.1.6
-    * @angular-devkit/schematics   9.1.6
-    * @schematics/angular          9.1.6
-    * @schematics/update           0.901.6
-    * rxjs                         6.5.4
+        * @angular-devkit/architect    0.901.6
+        * @angular-devkit/core         9.1.6
+        * @angular-devkit/schematics   9.1.6
+        * @schematics/angular          9.1.6
+        * @schematics/update           0.901.6
+        * rxjs                         6.5.4
 
 3. go to fronend folder, and run following commands to build the frontend
 
@@ -84,17 +84,17 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
     `ng serve`
 
 ### Backend
-1. Make sure you have python2, virtualenv installed on your machine
+1. Make sure you have python3.7, pip, python3-venv, virtualenv installed on your machine
+    * To check pip version, run `pip -V`, or follow this [link](https://pip.pypa.io/en/stable/installing/#upgrading-pip) to install it on your machine
+    * To check virtualenv version, run `virtualenv --version`, or run `python -m pip install --user virtualenv` to install it.
 2. go to the backend folder, run the following commands to build the backend server
 
-    `source venv/bin/activate`
-
-    `export FLASK_APP=main.py`
-
-    `flask run`
+    * `./build.sh`
 
 ### Browser
 After finishing set up the frontend and backend, open the browser(recommend chrome) and visit "http://localhost:4200/", you should be able to see the website connected with the backend
+
+## TBD: Deploy the project to Google Cloud Platform
 
 ## TBD: Commands to send out code review
 
