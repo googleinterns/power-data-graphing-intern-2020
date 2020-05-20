@@ -84,10 +84,15 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
     `ng serve`
 
 ### Backend
-1. Make sure you have python3.7, pip, python3-venv, virtualenv installed on your machine
-    * To check pip version, run `pip -V`, or follow this [link](https://pip.pypa.io/en/stable/installing/#upgrading-pip) to install it on your machine
-    * To check virtualenv version, run `virtualenv --version`, or run `python -m pip install --user virtualenv` to install it.
-2. go to the backend folder, run the following commands to build the backend server
+1. Make sure you have python3.7+, pip3, python3-venv installed on your machine
+    * To check pip3 version, run `pip3 -V`, or run `sudo apt-get install python3-pip` to install it on your machine
+    * Run `sudo apt-get install python3-venv` to install python3-venv.
+2. Make sure you have a python virtual environment on your local machine and install all dependencies in the virtual environment.
+    * Create a virtual environment by running `python3 -m venv venv`. (Recommend to put the environment folder at project's root folder)
+    * Activate the environment by running `venv/bin/activate`
+    * install packages in the environment by running `pip3 install 'package-name'`
+    * Leave the enivronment by running `deactivate`
+2. go to the backend folder, run the following commands to build the backend server **Make sure that you are in a virtual environment before you run this command**
 
     * `./build.sh`
 
