@@ -65,7 +65,7 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
       `node -v`
 
       `npm -v`
-2. Install [Angular-cli](https://cli.angular.io/)
+2. Install [Angular-cli](https://cli.angular.io/) by running `npm install -g @angular/cli`
     * Check version by running
     
       `ng version`
@@ -93,11 +93,11 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
     * install packages in the environment by running `pip3 install 'package-name'`
     * Leave the enivronment by running `deactivate`
 2. go to the backend folder, run the following commands to build the backend server **Make sure that you are in a virtual environment before you run this command**
-
+    * `pip3 install -r requirements.txt` (Only need to run this command at the first time)
     * `./build.sh`
 
 ### Browser
-After finishing set up the frontend and backend, open the browser(recommend chrome) and visit "http://localhost:4200/", you should be able to see the website connected with the backend
+After finishing set up the frontend and backend, open the browser(recommend chrome) and visit "http://localhost:4200/", you should be able to see the website connected with the backend.
 
 ## TBD: Deploy the project to Google Cloud Platform
 
