@@ -30,7 +30,7 @@ Apache header:
     See the License for the specific language governing permissions and
     limitations under the License.
 
-## Commands to checkout the code and push local changes.
+## Commands to checkout the code and push local changes (For admin only).
     git init
 
     git remote add origin git@github.com:googleinterns/power-data-graphing-intern-2020.git
@@ -99,7 +99,42 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
 ### Browser
 After finishing set up the frontend and backend, open the browser(recommend chrome) and visit "http://localhost:4200/", you should be able to see the website connected with the backend.
 
+
+## Dev Workflow
+
+### One time actions:
+1. Fork the repo
+    * Done in github ui.
+    * For example, my fork repo is https://github.com/yaomeng-google/power-data-graphing-intern-2020
+2. Clone the forked repo locally
+    * git clone https://github.com/<YOUR_USERNAME>/power-data-graphing-intern-2020.git
+3. Add upstream remote
+    * git remote add upstream git@github.com:googleinterns/power-data-graphing-intern-2020.git
+    * Run “git remote -v”, the origin is the fork repo, upstream is the actual repo.
+         * origin	https://github.com/yaomeng-google/power-data-graphing-intern-2020.git (fetch)
+         * origin	https://github.com/yaomeng-google/power-data-graphing-intern-2020.git (push)
+         * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (fetch)
+         * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (push)
+### When I am going to work on a new feature:
+1. sync my fork's master branch to upstream's master branch
+    * git checkout master; git fetch upstream; git rebase upstream/master
+2. create a new branch from master
+    * git checkout -b cool_feature
+3. do my coding
+4. add and commit my changes
+    * git add *; git commit -m "New feature"
+5. push my branch to my fork
+    * git push origin cool_feature
+6. pull-request my branch from my fork to the upstream repo
+    * done in the git hub UI
+7. deal with any code review code changes by making commits and updating the branch in my fork (this updates the open pull-request)
+    * git add *; get commit -m "Fixes form review"; git push origin cool_feature
+8. merge the branch into the upstream repo's main branch
+    * done in github ui
+9. delete my development branch
+    * normally done in github ui
+
+
 ## TBD: Deploy the project to Google Cloud Platform
 
-## TBD: Commands to send out code review
 
