@@ -107,14 +107,15 @@ After finishing set up the frontend and backend, open the browser(recommend chro
     * Done in github ui.
     * For example, my fork repo is https://github.com/yaomeng-google/power-data-graphing-intern-2020
 2. Clone the forked repo locally
-    * git clone https://github.com/<YOUR_USERNAME>/power-data-graphing-intern-2020.git
+    * git clone git@github.com:<YOUR_USERNAME>/power-data-graphing-intern-2020.git
 3. Add upstream remote
     * git remote add upstream git@github.com:googleinterns/power-data-graphing-intern-2020.git
     * Run “git remote -v”, the origin is the fork repo, upstream is the actual repo.
-         * origin	https://github.com/yaomeng-google/power-data-graphing-intern-2020.git (fetch)
-         * origin	https://github.com/yaomeng-google/power-data-graphing-intern-2020.git (push)
-         * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (fetch)
+         * origin	git@github.com:yaomeng-google/power-data-graphing-intern-2020.git (fetch)
+         * origin	git@github.com:yaomeng-google/power-data-graphing-intern-2020.git (push)
+	 * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (fetch)
          * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (push)
+
 ### When I am going to work on a new feature:
 1. sync my fork's master branch to upstream's master branch
     * git checkout master; git fetch upstream; git rebase upstream/master
@@ -128,7 +129,7 @@ After finishing set up the frontend and backend, open the browser(recommend chro
 6. pull-request my branch from my fork to the upstream repo
     * done in the git hub UI
 7. deal with any code review code changes by making commits and updating the branch in my fork (this updates the open pull-request)
-    * git add *; get commit -m "Fixes form review"; git push origin cool_feature
+    * git add *; git commit -m "Fixes form review"; git push origin cool_feature
 8. merge the branch into the upstream repo's main branch
     * done in github ui
 9. delete my development branch
