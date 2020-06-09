@@ -14,7 +14,7 @@ CORS(app)
 def getData():
     fn = 'Power_sample_data.csv'
     maxLines = 6000
-    numLines = 7200000 # assume number of records is accessible upon deployment
+    numLines = 7200000  # assume number of records is accessible upon deployment
 
     frequency = numLines / maxLines
     data = list()
@@ -24,11 +24,11 @@ def getData():
                 data.append(line.strip('\n').split(','))
     return jsonify(data)
 
+
 @app.route("/")
 def hello():
     return "Hello world, welcome to Google"
 
 
-
 if __name__ == '__main__':
-     app.run(port=5000)
+    app.run(port=5000)
