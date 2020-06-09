@@ -13,7 +13,7 @@ CORS(app)
 @app.route('/data')
 def getData():
     fn = 'Power_sample_data.csv'
-    maxLines = 6000
+    maxLines = 600
     numLines = 7200000  # assume number of records is accessible upon deployment
 
     frequency = numLines / maxLines
