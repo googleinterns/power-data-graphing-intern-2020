@@ -22,6 +22,8 @@ def getData():
         for i, line in enumerate(fr):
             if i % frequency == 0:
                 data.append(line.strip('\n').split(','))
+            if i == 1000000:
+                break
     return jsonify(data)
 
 
