@@ -121,15 +121,15 @@ export class ChartComponent implements OnInit {
       .attr('opacity', 0.4);
 
     // Create a rect on top of the svg area: this rectangle recovers mouse position
-    svg
-      .append('rect')
-      .style('fill', 'none')
-      .style('pointer-events', 'all')
-      .attr('width', this.chart_width - this.chart_padding)
-      .attr('height', this.chart_height)
-      .on('mouseover', mouseover)
-      .on('mousemove', mousemove)
-      .on('mouseout', mouseout);
+    // svg
+    //   .append('rect')
+    //   .style('fill', 'none')
+    //   .style('pointer-events', 'all')
+    //   .attr('width', this.chart_width - this.chart_padding)
+    //   .attr('height', this.chart_height)
+    //   .on('mouseover', mouseover)
+    //   .on('mousemove', mousemove)
+    //   .on('mouseout', mouseout);
 
     // Brush functionality
     const brush = d3
@@ -144,8 +144,15 @@ export class ChartComponent implements OnInit {
       .on('end', () => {
         console.log('update chart');
         updateChart();
-      });
-    svg.append('g').attr('class', 'brush').call(brush);
+      })
+      
+    svg
+      .append('g')
+      .attr('class', 'brush')
+      .call(brush)
+      .on('mouseover', mouseover) //this mouse over value display funtionality
+      .on('mousemove', mousemove)
+      .on('mouseout', mouseout);;
 
     // What happens when the mouse move -> show the annotations at the right positions.
     function mouseover() {
