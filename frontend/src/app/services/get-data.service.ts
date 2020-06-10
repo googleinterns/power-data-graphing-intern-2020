@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
@@ -14,6 +14,7 @@ export class GetDataService {
     return this.http.get(this.url, {
       responseType: 'json',
       observe: 'response',
+      params: new HttpParams().set('number', '1024'),
     });
   }
 }

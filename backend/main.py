@@ -1,6 +1,6 @@
 # Simple backend server using flask framework
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
@@ -13,8 +13,8 @@ CORS(app)
 @app.route('/data')
 def getData():
     fn = 'Power_sample_data.csv'
-    maxLines = 200
     numLines = 7200000  # assume number of records is accessible upon deployment
+    maxLines = request.args.get('number', default=6000, type=int)
     frequency = numLines / maxLines
     data = list()
     with open(fn, 'r') as fr:

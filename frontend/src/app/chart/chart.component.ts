@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { GetDataService } from '../services/get-data.service';
 import * as d3 from 'd3';
+import { timeParse } from 'd3';
 
 @Component({
   selector: 'main-chart',
@@ -57,21 +58,23 @@ export class ChartComponent implements OnInit {
       .range([this.chart_height - this.chart_padding, this.chart_padding]);
 
     // Create Axis
-    const x_axis = d3.axisBottom(x_scale).ticks(5).tickFormat(this.time_format);
-    const y_axis = d3.axisLeft(y_scale).ticks(12);
-    svg
+
+    const x_axis = svg
       .append('g')
       .classed('x-axis', true)
       .attr(
         'transform',
         `translate(0, ${this.chart_height - this.chart_padding})`
       )
-      .call(x_axis);
-    svg
+      .call(
+        d3.axisBottom(x_scale).ticks(5)
+        // .tickFormat(this.time_format)
+      );
+    const y_axis = svg
       .append('g')
       .classed('y-axis', true)
       .attr('transform', `translate(${this.chart_padding},0)`)
-      .call(y_axis);
+      .call(d3.axisLeft(y_scale).ticks(12));
 
     // Draw Area under the curve
     const area = d3
@@ -128,6 +131,22 @@ export class ChartComponent implements OnInit {
       .on('mousemove', mousemove)
       .on('mouseout', mouseout);
 
+    // Brush functionality
+    const brush = d3
+      .brushX()
+      .extent([
+        [this.chart_padding, this.chart_padding],
+        [
+          this.chart_width - this.chart_padding,
+          this.chart_height - this.chart_padding,
+        ],
+      ])
+      .on('end', () => {
+        console.log('update chart');
+        updateChart();
+      });
+    svg.append('g').attr('class', 'brush').call(brush);
+
     // What happens when the mouse move -> show the annotations at the right positions.
     function mouseover() {
       focus.style('opacity', 1);
@@ -155,6 +174,43 @@ export class ChartComponent implements OnInit {
     function mouseout() {
       focus.style('opacity', 0);
       focusText.style('opacity', 0);
+    }
+
+    function updateChart() {
+      // What are the selected boundaries?
+      const extent = d3.event.selection;
+
+      // If no selection, back to initial coordinate. Otherwise, update X axis domain
+      if (!extent) {
+        x_scale.domain(
+          d3.extent(records, (d) => time_parse(d[0]))
+          //   [
+          //   d3.min(records, (d) => this.time_parse(d[0])),
+          //   d3.max(records, (d) => this.time_parse(d[0])),
+          // ]
+        );
+      } else {
+        x_scale.domain([x_scale.invert(extent[0]), x_scale.invert(extent[1])]);
+        svg.select('.brush').call(brush.move, null); // This remove the grey brush area as soon as the selection has been done
+      }
+
+      // Update axis and line position
+      x_axis.transition().duration(1000).call(d3.axisBottom(x_scale));
+      svg
+        .select('.line')
+        .transition()
+        .duration(1000)
+        .attr(
+          'd',
+          d3
+            .line()
+            .x(function (d: any) {
+              return x_scale(time_parse(d[0]));
+            })
+            .y(function (d: any) {
+              return y_scale(+d[1]);
+            })
+        );
     }
   }
 }
