@@ -13,17 +13,14 @@ CORS(app)
 @app.route('/data')
 def getData():
     fn = 'Power_sample_data.csv'
-    maxLines = 600
+    maxLines = 200
     numLines = 7200000  # assume number of records is accessible upon deployment
-
     frequency = numLines / maxLines
     data = list()
     with open(fn, 'r') as fr:
         for i, line in enumerate(fr):
             if i % frequency == 0:
                 data.append(line.strip('\n').split(','))
-            if i == 1000000:
-                break
     return jsonify(data)
 
 
