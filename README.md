@@ -84,17 +84,26 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
     `ng serve`
 
 ### Backend
-1. Make sure you have python3.7+, pip3, python3-venv installed on your machine
-    * To check pip3 version, run `pip3 -V`, or run `sudo apt-get install python3-pip` to install it on your machine
-    * Run `sudo apt-get install python3-venv` to install python3-venv.
-2. Make sure you have a python virtual environment on your local machine and install all dependencies in the virtual environment.
+
+#### Install pkgs
+
+Make sure you have python3.7+, pip3, python3-venv installed on your machine
+
+1. To check pip3 version, run `pip3 -V`, or run `sudo apt-get install python3-pip` to install it on your machine
+
+2. Run `sudo apt-get install python3-venv` to install python3-venv.
+
+#### Build and run the backend
+1. Make sure you have a python virtual environment on your local machine and install all dependencies in the virtual environment.
     * Create a virtual environment by running `python3 -m venv venv`. (Recommend to put the environment folder at project's root folder)
-    * Activate the environment by running `venv/bin/activate`
+    * Activate the environment by running `source venv/bin/activate`
+    * `pip3 install wheel`
     * install packages in the environment by running `pip3 install 'package-name'`
-    * Leave the enivronment by running `deactivate`
 2. go to the backend folder, run the following commands to build the backend server **Make sure that you are in a virtual environment before you run this command**
     * `pip3 install -r requirements.txt` (Only need to run this command at the first time)
     * `./build.sh`
+3. Leave the virtual environment
+    * `deactivate`
 
 ### Browser
 After finishing set up the frontend and backend, open the browser(recommend chrome) and visit "http://localhost:4200/", you should be able to see the website connected with the backend.
@@ -113,7 +122,7 @@ After finishing set up the frontend and backend, open the browser(recommend chro
     * Run “git remote -v”, the origin is the fork repo, upstream is the actual repo.
          * origin	git@github.com:yaomeng-google/power-data-graphing-intern-2020.git (fetch)
          * origin	git@github.com:yaomeng-google/power-data-graphing-intern-2020.git (push)
-	 * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (fetch)
+         * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (fetch)
          * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (push)
 
 ### When I am going to work on a new feature:
