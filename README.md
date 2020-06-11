@@ -113,7 +113,7 @@ After finishing set up the frontend and backend, open the browser(recommend chro
     * Run “git remote -v”, the origin is the fork repo, upstream is the actual repo.
          * origin	git@github.com:yaomeng-google/power-data-graphing-intern-2020.git (fetch)
          * origin	git@github.com:yaomeng-google/power-data-graphing-intern-2020.git (push)
-	 * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (fetch)
+         * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (fetch)
          * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (push)
 
 ### When I am going to work on a new feature:
