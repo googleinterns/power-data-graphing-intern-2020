@@ -56,7 +56,7 @@ export class ChartComponent implements OnInit {
     // Create the chart variable: where both the chart and the brush take place
     const chart = svg.append('g').attr('clip-path', 'url(#clip)');
 
-    // Scale
+    // Scales
     const x_scale = d3
       .scaleTime()
       .domain([
@@ -71,8 +71,7 @@ export class ChartComponent implements OnInit {
       .range([this.chart_height - this.chart_padding, this.chart_padding]);
 
     // Create Axis
-
-    const x_axis = chart
+    const x_axis = svg
       .append('g')
       .classed('x-axis', true)
       .attr(
@@ -83,7 +82,7 @@ export class ChartComponent implements OnInit {
         d3.axisBottom(x_scale)
         // .tickFormat(this.time_format)
       );
-    chart
+    const y_axis = svg
       .append('g')
       .classed('y-axis', true)
       .attr('transform', `translate(${this.chart_padding},0)`)
@@ -161,7 +160,7 @@ export class ChartComponent implements OnInit {
       .append('g')
       .attr('class', 'brush')
       .call(brush)
-      .on('mouseover', mouseover) //this mouse over value display funtionality
+      .on('mouseover', mouseover) //this mouse over value display functionality
       .on('mousemove', mousemove)
       .on('mouseout', mouseout);
 
@@ -213,13 +212,24 @@ export class ChartComponent implements OnInit {
         x_scale.domain([x_scale.invert(extent[0]), x_scale.invert(extent[1])]);
         chart.select('.brush').call(brush.move, null); // This remove the grey brush area as soon as the selection has been done
       }
+      // Update axis, line and area position
+      updateDomain(1000);
 
-      // Update axis and line position
-      x_axis.transition().duration(1000).call(d3.axisBottom(x_scale));
+      chart.on('dblclick', () => {
+        // Reset x scale domain
+        x_scale.domain(d3.extent(records, (d) => time_parse(d[0])));
+        // Reset axis, line and area position
+        updateDomain(250);
+      });
+    }
+
+    // Update area, domain, line positions in accord with new interval
+    function updateDomain(duration: number) {
+      x_axis.transition().duration(duration).call(d3.axisBottom(x_scale));
       chart
         .select('.line')
         .transition()
-        .duration(1000)
+        .duration(duration)
         .attr(
           'd',
           d3
@@ -230,7 +240,7 @@ export class ChartComponent implements OnInit {
       chart
         .select('.area')
         .transition()
-        .duration(1000)
+        .duration(duration)
         .attr(
           'd',
           d3
@@ -240,33 +250,6 @@ export class ChartComponent implements OnInit {
             .y0(() => y_scale.range()[0])
             .y1((d: any) => y_scale(+d[1]))
         );
-
-      chart.on('dblclick', () => {
-        x_scale.domain(d3.extent(records, (d) => time_parse(d[0])));
-        x_axis.transition().call(d3.axisBottom(x_scale));
-        chart
-          .select('.line')
-          .transition()
-          .attr(
-            'd',
-            d3
-              .line()
-              .x((d: any) => x_scale(time_parse(d[0])))
-              .y((d) => y_scale(+d[1]))
-          );
-        chart
-          .select('.area')
-          .transition()
-          .attr(
-            'd',
-            d3
-              .area()
-              .defined((d) => +d[1] >= 0)
-              .x((d: any) => x_scale(time_parse(d[0])))
-              .y0(() => y_scale.range()[0])
-              .y1((d: any) => y_scale(+d[1]))
-          );
-      });
     }
   }
 }
