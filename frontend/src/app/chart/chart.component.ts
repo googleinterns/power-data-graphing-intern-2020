@@ -48,7 +48,7 @@ export class ChartComponent implements OnInit {
       .append('svg:clipPath')
       .attr('id', 'clip')
       .append('svg:rect')
-      .attr('width', this.chart_width - this.chart_padding)
+      .attr('width', this.chart_width - this.chart_padding * 2)
       .attr('height', this.chart_height)
       .attr('x', this.chart_padding)
       .attr('y', 0);
