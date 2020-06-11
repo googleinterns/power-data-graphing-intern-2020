@@ -86,9 +86,12 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
 ### Backend
 
 #### Install pkgs
+
 Make sure you have python3.7+, pip3, python3-venv installed on your machine
-    * To check pip3 version, run `pip3 -V`, or run `sudo apt-get install python3-pip` to install it on your machine
-    * Run `sudo apt-get install python3-venv` to install python3-venv.
+
+1. To check pip3 version, run `pip3 -V`, or run `sudo apt-get install python3-pip` to install it on your machine
+
+2. Run `sudo apt-get install python3-venv` to install python3-venv.
 
 #### Build and run the backend
 1. Make sure you have a python virtual environment on your local machine and install all dependencies in the virtual environment.
