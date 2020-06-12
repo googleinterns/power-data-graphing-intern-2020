@@ -19,8 +19,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
   providedIn: 'root',
 })
 export class GetDataService {
-  private url = 'http://127.0.0.1:5000';
-  readonly http: HttpClient;
+  private readonly url = 'http://127.0.0.1';
+  private readonly port = '5000';
+  private readonly http: HttpClient;
 
   loading = false;
 
@@ -28,8 +29,8 @@ export class GetDataService {
     this.http = http;
   }
 
-  getRecords(endpoint: string, number: number) {
-    return this.http.get(this.url + endpoint, {
+  getRecords(path: string, number: number) {
+    return this.http.get([this.url, this.port].join(':') + path, {
       responseType: 'json',
       observe: 'response',
       params: new HttpParams().set('number', `${number}`),
