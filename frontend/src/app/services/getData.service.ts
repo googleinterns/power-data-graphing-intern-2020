@@ -12,13 +12,27 @@
 // limitations under the License.
 // =============================================================================
 
-import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
-const routes: Routes = [];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule],
+@Injectable({
+  providedIn: 'root',
 })
-export class AppRoutingModule {}
+export class GetDataService {
+  private url = 'http://127.0.0.1:5000';
+  readonly http: HttpClient;
+
+  loading = false;
+
+  constructor(http: HttpClient) {
+    this.http = http;
+  }
+
+  getRecords(endpoint: string, number: number) {
+    return this.http.get(this.url + endpoint, {
+      responseType: 'json',
+      observe: 'response',
+      params: new HttpParams().set('number', `${number}`),
+    });
+  }
+}

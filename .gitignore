@@ -7,5 +7,6 @@ venv/
 # vscode setting
 .vscode/
 
-# __pycache__
-__pycache__
+
+__pycache__/
+*.pyc

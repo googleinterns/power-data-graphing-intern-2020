@@ -12,13 +12,11 @@
 // limitations under the License.
 // =============================================================================
 
-import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
-
-const routes: Routes = [];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule],
-})
-export class AppRoutingModule {}
+/**
+ * Power data interface
+ */
+export interface Record {
+  time: Date;
+  value: number;
+  source: string;
+}
