@@ -21,13 +21,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 export class GetDataService {
   private readonly url = 'http://127.0.0.1';
   private readonly port = '5000';
-  private readonly http: HttpClient;
 
   loading = false;
 
-  constructor(http: HttpClient) {
-    this.http = http;
-  }
+  constructor(private readonly http: HttpClient) {}
 
   getRecords(path: string, number: number) {
     return this.http.get([this.url, this.port].join(':') + path, {
