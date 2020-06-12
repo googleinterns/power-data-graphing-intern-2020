@@ -12,13 +12,19 @@
 // limitations under the License.
 // =============================================================================
 
-import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
 
-const routes: Routes = [];
+import { GetDataService } from './getData.service';
 
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule],
-})
-export class AppRoutingModule {}
+describe('GetDataService', () => {
+  let service: GetDataService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(GetDataService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});

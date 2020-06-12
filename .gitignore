@@ -1,2 +1,12 @@
 # python virutal environment
 venv/
+
+# sample data
+*.csv
+
+# vscode setting
+.vscode/
+
+
+__pycache__/
+*.pyc

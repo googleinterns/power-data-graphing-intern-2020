@@ -1,9 +1,24 @@
-.container{
-  width: 400px;
-  height:400px;
+.container {
+  align-items: center;
   display: flex;
   flex-direction: column;
+  width: 1200px;
+  height: auto;
+  margin: 30px auto;
+  min-height: 400px;
+}
+
+.app-title {
   align-items: center;
+  display: flex;
+  width: auto;
+  flex-direction: column;
+  height: 100px;
   justify-content: center;
   margin: 30px auto;
+  min-width: 400px;
+}
+
+.app-title h1 {
+  font-size: 40px;
 }
