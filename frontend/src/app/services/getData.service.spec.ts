@@ -14,7 +14,7 @@
 
 import { TestBed } from '@angular/core/testing';
 
-import { GetDataService } from './get-data.service';
+import { GetDataService } from './getData.service';
 
 describe('GetDataService', () => {
   let service: GetDataService;
