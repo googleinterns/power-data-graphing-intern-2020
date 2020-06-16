@@ -49,7 +49,7 @@ export class ChartComponent implements OnInit {
   ngOnInit(): void {
     this.loading = true;
     this.service
-      .getRecords('/data', 400, 'max')
+      .getRecords('/data', 400, 'average')
       .subscribe((response: HttpResponse<Object>) => {
         this.records = Object.values(response.body).map(
           (d: [number, number, string]) => {
