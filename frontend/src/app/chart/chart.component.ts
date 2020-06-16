@@ -13,7 +13,7 @@
 // =============================================================================
 
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { GetDataService } from '../services/getData.service';
+import { HttpService } from '../services/http.service';
 import * as d3 from 'd3';
 
 import { Record } from '../record';
@@ -41,21 +41,22 @@ export class ChartComponent implements OnInit {
   chartWidth = 1100;
   chartHeight = 700;
   chartPadding = 50;
-  timeParse = d3.timeParse('%s');
-  timeFormat = d3.timeFormat('%m/%d-%H:%M');
+  timeParse = d3.timeParse('%Q');
+  timeFormat = d3.timeFormat('%H:%M:%S.%L');
 
-  constructor(private service: GetDataService) {}
+  constructor(private service: HttpService) {}
 
   ngOnInit(): void {
     this.loading = true;
     this.service
-      .getRecords('/data', 400)
+      .getRecords('/data', 400, 'max')
       .subscribe((response: HttpResponse<Object>) => {
         this.records = Object.values(response.body).map(
-          (d: [string, string, string]) => {
+          (d: [number, number, string]) => {
             return <Record>{
-              time: this.timeParse(d[0]),
-              value: +d[1],
+              // Ignoring microseconds in accord with the highest precision in JS
+              time: this.timeParse(Math.floor(d[0] / 1000).toString()),
+              value: d[1],
               source: d[2],
             };
           }
@@ -96,7 +97,10 @@ export class ChartComponent implements OnInit {
 
     this.yScale = d3
       .scaleLinear()
-      .domain([0, d3.max(this.records, (d: Record) => d.value)])
+      .domain([
+        d3.min(this.records, (d: Record) => d.value),
+        d3.max(this.records, (d: Record) => d.value),
+      ])
       .range([this.chartHeight - this.chartPadding, this.chartPadding]);
 
     // Create Axis
@@ -114,21 +118,21 @@ export class ChartComponent implements OnInit {
       .attr('transform', `translate(${this.chartPadding},0)`)
       .call(d3.axisLeft(this.yScale));
 
-    // Draw Area under the curve
-    this.svgChart
-      .append('path')
-      .datum(<any>this.records)
-      .classed('area', true)
-      .attr('fill', '#F2EEB3')
-      .attr(
-        'd',
-        d3
-          .area()
-          .defined((d: any) => d.value >= 0)
-          .x((d: any) => this.xScale(d.time))
-          .y0(() => this.yScale.range()[0])
-          .y1((d: any) => this.yScale(d.value))
-      );
+    // // Draw Area under the curve
+    // this.svgChart
+    //   .append('path')
+    //   .datum(<any>this.records)
+    //   .classed('area', true)
+    //   .attr('fill', '#F2EEB3')
+    //   .attr(
+    //     'd',
+    //     d3
+    //       .area()
+    //       .defined((d: any) => d.value >= 0)
+    //       .x((d: any) => this.xScale(d.time))
+    //       .y0(() => this.yScale.range()[0])
+    //       .y1((d: any) => this.yScale(d.value))
+    //   );
 
     const bisect = d3.bisector((d: Record) => d.time).left;
 
@@ -138,7 +142,7 @@ export class ChartComponent implements OnInit {
       .append('circle')
       .style('fill', 'none')
       .attr('stroke', 'black')
-      .attr('r', 8.5)
+      .attr('r', 4)
       .style('opacity', 0);
 
     // Create the text that travels along the curve of chart
@@ -148,7 +152,7 @@ export class ChartComponent implements OnInit {
       .attr('opacity', 1)
       .attr('text-anchor', 'left')
       .attr('alignment-baseline', 'middle')
-      .attr('font-size', '20px');
+      .attr('font-size', '15px');
 
     // Draw lines
 
@@ -210,7 +214,10 @@ export class ChartComponent implements OnInit {
         .attr('cx', xScale(selectedData.time))
         .attr('cy', yScale(selectedData.value));
       focusText
-        .html(`x: ${timeFormat(selectedData.time)} - y: ${selectedData.value}`)
+        .html(
+          `Time: ${timeFormat(selectedData.time)} - 
+          Power: ${selectedData.value}`
+        )
         .attr('x', xScale(selectedData.time) + 15)
         .attr('y', yScale(selectedData.value));
     }

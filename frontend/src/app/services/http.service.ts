@@ -12,19 +12,27 @@
 // limitations under the License.
 // =============================================================================
 
-import { TestBed } from '@angular/core/testing';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
-import { GetDataService } from './getData.service';
+@Injectable({
+  providedIn: 'root',
+})
+export class HttpService {
+  private readonly url = 'http://127.0.0.1';
+  private readonly port = '5000';
 
-describe('GetDataService', () => {
-  let service: GetDataService;
+  loading = false;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(GetDataService);
-  });
+  constructor(private readonly http: HttpClient) {}
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
-});
+  getRecords(path: string, number: number, downsampleStrategy: string) {
+    return this.http.get([this.url, this.port].join(':') + path, {
+      responseType: 'json',
+      observe: 'response',
+      params: new HttpParams()
+        .set('number', `${number}`)
+        .set('strategy', downsampleStrategy),
+    });
+  }
+}
