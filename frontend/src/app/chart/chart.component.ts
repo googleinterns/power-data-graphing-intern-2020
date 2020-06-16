@@ -13,7 +13,7 @@
 // =============================================================================
 
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { GetDataService } from '../services/getData.service';
+import { GetDataService, HttpService } from '../services/http.service';
 import * as d3 from 'd3';
 
 import { Record } from '../record';
@@ -41,21 +41,22 @@ export class ChartComponent implements OnInit {
   chartWidth = 1100;
   chartHeight = 700;
   chartPadding = 50;
-  timeParse = d3.timeParse('%s');
+  timeParse = d3.timeParse('%Q');
   timeFormat = d3.timeFormat('%m/%d-%H:%M');
 
-  constructor(private service: GetDataService) {}
+  constructor(private service: HttpService) {}
 
   ngOnInit(): void {
     this.loading = true;
     this.service
-      .getRecords('/data', 400)
+      .getRecords('/data', 400, 'average')
       .subscribe((response: HttpResponse<Object>) => {
         this.records = Object.values(response.body).map(
-          (d: [string, string, string]) => {
+          (d: [number, number, string]) => {
             return <Record>{
-              time: this.timeParse(d[0]),
-              value: +d[1],
+              // Ignoring microseconds in accord with the highest precision in JS
+              time: this.timeParse(Math.floor(d[0] / 1000).toString()),
+              value: d[1],
               source: d[2],
             };
           }
