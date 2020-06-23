@@ -14,5 +14,27 @@
  =============================================================================
 -->
 
-<mat-spinner *ngIf="loading" mode="indeterminate"> </mat-spinner>
+<div class="chart-header">
+  <mat-form-field>
+    <mat-label>Select an option</mat-label>
+    <mat-select
+      [(value)]="strategy"
+      (selectionChange)="loadRecords(updateChartData.bind(this))"
+    >
+      <mat-option value="max">max</mat-option>
+      <mat-option value="min">min</mat-option>
+      <mat-option value="avg">average</mat-option>
+      <mat-option value="median">median</mat-option>
+      <mat-option value="lttb">lttb</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-spinner
+    *ngIf="loading"
+    diameter="20"
+    mode="indeterminate"
+    class="spinner"
+  >
+  </mat-spinner>
+</div>
+
 <div id="chart-component"></div>

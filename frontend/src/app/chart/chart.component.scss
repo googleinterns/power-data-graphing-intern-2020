@@ -14,3 +14,16 @@
   font-family: sans-serif;
   font-size: 16px;
 }
+
+.chart-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: auto;
+  margin: 10px auto;
+  height: 60px;
+}
+
+.spinner {
+  margin: auto 10px;
+}

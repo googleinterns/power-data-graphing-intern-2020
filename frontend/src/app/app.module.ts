@@ -21,6 +21,8 @@ import { MatCardModule } from '@angular/material/card';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ChartComponent } from './chart/chart.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatGridListModule } from '@angular/material/grid-list';
 
 @NgModule({
   declarations: [AppComponent, ChartComponent],
@@ -31,6 +33,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatCardModule,
     BrowserAnimationsModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
+    MatGridListModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

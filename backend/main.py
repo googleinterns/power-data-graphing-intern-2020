@@ -65,7 +65,7 @@ def downsample_raw_data(filename, num_records, max_records, strategy):
                     for _ in range(position):
                         median = heappop(temp_store)
                     data.append(median[1])
-                elif strategy == 'average':
+                elif strategy == 'avg':
                     average = [
                         sum([record[1][0]
                              for record in temp_store]) // len(temp_store),
@@ -74,9 +74,8 @@ def downsample_raw_data(filename, num_records, max_records, strategy):
                         temp_store[0][1][2]
                     ]
                     data.append(average)
-                elif strategy == 'random':
-                    data.append(
-                        temp_store[random.randint(0, len(temp_store))][1])
+                elif strategy == 'lttb':
+                    print('Strategy not implemented')
                 else:
                     print('Strategy not identified')
                 temp_store = list()
@@ -91,7 +90,7 @@ def get_data():
         records from request body.
     """
     filename = './DMM_result_single_channel.csv'
-    strategies = ['max', 'min', 'median', 'random', 'average']
+    strategies = ['max', 'min', 'median', 'avg']
 
     num_records = 1000090  # assume number of records is accessible upon deployment
     max_records = request.args.get('number', default=6000, type=int)
