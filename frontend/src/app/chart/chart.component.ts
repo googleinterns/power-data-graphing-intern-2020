@@ -27,56 +27,64 @@ import { HttpResponse } from '@angular/common/http';
 })
 export class ChartComponent implements OnInit {
   // Data related variable
-  records: Record[];
   loading = false;
+  number = 600;
+  records: Record[];
+  strategy = 'max';
 
   // Chart d3 SVG Elements
+  private brush: d3.BrushBehavior<unknown>;
+  private line: d3.Line<[number, number]>;
+  private svg: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private svgChart: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private xAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private xScale: d3.ScaleTime<number, number>;
+  private yAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private yScale: d3.ScaleLinear<number, number>;
-  private svgChart: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private brush: d3.BrushBehavior<unknown>;
 
   // Chart size constants
-  chartWidth = 1100;
-  chartHeight = 700;
+  chartHeight = 400;
   chartPadding = 50;
+  chartWidth = 1100;
   timeParse = d3.timeParse('%Q');
   timeFormat = d3.timeFormat('%H:%M:%S.%L');
 
   constructor(private service: HttpService) {}
 
   ngOnInit(): void {
+    this.loadRecords(this.initChart.bind(this));
+  }
+
+  loadRecords(chartFunction: () => void) {
     this.loading = true;
     this.service
-      .getRecords('/data', 400, 'average')
-      .subscribe((response: HttpResponse<Object>) => {
+      .getRecords('/data', this.number, this.strategy)
+      .subscribe((response: HttpResponse<object>) => {
         this.records = Object.values(response.body).map(
           (d: [number, number, string]) => {
-            return <Record>{
-              // Ignoring microseconds in accord with the highest precision in JS
-              time: this.timeParse(Math.floor(d[0] / 1000).toString()),
+            return {
+              time: this.timeParse(Math.floor(d[0] / 1000).toString()), // Ignoring microseconds in accord with the highest precision in JS
               value: d[1],
               source: d[2],
-            };
+            } as Record;
           }
         );
 
         this.loading = false;
-        this.createLineChart();
+        chartFunction();
       });
   }
 
-  createLineChart() {
+  initChart() {
     // Chart SVG Component
-    const svg = d3
+    this.svg = d3
       .select('#chart-component')
       .append('svg')
       .attr('width', this.chartWidth)
       .attr('height', this.chartHeight);
 
     // Add a clipPath: everything out of this area won't be drawn.
-    svg
+    this.svg
       .append('defs')
       .append('svg:clipPath')
       .attr('id', 'clip')
@@ -87,7 +95,7 @@ export class ChartComponent implements OnInit {
       .attr('y', 0);
 
     // Create the chart variable: where both the chart and the brush take place
-    this.svgChart = svg.append('g').attr('clip-path', 'url(#clip)');
+    this.svgChart = this.svg.append('g').attr('clip-path', 'url(#clip)');
 
     // Scales
     this.xScale = d3
@@ -97,14 +105,11 @@ export class ChartComponent implements OnInit {
 
     this.yScale = d3
       .scaleLinear()
-      .domain([
-        d3.min(this.records, (d: Record) => d.value),
-        d3.max(this.records, (d: Record) => d.value),
-      ])
+      .domain(d3.extent(this.records, (d: Record) => d.value))
       .range([this.chartHeight - this.chartPadding, this.chartPadding]);
 
     // Create Axis
-    this.xAxis = svg
+    this.xAxis = this.svg
       .append('g')
       .classed('x-axis', true)
       .attr(
@@ -112,27 +117,11 @@ export class ChartComponent implements OnInit {
         `translate(0, ${this.chartHeight - this.chartPadding})`
       )
       .call(d3.axisBottom(this.xScale));
-    svg
+    this.yAxis = this.svg
       .append('g')
       .classed('y-axis', true)
       .attr('transform', `translate(${this.chartPadding},0)`)
       .call(d3.axisLeft(this.yScale));
-
-    // // Draw Area under the curve
-    // this.svgChart
-    //   .append('path')
-    //   .datum(<any>this.records)
-    //   .classed('area', true)
-    //   .attr('fill', '#F2EEB3')
-    //   .attr(
-    //     'd',
-    //     d3
-    //       .area()
-    //       .defined((d: any) => d.value >= 0)
-    //       .x((d: any) => this.xScale(d.time))
-    //       .y0(() => this.yScale.range()[0])
-    //       .y1((d: any) => this.yScale(d.value))
-    //   );
 
     const bisect = d3.bisector((d: Record) => d.time).left;
 
@@ -155,21 +144,19 @@ export class ChartComponent implements OnInit {
       .attr('font-size', '15px');
 
     // Draw lines
+    this.line = d3
+      .line()
+      .x((d: any) => this.xScale(d.time))
+      .y((d: any) => this.yScale(d.value));
 
     this.svgChart
       .append('path')
-      .datum(<any>this.records)
+      // .datum(<any>this.records)
       .classed('line', true)
       .attr('fill', 'none')
       .attr('stroke', '#F29F05')
       .attr('stroke-width', 2)
-      .attr(
-        'd',
-        d3
-          .line()
-          .x((d: any) => this.xScale(d.time))
-          .y((d: any) => this.yScale(d.value))
-      )
+      .attr('d', this.line(this.records as any))
       .attr('opacity', 0.4);
 
     // Brush functionality
@@ -182,51 +169,61 @@ export class ChartComponent implements OnInit {
           this.chartHeight - this.chartPadding,
         ],
       ])
-      .on('end', this.updateChart.bind(this));
+      .on('end', this.interactChart.bind(this));
 
-    // Variable references for mouseover function
-    const records = this.records;
-    const xScale = this.xScale;
-    const yScale = this.yScale;
-    const timeFormat = this.timeFormat;
+    const setFocusOpacity = (opacity: number) => {
+      focus.style('opacity', opacity);
+      focusText.style('opacity', opacity);
+    };
+
+    const setFocus = (container: d3.ContainerElement) => {
+      // recover coordinate we need
+      const x0 = this.xScale.invert(d3.mouse(container)[0]);
+      const i = bisect(this.records, x0, 1);
+      const selectedData = this.records[i];
+
+      focus
+        .attr('cx', this.xScale(selectedData.time))
+        .attr('cy', this.yScale(selectedData.value));
+      focusText
+        .html(
+          `Time: ${this.timeFormat(selectedData.time)} - 
+          Power: ${selectedData.value}`
+        )
+        .attr('x', this.xScale(selectedData.time) + 15)
+        .attr('y', this.yScale(selectedData.value));
+    };
     // Mouse over displaying text
     this.svgChart
       .append('g')
       .attr('class', 'brush')
       .call(this.brush)
-      .on('mouseover', mouseover) //this mouse over value display functionality
+      .on('mouseover', () => {
+        setFocusOpacity(1);
+      }) // this mouse over value display functionality
       .on('mousemove', mousemove)
-      .on('mouseout', mouseout);
-
-    // What happens when the mouse move -> show the annotations at the right positions.
-    function mouseover() {
-      focus.style('opacity', 1);
-      focusText.style('opacity', 1);
-    }
+      .on('mouseout', () => {
+        setFocusOpacity(0);
+      });
 
     function mousemove() {
-      // recover coordinate we need
-      const x0 = xScale.invert(d3.mouse(this)[0]);
-      const i = bisect(records, x0, 1);
-      const selectedData = records[i];
-
-      focus
-        .attr('cx', xScale(selectedData.time))
-        .attr('cy', yScale(selectedData.value));
-      focusText
-        .html(
-          `Time: ${timeFormat(selectedData.time)} - 
-          Power: ${selectedData.value}`
-        )
-        .attr('x', xScale(selectedData.time) + 15)
-        .attr('y', yScale(selectedData.value));
-    }
-    function mouseout() {
-      focus.style('opacity', 0);
-      focusText.style('opacity', 0);
+      setFocus(this);
     }
   }
-  updateChart() {
+
+  updateChartData() {
+    this.xScale.domain(d3.extent(this.records, (d) => d.time));
+    this.yScale.domain(d3.extent(this.records, (d) => d.value));
+    this.xAxis.transition().duration(750).call(d3.axisBottom(this.xScale));
+    this.yAxis.transition().duration(750).call(d3.axisLeft(this.yScale));
+    this.svgChart
+      .select('.line')
+      .transition()
+      .duration(750)
+      .attr('d', this.line(this.records as any));
+  }
+
+  interactChart() {
     // What are the selected boundaries?
     const extent = d3.event.selection;
 
@@ -234,10 +231,11 @@ export class ChartComponent implements OnInit {
     let idleTimeout: number;
     // If no selection, back to initial coordinate. Otherwise, update X axis domain
     if (!extent) {
-      if (!idleTimeout)
+      if (!idleTimeout) {
         setTimeout(() => {
           idleTimeout = null;
-        }, 350); // This allows to wait a little bit
+        }, 350);
+      } // This allows to wait a little bit
       return;
     } else {
       this.xScale.domain([
@@ -264,25 +262,6 @@ export class ChartComponent implements OnInit {
       .select('.line')
       .transition()
       .duration(duration)
-      .attr(
-        'd',
-        d3
-          .line()
-          .x((d: any) => this.xScale(d.time))
-          .y((d: any) => this.yScale(d.value))
-      );
-    this.svgChart
-      .select('.area')
-      .transition()
-      .duration(duration)
-      .attr(
-        'd',
-        d3
-          .area()
-          .defined((d: any) => d.value >= 0)
-          .x((d: any) => this.xScale(d.time))
-          .y0(() => this.yScale.range()[0])
-          .y1((d: any) => this.yScale(d.value))
-      );
+      .attr('d', this.line(this.records as any));
   }
 }

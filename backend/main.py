@@ -19,8 +19,65 @@ from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
 
+NUMBER_OF_RECORDS_PER_REQUEST = 1000
+NUMBER_OF_RECORDS_PER_SECOND = 2000
+SECOND_TO_MICROSECOND = 1E6
+
 app = Flask(__name__)
 CORS(app)
+
+def triangle_area(point1, point2, point3):
+    """Calculate the area of triangle
+
+        Calculate the area of triangle formed by the given three points.
+
+        Args:
+            point1: Index of the first point
+            point2: Index of the second point
+            point3: Index of the third point
+
+        Returns:
+            Area in float
+    """
+    return abs(point1[0] * point2[1] -
+     point1[1] * point2[0] + point2[0] * point3[1] - 
+     point2[1] * point3[0] + point3[0] * point1[1] - 
+     point3[1] * point1[0]) / 2
+
+def parse_line(line):
+    if not line:
+        return None
+    data_point = line.strip('\n').split(',')
+    data_point[0] = float(data_point[0])
+    data_point[1] = float(data_point[1])
+    return data_point
+
+_
+def max_min_downsample(records, method):
+    timespan = len(records) // NUMBER_OF_RECORDS_PER_SECOND
+    if method == 'max':
+        return [max(records[i * timespan: (i+1)*timespan], key=lambda record:record[1]) 
+        for i in range(NUMBER_OF_RECORDS_PER_SECOND)]
+    if method == 'min':
+        return [min(records[i * timespan: (i+1)*timespan], key=lambda record:record[1]) 
+        for i in range(NUMBER_OF_RECORDS_PER_SECOND)]
+    return None
+
+def downsample(filename, num_records, max_records, strategy):
+    data = list()
+
+    with open(filename, 'r') as filereader:
+        temp_store = list()
+        start_time = 0
+        for i, line in enumerate(filereader):
+            temp_store.append(parse_line(line))
+            if temptemp_store[-1] is None or temp_store[-1][0] - \
+                start_time > SECOND_TO_MICROSECOND:
+                start_time = temp_store[-1][0]
+                if strategy == 'max':
+                    res = max_downsample(temp_store)
+                data.extend(res)
+                temp_store = list()
 
 
 def downsample_raw_data(filename, num_records, max_records, strategy):
@@ -65,7 +122,7 @@ def downsample_raw_data(filename, num_records, max_records, strategy):
                     for _ in range(position):
                         median = heappop(temp_store)
                     data.append(median[1])
-                elif strategy == 'average':
+                elif strategy == 'avg':
                     average = [
                         sum([record[1][0]
                              for record in temp_store]) // len(temp_store),
@@ -74,9 +131,8 @@ def downsample_raw_data(filename, num_records, max_records, strategy):
                         temp_store[0][1][2]
                     ]
                     data.append(average)
-                elif strategy == 'random':
-                    data.append(
-                        temp_store[random.randint(0, len(temp_store))][1])
+                elif strategy == 'lttb':
+                    print('Strategy not implemented')
                 else:
                     print('Strategy not identified')
                 temp_store = list()
@@ -91,7 +147,7 @@ def get_data():
         records from request body.
     """
     filename = './DMM_result_single_channel.csv'
-    strategies = ['max', 'min', 'median', 'random', 'average']
+    strategies = ['max', 'min', 'median', 'avg']
 
     num_records = 1000090  # assume number of records is accessible upon deployment
     max_records = request.args.get('number', default=6000, type=int)
