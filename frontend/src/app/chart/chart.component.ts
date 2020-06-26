@@ -18,6 +18,7 @@ import * as d3 from 'd3';
 
 import { Record } from '../record';
 import { HttpResponse } from '@angular/common/http';
+import { SelectorMatcher } from '@angular/compiler';
 
 @Component({
   selector: 'main-chart',
@@ -43,7 +44,11 @@ export class ChartComponent implements OnInit {
   private yScale: d3.ScaleLinear<number, number>;
 
   // Chart size constants
+<<<<<<< HEAD
   chartHeight = 400;
+=======
+  chartHeight = 700;
+>>>>>>> 7632190ca38c170c43de0233fa1236a34c666756
   chartPadding = 50;
   chartWidth = 1100;
   timeParse = d3.timeParse('%Q');
@@ -59,7 +64,11 @@ export class ChartComponent implements OnInit {
     this.loading = true;
     this.service
       .getRecords('/data', this.number, this.strategy)
+<<<<<<< HEAD
       .subscribe((response: HttpResponse<object>) => {
+=======
+      .subscribe((response: HttpResponse<Object>) => {
+>>>>>>> 7632190ca38c170c43de0233fa1236a34c666756
         this.records = Object.values(response.body).map(
           (d: [number, number, string]) => {
             return {
