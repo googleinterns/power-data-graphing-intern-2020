@@ -26,13 +26,14 @@ export class HttpService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getRecords(path: string, number: number, downsampleStrategy: string) {
+  getRecords(path: string, downsampleStrategy: string, timespan: Date[]) {
     return this.http.get([this.url, this.port].join(':') + path, {
       responseType: 'json',
       observe: 'response',
       params: new HttpParams()
-        .set('number', `${number}`)
-        .set('strategy', downsampleStrategy),
+        .set('strategy', downsampleStrategy)
+        .set('start', timespan ? String(timespan[0].getTime() * 1000) : null)
+        .set('end', timespan ? String(timespan[1].getTime() * 1000) : null),
     });
   }
 }

@@ -16,18 +16,19 @@
 
 <div class="chart-header">
   <mat-form-field>
-    <mat-label>Select an option</mat-label>
+    <mat-label>Select a downsample strategy</mat-label>
+
     <mat-select
       [(value)]="strategy"
-      (selectionChange)="loadRecords(updateChartData.bind(this))"
+      (selectionChange)="loadRecords(updateChartDomain.bind(this))"
     >
       <mat-option value="max">max</mat-option>
       <mat-option value="min">min</mat-option>
       <mat-option value="avg">average</mat-option>
-      <mat-option value="median">median</mat-option>
       <mat-option value="lttb">lttb</mat-option>
     </mat-select>
   </mat-form-field>
+  <button mat-button (click)="preprocess()" color="primary">Preprocess</button>
   <mat-spinner
     *ngIf="loading"
     diameter="20"

@@ -11,132 +11,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
-import random
-from heapq import heappop
-from heapq import heappush
+import sys
 from flask import request
 from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
+import utils
+import downsample
 
-NUMBER_OF_RECORDS_PER_REQUEST = 1000
+NUMBER_OF_RECORDS_PER_REQUEST = 600
 NUMBER_OF_RECORDS_PER_SECOND = 2000
 SECOND_TO_MICROSECOND = 1E6
+FLOAT_PRECISION = 4
+STRATEGIES = ['max', 'min', 'lttb', 'avg']
+
+FILENAME = 'DMM_result_single_channel.csv'
 
 app = Flask(__name__)
 CORS(app)
-
-def triangle_area(point1, point2, point3):
-    """Calculate the area of triangle
-
-        Calculate the area of triangle formed by the given three points.
-
-        Args:
-            point1: Index of the first point
-            point2: Index of the second point
-            point3: Index of the third point
-
-        Returns:
-            Area in float
-    """
-    return abs(point1[0] * point2[1] -
-     point1[1] * point2[0] + point2[0] * point3[1] - 
-     point2[1] * point3[0] + point3[0] * point1[1] - 
-     point3[1] * point1[0]) / 2
-
-def parse_line(line):
-    if not line:
-        return None
-    data_point = line.strip('\n').split(',')
-    data_point[0] = float(data_point[0])
-    data_point[1] = float(data_point[1])
-    return data_point
-
-_
-def max_min_downsample(records, method):
-    timespan = len(records) // NUMBER_OF_RECORDS_PER_SECOND
-    if method == 'max':
-        return [max(records[i * timespan: (i+1)*timespan], key=lambda record:record[1]) 
-        for i in range(NUMBER_OF_RECORDS_PER_SECOND)]
-    if method == 'min':
-        return [min(records[i * timespan: (i+1)*timespan], key=lambda record:record[1]) 
-        for i in range(NUMBER_OF_RECORDS_PER_SECOND)]
-    return None
-
-def downsample(filename, num_records, max_records, strategy):
-    data = list()
-
-    with open(filename, 'r') as filereader:
-        temp_store = list()
-        start_time = 0
-        for i, line in enumerate(filereader):
-            temp_store.append(parse_line(line))
-            if temptemp_store[-1] is None or temp_store[-1][0] - \
-                start_time > SECOND_TO_MICROSECOND:
-                start_time = temp_store[-1][0]
-                if strategy == 'max':
-                    res = max_downsample(temp_store)
-                data.extend(res)
-                temp_store = list()
-
-
-def downsample_raw_data(filename, num_records, max_records, strategy):
-    """Desample power data
-
-        Read power data from given filename, desample and limit number of records
-        to the given number.
-        The desample strategy is to select one data point per certain number to ensure that output
-        data points are kept under threshold.
-
-        Args:
-            filename: The filename of data csv
-            num_records: Total number of data points
-            max_records: Max number of data points to output
-            strategy: Data downsampling strategy
-
-        Returns:
-            A list of power data. For example:
-            [
-                ['1532523212', '53', 'SYSTEM'],
-                ['1532523242', '33', 'SYSTEM']
-            ]
-    """
-    data = list()
-    frequency = num_records // max_records
-
-    with open(filename, 'r') as filereader:
-        temp_store = list()
-        for i, line in enumerate(filereader):
-            data_point = line.strip('\n').split(',')
-            data_point[0] = float(data_point[0])
-            data_point[1] = float(data_point[1])
-            heappush(temp_store, [data_point[1], data_point])
-            if i == max_records or (i > 0 and i % frequency == 0):
-                if strategy == 'max':
-                    data.append(max(temp_store, key=lambda dp: dp[0])[1])
-                elif strategy == 'min':
-                    data.append(heappop(temp_store)[1])
-                elif strategy == 'median':
-                    median = None
-                    position = len(temp_store) // 2
-                    for _ in range(position):
-                        median = heappop(temp_store)
-                    data.append(median[1])
-                elif strategy == 'avg':
-                    average = [
-                        sum([record[1][0]
-                             for record in temp_store]) // len(temp_store),
-                        sum([record[1][1]
-                             for record in temp_store]) // len(temp_store),
-                        temp_store[0][1][2]
-                    ]
-                    data.append(average)
-                elif strategy == 'lttb':
-                    print('Strategy not implemented')
-                else:
-                    print('Strategy not identified')
-                temp_store = list()
-    return data
 
 
 @app.route('/data')
@@ -147,16 +39,45 @@ def get_data():
         records from request body.
     """
     filename = './DMM_result_single_channel.csv'
-    strategies = ['max', 'min', 'median', 'avg']
-
-    num_records = 1000090  # assume number of records is accessible upon deployment
-    max_records = request.args.get('number', default=6000, type=int)
     strategy = request.args.get('strategy', default='avg', type=str)
-    if not strategy in strategies:
+    start = request.args.get('start', default=None, type=int)
+    end = request.args.get('end', default=None, type=int)
+    if not strategy in STRATEGIES:
         return 'Incorrect Strategy', 400
 
-    data = downsample_raw_data(filename, num_records, max_records, strategy)
+    cache_filename = utils.cache_filename(FILENAME, strategy)
+    data = downsample.secondary_downsample(
+        cache_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
+
     return jsonify(data)
+
+
+@app.route('/preprocessing')
+def preprocessing():
+    """HTTP endpoint to preprocess data
+
+        Preprocess data for all strategy and save results locally,
+        each strategy in a file.
+    """
+    for strategy in STRATEGIES:
+        data = downsample.downsample(
+            FILENAME, strategy, NUMBER_OF_RECORDS_PER_SECOND)
+        data_csv = utils.csv_format(data)
+        output_filename = utils.cache_filename(FILENAME, strategy)
+        with open(output_filename, 'w') as filewriter:
+            filewriter.write(data_csv)
+            filewriter.flush()
+    return 'Preprocessing Successful!'
+
+
+@app.before_first_request
+def initialize():
+    """Initialize with preprocessing
+
+        Preprocess all power data at the first request.
+    """
+    # TODO(tangyifei@): Initialize at the start of service, instead of first request.
+    preprocessing()
 
 
 if __name__ == '__main__':

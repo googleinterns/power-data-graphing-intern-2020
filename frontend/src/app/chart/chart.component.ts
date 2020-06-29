@@ -18,7 +18,6 @@ import * as d3 from 'd3';
 
 import { Record } from '../record';
 import { HttpResponse } from '@angular/common/http';
-import { SelectorMatcher } from '@angular/compiler';
 
 @Component({
   selector: 'main-chart',
@@ -44,15 +43,12 @@ export class ChartComponent implements OnInit {
   private yScale: d3.ScaleLinear<number, number>;
 
   // Chart size constants
-<<<<<<< HEAD
   chartHeight = 400;
-=======
-  chartHeight = 700;
->>>>>>> 7632190ca38c170c43de0233fa1236a34c666756
   chartPadding = 50;
   chartWidth = 1100;
   timeParse = d3.timeParse('%Q');
   timeFormat = d3.timeFormat('%H:%M:%S.%L');
+  totalXDomain: Date[];
 
   constructor(private service: HttpService) {}
 
@@ -60,15 +56,15 @@ export class ChartComponent implements OnInit {
     this.loadRecords(this.initChart.bind(this));
   }
 
-  loadRecords(chartFunction: () => void) {
+  preprocess() {
+    console.log('preprocessing');
+  }
+
+  loadRecords(chartFunction: () => void, timespan?: Date[]) {
     this.loading = true;
     this.service
-      .getRecords('/data', this.number, this.strategy)
-<<<<<<< HEAD
+      .getRecords('/data', this.strategy, timespan)
       .subscribe((response: HttpResponse<object>) => {
-=======
-      .subscribe((response: HttpResponse<Object>) => {
->>>>>>> 7632190ca38c170c43de0233fa1236a34c666756
         this.records = Object.values(response.body).map(
           (d: [number, number, string]) => {
             return {
@@ -78,8 +74,9 @@ export class ChartComponent implements OnInit {
             } as Record;
           }
         );
-
         this.loading = false;
+
+        this.totalXDomain = d3.extent(this.records, (d: Record) => d.time);
         chartFunction();
       });
   }
@@ -220,57 +217,38 @@ export class ChartComponent implements OnInit {
     }
   }
 
-  updateChartData() {
-    this.xScale.domain(d3.extent(this.records, (d) => d.time));
-    this.yScale.domain(d3.extent(this.records, (d) => d.value));
+  interactChart() {
+    // What are the selected boundaries?
+    const extent = d3.event.selection;
+    if (!extent) return;
+    const selectedTimeSpan = [
+      this.xScale.invert(extent[0]),
+      this.xScale.invert(extent[1]),
+    ];
+    // This remove the grey brush area as soon as the selection has been done
+    this.svgChart.select('.brush').call(this.brush.move, null);
+
+    // Update axis, line and area position, and load new data with the range
+    this.loadRecords(this.updateChartDomain.bind(this), selectedTimeSpan);
+
+    this.svgChart.on('dblclick', () => {
+      // // Reset scale domain
+      this.loadRecords(this.updateChartDomain.bind(this));
+    });
+  }
+
+  updateChartDomain() {
+    const xExtent = d3.extent(this.records, (d) => d.time);
+    const yExtent = d3.extent(this.records, (d) => d.value);
+
+    this.xScale.domain(xExtent);
+    this.yScale.domain(yExtent);
     this.xAxis.transition().duration(750).call(d3.axisBottom(this.xScale));
     this.yAxis.transition().duration(750).call(d3.axisLeft(this.yScale));
     this.svgChart
       .select('.line')
       .transition()
       .duration(750)
-      .attr('d', this.line(this.records as any));
-  }
-
-  interactChart() {
-    // What are the selected boundaries?
-    const extent = d3.event.selection;
-
-    // A function that set idleTimeOut to null
-    let idleTimeout: number;
-    // If no selection, back to initial coordinate. Otherwise, update X axis domain
-    if (!extent) {
-      if (!idleTimeout) {
-        setTimeout(() => {
-          idleTimeout = null;
-        }, 350);
-      } // This allows to wait a little bit
-      return;
-    } else {
-      this.xScale.domain([
-        this.xScale.invert(extent[0]),
-        this.xScale.invert(extent[1]),
-      ]);
-      this.svgChart.select('.brush').call(this.brush.move, null); // This remove the grey brush area as soon as the selection has been done
-    }
-    // Update axis, line and area position
-    this.updateDomain(1000);
-
-    this.svgChart.on('dblclick', () => {
-      // Reset x scale domain
-      this.xScale.domain(d3.extent(this.records, (d) => d.time));
-      // Reset axis, line and area position
-      this.updateDomain(250);
-    });
-  }
-
-  // Update area, domain, line positions in accord with new interval
-  updateDomain(duration: number) {
-    this.xAxis.transition().duration(duration).call(d3.axisBottom(this.xScale));
-    this.svgChart
-      .select('.line')
-      .transition()
-      .duration(duration)
       .attr('d', this.line(this.records as any));
   }
 }
