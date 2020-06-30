@@ -50,6 +50,7 @@ export class ChartComponent implements OnInit {
   timeParse = d3.timeParse('%Q');
   timeFormat = d3.timeFormat('%H:%M:%S.%L');
   totalXDomain: Date[];
+  animationDuration = 500;
 
   constructor(private service: HttpService) {}
 
@@ -246,12 +247,18 @@ export class ChartComponent implements OnInit {
 
     this.xScale.domain(xExtent);
     this.yScale.domain(yExtent);
-    this.xAxis.transition().duration(750).call(d3.axisBottom(this.xScale));
-    this.yAxis.transition().duration(750).call(d3.axisLeft(this.yScale));
+    this.xAxis
+      .transition()
+      .duration(this.animationDuration)
+      .call(d3.axisBottom(this.xScale));
+    this.yAxis
+      .transition()
+      .duration(this.animationDuration)
+      .call(d3.axisLeft(this.yScale));
     this.svgChart
       .select('.line')
       .transition()
-      .duration(750)
+      .duration(this.animationDuration)
       .attr('d', this.line(this.records as any));
   }
 

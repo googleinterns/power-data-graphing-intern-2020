@@ -11,6 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
+
+"""Downsample strategies
+
+    Contains all of the downsample strategies. Use downsample(), and
+    secondary_downsample() for downsampling records stored in files.
+"""
+
 import utils
 
 
@@ -81,20 +88,22 @@ def lttb_downsample(records, max_records):
             continue
 
         # Calculate average in the next bucket
-        next_average = [0, 0]
         next_index = index + 1
         while not buckets[next_index]:
             next_index += 1
         if next_index >= len(buckets) - 1:
             continue
+        next_average = [0, 0]
         for record in buckets[next_index]:
             next_average[0] += record[0]
             next_average[1] += record[1]
         next_average[0] /= len(buckets[next_index])
         next_average[1] /= len(buckets[next_index])
 
+        # Select record of highest triangle area in each bucket
         result.append(
-            max(bucket, key=lambda record: triangle_area(result[-1], record, next_average)))
+            max(bucket, key=lambda record, next_average=next_average:
+                triangle_area(result[-1], record, next_average)))
     return result
 
 

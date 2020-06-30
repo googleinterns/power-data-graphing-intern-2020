@@ -11,6 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
+
+"""HTTP server module
+
+    Expose HTTP endpoints for triggering preprocess and send downsampled data.
+"""
+
 from flask import request
 from flask import jsonify
 from flask import Flask

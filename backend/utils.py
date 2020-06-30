@@ -11,6 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
+
+"""String utilities
+
+    A few functions for parsing csv records, get cache file names.
+"""
+
+
 import sys
 FLOAT_PRECISION = 4
 
