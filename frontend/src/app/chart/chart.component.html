@@ -18,10 +18,7 @@
   <mat-form-field>
     <mat-label>Select a downsample strategy</mat-label>
 
-    <mat-select
-      [(value)]="strategy"
-      (selectionChange)="loadRecords(updateChartDomain.bind(this))"
-    >
+    <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
       <mat-option value="max">max</mat-option>
       <mat-option value="min">min</mat-option>
       <mat-option value="avg">average</mat-option>

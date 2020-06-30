@@ -31,6 +31,7 @@ export class ChartComponent implements OnInit {
   number = 600;
   records: Record[];
   strategy = 'max';
+  zoomIn = false;
 
   // Chart d3 SVG Elements
   private brush: d3.BrushBehavior<unknown>;
@@ -229,10 +230,12 @@ export class ChartComponent implements OnInit {
     this.svgChart.select('.brush').call(this.brush.move, null);
 
     // Update axis, line and area position, and load new data with the range
+    this.zoomIn = true;
     this.loadRecords(this.updateChartDomain.bind(this), selectedTimeSpan);
 
     this.svgChart.on('dblclick', () => {
       // // Reset scale domain
+      this.zoomIn = false;
       this.loadRecords(this.updateChartDomain.bind(this));
     });
   }
@@ -250,5 +253,12 @@ export class ChartComponent implements OnInit {
       .transition()
       .duration(750)
       .attr('d', this.line(this.records as any));
+  }
+
+  strategySwitch() {
+    this.loadRecords(
+      this.updateChartDomain.bind(this),
+      this.zoomIn ? d3.extent(this.records, (d) => d.time) : null
+    );
   }
 }
