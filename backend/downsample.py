@@ -37,6 +37,67 @@ def triangle_area(point1, point2, point3):
                point3[1] * point1[0]) / 2
 
 
+def lttb_downsample(records, max_records):
+    """Largest-triangle-three-buckets Downsampling strategy
+
+        Downsample records and select those of highest significance.
+        The time series to be downsampled is split into buckets of the same number
+        as max_records, then select one record for each bucket.
+        Significance is defined by the area form by the point in the current bucket and
+        records in the left and right bucket.
+        The process goes from left to right, so the left record is chosen already and
+        right record is the average in the right bucket.
+        If a bucket has only one record, choose that record.
+
+    Args:
+        records: records in 1 second
+        max_records: limit of returned records
+
+    Returns:
+        list: downsampled records
+    """
+    if len(records) <= max_records:
+        return records
+    timespan = (records[-2][0] - records[1][0]) / (max_records - 2)
+    buckets = list()
+
+    start = -float('inf')
+    for i, record in enumerate(records):
+        if i == 0 or i == len(records) - 1:
+            buckets.append([record])
+            continue
+        if record[0] - start > timespan:
+            buckets.append([record])
+            start = record[0]
+        else:
+            buckets[-1].append(record)
+
+    result = list()
+    for i, bucket in enumerate(buckets):
+        if len(bucket) == 1:
+            result.append(bucket[0])
+            continue
+        if len(bucket) == 0:
+            continue
+
+        # Calculate average in the next bucket
+        next_average = [0, 0]
+        next_index = i + 1
+        while not buckets[next_index]:
+            next_index += 1
+        if next_index >= len(buckets) - 1:
+            continue
+        for record in buckets[next_index]:
+            next_average[0] += record[0]
+            next_average[1] += record[1]
+        next_average[0] /= len(buckets[next_index])
+        next_average[1] /= len(buckets[next_index])
+
+        result.append(
+            max(bucket, key=lambda record: triangle_area(result[-1], record, next_average)))
+    return result
+
+
 def max_min_downsample(records, method, max_records):
     """Maximum and Minimum Downsampling strategy
 
@@ -68,7 +129,7 @@ def max_min_downsample(records, method, max_records):
 
 
 def average_downsample(records, max_records):
-    """Maximum and Minimum Downsampling strategy
+    """Average Downsampling strategy
 
     Downsample the records with average strategy.
 
@@ -178,8 +239,8 @@ def secondary_downsample(filename, strategy, max_records, start, end):
             res = average_downsample(
                 data, max_records=max_records)
         elif strategy == 'lttb':
-            res = max_min_downsample(
-                data, method='min', max_records=max_records)
+            res = lttb_downsample(
+                data,  max_records=max_records)
         else:
             res = list()
         return res

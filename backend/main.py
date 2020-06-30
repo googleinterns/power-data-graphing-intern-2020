@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
-import sys
 from flask import request
 from flask import jsonify
 from flask import Flask
@@ -19,9 +18,8 @@ from flask_cors import CORS
 import utils
 import downsample
 
-NUMBER_OF_RECORDS_PER_REQUEST = 600
+NUMBER_OF_RECORDS_PER_REQUEST = 800
 NUMBER_OF_RECORDS_PER_SECOND = 2000
-SECOND_TO_MICROSECOND = 1E6
 FLOAT_PRECISION = 4
 STRATEGIES = ['max', 'min', 'lttb', 'avg']
 
