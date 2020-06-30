@@ -36,7 +36,6 @@ def get_data():
         Retrives all power data from local file given a limit on number of
         records from request body.
     """
-    filename = './DMM_result_single_channel.csv'
     strategy = request.args.get('strategy', default='avg', type=str)
     start = request.args.get('start', default=None, type=int)
     end = request.args.get('end', default=None, type=int)

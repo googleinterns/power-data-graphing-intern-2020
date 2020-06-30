@@ -62,8 +62,8 @@ def lttb_downsample(records, max_records):
     buckets = list()
 
     start = -float('inf')
-    for i, record in enumerate(records):
-        if i == 0 or i == len(records) - 1:
+    for index, record in enumerate(records):
+        if index in (0, len(records) - 1):
             buckets.append([record])
             continue
         if record[0] - start > timespan:
@@ -73,16 +73,16 @@ def lttb_downsample(records, max_records):
             buckets[-1].append(record)
 
     result = list()
-    for i, bucket in enumerate(buckets):
+    for index, bucket in enumerate(buckets):
+        if not bucket:
+            continue
         if len(bucket) == 1:
             result.append(bucket[0])
-            continue
-        if len(bucket) == 0:
             continue
 
         # Calculate average in the next bucket
         next_average = [0, 0]
-        next_index = i + 1
+        next_index = index + 1
         while not buckets[next_index]:
             next_index += 1
         if next_index >= len(buckets) - 1:
@@ -180,7 +180,7 @@ def downsample(filename, strategy, max_records_per_second):
     with open(filename, 'r') as filereader:
         temp_store = list()
         start_time = 0
-        for i, line in enumerate(filereader):
+        for line in filereader:
             temp_store.append(utils.parse_line(line))
             if temp_store[-1] is None or temp_store[-1][0] - \
                     start_time > SECOND_TO_MICROSECOND:
@@ -240,7 +240,7 @@ def secondary_downsample(filename, strategy, max_records, start, end):
                 data, max_records=max_records)
         elif strategy == 'lttb':
             res = lttb_downsample(
-                data,  max_records=max_records)
+                data, max_records=max_records)
         else:
             res = list()
         return res
