@@ -16,6 +16,7 @@
 
 Expose HTTP endpoints for triggering preprocess and send downsampled data.
 """
+import logging
 import os
 from flask import request
 from flask import jsonify
@@ -46,6 +47,7 @@ def get_data():
     start = request.args.get('start', default=None, type=int)
     end = request.args.get('end', default=None, type=int)
     if not strategy in STRATEGIES:
+        logging.error('Incorrect Strategy: {}'.format(strategy))
         return 'Incorrect Strategy', 400
 
     cache_filename = utils.generate_filename_on_strategy(FILENAME, strategy)

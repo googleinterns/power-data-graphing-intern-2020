@@ -15,6 +15,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 
+export enum STRATEGY {
+  AVG = 'avg',
+  LTTB = 'lttb',
+  MAX = 'max',
+  MIN = 'min',
+}
 @Injectable({
   providedIn: 'root',
 })
@@ -26,12 +32,18 @@ export class HttpService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getRecords(path: string, downsampleStrategy: string, timespan: Date[]) {
+  /**
+   *
+   * @param path The http endpoint.
+   * @param strategy Strategy used for downsampling.
+   * @param timespan A time range in which user wish to see the records.
+   */
+  getRecords(path: string, strategy: STRATEGY, timespan: Date[]) {
     return this.http.get([this.url, this.port].join(':') + path, {
       responseType: 'json',
       observe: 'response',
       params: new HttpParams()
-        .set('strategy', downsampleStrategy)
+        .set('strategy', strategy)
         .set('start', timespan ? String(timespan[0].getTime() * 1000) : null)
         .set('end', timespan ? String(timespan[1].getTime() * 1000) : null),
     });

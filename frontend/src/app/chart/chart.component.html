@@ -19,10 +19,9 @@
     <mat-label>Select a downsample strategy</mat-label>
 
     <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
-      <mat-option value="avg">average</mat-option>
-      <mat-option value="max">max</mat-option>
-      <mat-option value="min">min</mat-option>
-      <mat-option value="lttb">lttb</mat-option>
+      <mat-option *ngFor="let s of strategyType | keyvalue" [value]="s.value"
+        >{{ s.key }}
+      </mat-option>
     </mat-select>
   </mat-form-field>
   <mat-spinner

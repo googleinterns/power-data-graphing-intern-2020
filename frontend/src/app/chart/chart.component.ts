@@ -12,12 +12,13 @@
 // limitations under the License.
 // =============================================================================
 
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { HttpService } from '../services/http.service';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { HttpService, STRATEGY } from '../services/http.service';
 import * as d3 from 'd3';
 
 import { Record } from '../record';
 import { HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'main-chart',
@@ -25,12 +26,18 @@ import { HttpResponse } from '@angular/common/http';
   styleUrls: ['./chart.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
-export class ChartComponent implements OnInit {
+export class ChartComponent implements OnInit, OnDestroy {
+  // Bind strategy type
+  strategyType = STRATEGY;
+
+  // Bind Subscription
+  subscription: Subscription;
+
   // Data related variable
   loading = false;
   number = 600;
   records: Record[];
-  strategy = 'avg';
+  strategy = STRATEGY.AVG;
   zoomIn = false;
 
   // Chart d3 SVG Elements
@@ -49,18 +56,21 @@ export class ChartComponent implements OnInit {
   chartWidth = 1100;
   timeParse = d3.timeParse('%Q');
   timeFormat = d3.timeFormat('%H:%M:%S.%L');
-  totalXDomain: Date[];
   animationDuration = 500;
 
   constructor(private service: HttpService) {}
 
   ngOnInit(): void {
-    this.loadRecords(this.initChart.bind(this));
+    this.loadRecords();
   }
 
-  loadRecords(chartFunction: () => void, timespan?: Date[]) {
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
+
+  loadRecords(timespan?: Date[]) {
     this.loading = true;
-    this.service
+    this.subscription = this.service
       .getRecords('/data', this.strategy, timespan)
       .subscribe((response: HttpResponse<object>) => {
         this.records = Object.values(response.body).map(
@@ -73,9 +83,7 @@ export class ChartComponent implements OnInit {
           }
         );
         this.loading = false;
-
-        this.totalXDomain = d3.extent(this.records, (d: Record) => d.time);
-        chartFunction();
+        this.svg ? this.updateChartDomain() : this.initChart();
       });
   }
 
@@ -227,12 +235,12 @@ export class ChartComponent implements OnInit {
 
     // Update axis, line and area position, and load new data with the range
     this.zoomIn = true;
-    this.loadRecords(this.updateChartDomain.bind(this), selectedTimeSpan);
+    this.loadRecords(selectedTimeSpan);
 
     this.svgChart.on('dblclick', () => {
       // // Reset scale domain
       this.zoomIn = false;
-      this.loadRecords(this.updateChartDomain.bind(this));
+      this.loadRecords();
     });
   }
 
@@ -259,7 +267,6 @@ export class ChartComponent implements OnInit {
 
   strategySwitch() {
     this.loadRecords(
-      this.updateChartDomain.bind(this),
       this.zoomIn ? d3.extent(this.records, (d) => d.time) : null
     );
   }
