@@ -12,10 +12,10 @@
 # limitations under the License.
 # =============================================================================
 
-"""Downsample strategies
+"""Downsample strategies.
 
-    Contains all of the downsample strategies. Use downsample(), and
-    secondary_downsample() for downsampling records stored in files.
+Contains all of the downsample strategies. Use downsample(), and
+secondary_downsample() for downsampling records stored in files.
 """
 
 import utils
@@ -26,17 +26,15 @@ FLOAT_PRECISION = 4
 
 
 def triangle_area(point1, point2, point3):
-    """Calculate the area of triangle
+    """Calculate the area of triangle.
 
-        Calculate the area of triangle formed by the given three points.
+    Args:
+        point1: [float, float,] Index of the first point.
+        point2: [float, float,] Index of the second point.
+        point3: [float, float,] Index of the third point.
 
-        Args:
-            point1: Index of the first point
-            point2: Index of the second point
-            point3: Index of the third point
-
-        Returns:
-            float: Area in float
+    Returns:
+        float: Area in float.
     """
     return abs(point1[0] * point2[1] -
                point1[1] * point2[0] + point2[0] * point3[1] -
@@ -45,23 +43,23 @@ def triangle_area(point1, point2, point3):
 
 
 def lttb_downsample(records, max_records):
-    """Largest-triangle-three-buckets Downsampling strategy
+    """Downsample records by triangle area significance.
 
-        Downsample records and select those of highest significance.
-        The time series to be downsampled is split into buckets of the same number
-        as max_records, then select one record for each bucket.
-        Significance is defined by the area form by the point in the current bucket and
-        records in the left and right bucket.
-        The process goes from left to right, so the left record is chosen already and
-        right record is the average in the right bucket.
-        If a bucket has only one record, choose that record.
+    Downsample records and select those of highest significance.
+    The time series to be downsampled is split into buckets of the same number
+    as max_records, then select one record for each bucket.
+    Significance is defined by the area form by the point in the current bucket and
+    records in the left and right bucket.
+    The process goes from left to right, so the left record is chosen already and
+    right record is the average in the right bucket.
+    If a bucket has only one record, choose that record.
 
     Args:
-        records: records in 1 second
-        max_records: limit of returned records
+        records: List of records in 1 second.
+        max_records: Int limit of returned records.
 
     Returns:
-        list: downsampled records
+        list: downsampled records.
     """
     if len(records) <= max_records:
         return records
@@ -108,18 +106,18 @@ def lttb_downsample(records, max_records):
 
 
 def max_min_downsample(records, method, max_records):
-    """Maximum and Minimum Downsampling strategy
+    """Downsample records by maximum or minimum value.
 
-        Downsample the records with max or min strategy specified by parameter.
+    Downsample the records with max or min strategy specified by parameter.
 
-        Args:
-            records: Records in 1 second
-            method: one of {max, min} to specify the strategy you want to use.
-            max_records: limit of returned records
+    Args:
+        records: List of records in 1 second.
+        method: String one of {max, min} to specify the strategy you want to use.
+        max_records: Int limit of returned records.
 
-        Returns:
-            list: downsampled records from the given records with number of
-            NUMBER_OF_RECORDS_PER_SECOND.
+    Returns:
+        list: downsampled records from the given records with number of
+        NUMBER_OF_RECORDS_PER_SECOND.
     """
     if len(records) <= max_records:
         return records
@@ -138,16 +136,16 @@ def max_min_downsample(records, method, max_records):
 
 
 def average_downsample(records, max_records):
-    """Average Downsampling strategy
+    """Downsample records by average value.
 
     Downsample the records with average strategy.
 
     Args:
-        records: records in 1 second
-        max_records: limit of returned records
+        records: List of records in 1 second.
+        max_records: Int limit of returned records.
 
     Returns:
-        list: downsampled records
+        list: List of downsampled records.
     """
     if len(records) <= max_records:
         return records
@@ -171,18 +169,18 @@ def average_downsample(records, max_records):
 
 
 def downsample(filename, strategy, max_records_per_second):
-    """Read the file and downsample with the given strategy.
+    """Read the raw data file and downsample with the given strategy.
 
-        Assume the records file is on local disk, read the records and
-        downsample the records in one-second-at-a-time fashion.
+    Assume the records file is on local disk, read the records and
+    downsample the records in one-second-at-a-time fashion.
 
-        Args:
-            filename: The name of the records file
-            strategy: Downsampling strategy.
-            max_records_per_second: Number of records to save per second
+    Args:
+        filename: String name of the records file.
+        strategy: String downsampling strategy.
+        max_records_per_second: Int number of records to save per second.
 
-        Returns:
-            list: Downsampled data in the given file.
+    Returns:
+        list: Downsampled data in the given file.
     """
     data = list()
 
@@ -190,8 +188,8 @@ def downsample(filename, strategy, max_records_per_second):
         temp_store = list()
         start_time = 0
         for line in filereader:
-            temp_store.append(utils.parse_line(line))
-            if temp_store[-1] is None or temp_store[-1][0] - \
+            temp_store.append(utils.parse_csv_line(line))
+            if temp_store[-1] is not None or temp_store[-1][0] - \
                     start_time > SECOND_TO_MICROSECOND:
                 start_time = temp_store[-1][0]
                 if strategy == 'max':
@@ -204,8 +202,8 @@ def downsample(filename, strategy, max_records_per_second):
                     res = average_downsample(
                         temp_store, max_records=max_records_per_second)
                 elif strategy == 'lttb':
-                    res = max_min_downsample(
-                        temp_store, method='min', max_records=max_records_per_second)
+                    res = lttb_downsample(
+                        temp_store, max_records=max_records_per_second)
                 else:
                     res = list()
 
@@ -215,27 +213,27 @@ def downsample(filename, strategy, max_records_per_second):
 
 
 def secondary_downsample(filename, strategy, max_records, start, end):
-    """Read the file and downsample with the given strategy.
+    """Read the preprocessing file and downsample with the given strategy for HTTP request.
 
-        Assume the records file is on local disk, read the records and downsample the records
-        to be within max records.
-        Optional arguments start and end to specify a timespan in which records must be laid.
+    Assume the records file is on local disk, read the records and downsample the records
+    to be within max records.
+    Optional arguments start and end to specify a timespan in which records must be laid.
 
-        Args:
-            filename: The name of the records file
-            strategy: Downsampling strategy.
-            max_records: Number of records to save
-            start: start of timespan
-            end: end of timespan
+    Args:
+        filename: String name of the records file.
+        strategy: String downsampling strategy.
+        max_records: Int number of records to save.
+        start: Int start of timespan.
+        end: Int end of timespan.
 
-        Returns:
-            list: Downsampled data in the given file.
+    Returns:
+        list: Downsampled data in the given file.
     """
 
     with open(filename, 'r') as filereader:
         data = list()
         for line in filereader.readlines():
-            record = utils.parse_line(line)
+            record = utils.parse_csv_line(line)
             if start is None or end is None or start <= record[0] <= end:
                 data.append(record)
         if strategy == 'max':

@@ -14,26 +14,28 @@
 
 """String utilities
 
-    A few functions for parsing csv records, get cache file names.
+A few functions for parsing csv records, get cache file names.
 """
 
 
-import sys
+import logging
+import os
+
 FLOAT_PRECISION = 4
 
 
-def parse_line(line):
-    """Parse record from csv file
+def parse_csv_line(line):
+    """Parse record from csv file.
 
-        Parse record and return in list type, containing time, value, and
-        source.
+    Parse record and return in list type, containing time, value, and
+    source.
 
-        Args:
-            line: single line record in csv format
+    Args:
+        line: String single line record in csv format.
 
-        Returns:
-            list: single record with time and value in float type,
-                source in string type.
+    Returns:
+        list: Single record list with time and value in float type,
+            source in string type.
     """
     if not line:
         return None
@@ -43,17 +45,17 @@ def parse_line(line):
     return data_point
 
 
-def csv_format(records):
-    """format record in list type to csv string format
+def convert_to_csv(records):
+    """format record in list type to csv string format.
 
-        Transform records in list type to csv string format, separate columns
-        with commas.
+    Transform records in list type to csv string format, separate columns
+    with commas.
 
-        Args:
-            records: power data records in list format
+    Args:
+        records: List of power data record lists.
 
-        Returns:
-            string: records in csv string format
+    Returns:
+        string: List of string records in csv format.
     """
     if not records:
         return None
@@ -67,24 +69,27 @@ def csv_format(records):
     return '\n'.join(csv_lines)
 
 
-def cache_filename(filename, strategy):
-    """Get filename of preprocessed result
+def generate_filename_on_strategy(filename, strategy):
+    """Get filename of preprocessed result.
 
-        Get the filename of the preprocessed records in given
-        strategy.
+    Get the filename of the preprocessed records in given
+    strategy.
 
-        Args:
-            filename: filename of the experiment (e.g. DMM_single_channel.csv)
-            strategy: one of STRATEGIES
+    Args:
+        filename: A string filename of the experiment (e.g. DMM_single_channel.csv)
+        strategy: One of STRATEGIES in string.
 
-        Returns:
-            string: filename of preprocessed records
+    Returns:
+        string: String filename of preprocessed records.
     """
     experiment = filename.strip(' ').strip('\n').strip('.csv')
-    return experiment + '_' + strategy + '.csv'
+    parent_path = os.path.join('preprocess', experiment)
+    if not os.path.isdir(parent_path):
+        os.makedirs(parent_path)
+    file_path = os.path.join(parent_path, experiment + '_' + strategy + '.csv')
+    return file_path
 
 
 def printd(string):
     # DEBUG
-    print(string, flush=True)
-    sys.stdout.flush()
+    logging.warning(string)

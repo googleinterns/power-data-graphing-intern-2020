@@ -30,7 +30,7 @@ export class ChartComponent implements OnInit {
   loading = false;
   number = 600;
   records: Record[];
-  strategy = 'max';
+  strategy = 'avg';
   zoomIn = false;
 
   // Chart d3 SVG Elements
@@ -56,10 +56,6 @@ export class ChartComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadRecords(this.initChart.bind(this));
-  }
-
-  preprocess() {
-    console.log('preprocessing');
   }
 
   loadRecords(chartFunction: () => void, timespan?: Date[]) {
@@ -159,7 +155,6 @@ export class ChartComponent implements OnInit {
 
     this.svgChart
       .append('path')
-      // .datum(<any>this.records)
       .classed('line', true)
       .attr('fill', 'none')
       .attr('stroke', '#F29F05')

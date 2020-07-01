@@ -12,11 +12,11 @@
 # limitations under the License.
 # =============================================================================
 
-"""HTTP server module
+"""HTTP server module.
 
-    Expose HTTP endpoints for triggering preprocess and send downsampled data.
+Expose HTTP endpoints for triggering preprocess and send downsampled data.
 """
-
+import os
 from flask import request
 from flask import jsonify
 from flask import Flask
@@ -24,7 +24,7 @@ from flask_cors import CORS
 import utils
 import downsample
 
-NUMBER_OF_RECORDS_PER_REQUEST = 800
+NUMBER_OF_RECORDS_PER_REQUEST = 600
 NUMBER_OF_RECORDS_PER_SECOND = 2000
 FLOAT_PRECISION = 4
 STRATEGIES = ['max', 'min', 'lttb', 'avg']
@@ -37,10 +37,10 @@ CORS(app)
 
 @app.route('/data')
 def get_data():
-    """HTTP endpoint to get data
+    """HTTP endpoint to get data.
 
-        Retrives all power data from local file given a limit on number of
-        records from request body.
+    Retrives all power data from local file given a limit on number of
+    records from request body.
     """
     strategy = request.args.get('strategy', default='avg', type=str)
     start = request.args.get('start', default=None, type=int)
@@ -48,25 +48,27 @@ def get_data():
     if not strategy in STRATEGIES:
         return 'Incorrect Strategy', 400
 
-    cache_filename = utils.cache_filename(FILENAME, strategy)
+    cache_filename = utils.generate_filename_on_strategy(FILENAME, strategy)
     data = downsample.secondary_downsample(
         cache_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
-
     return jsonify(data)
 
 
 @app.route('/preprocessing')
 def preprocessing():
-    """HTTP endpoint to preprocess data
+    """HTTP endpoint to preprocess data.
 
-        Preprocess data for all strategy and save results locally,
-        each strategy in a file.
+    Preprocess data for all strategy and save results locally,
+    each strategy in a file.
     """
     for strategy in STRATEGIES:
+        output_filename = utils.generate_filename_on_strategy(
+            FILENAME, strategy)
+        if os.path.isfile(output_filename):
+            continue
         data = downsample.downsample(
             FILENAME, strategy, NUMBER_OF_RECORDS_PER_SECOND)
-        data_csv = utils.csv_format(data)
-        output_filename = utils.cache_filename(FILENAME, strategy)
+        data_csv = utils.convert_to_csv(data)
         with open(output_filename, 'w') as filewriter:
             filewriter.write(data_csv)
             filewriter.flush()
@@ -75,9 +77,9 @@ def preprocessing():
 
 @app.before_first_request
 def initialize():
-    """Initialize with preprocessing
+    """Initialize with preprocessing.
 
-        Preprocess all power data at the first request.
+    Preprocess all power data at the first request.
     """
     # TODO(tangyifei@): Initialize at the start of service, instead of first request.
     preprocessing()
