@@ -47,7 +47,7 @@ def get_data():
     start = request.args.get('start', default=None, type=int)
     end = request.args.get('end', default=None, type=int)
     if not strategy in STRATEGIES:
-        logging.error('Incorrect Strategy: {}'.format(strategy))
+        logging.error('Incorrect Strategy: %s', strategy)
         return 'Incorrect Strategy', 400
 
     cache_filename = utils.generate_filename_on_strategy(FILENAME, strategy)
