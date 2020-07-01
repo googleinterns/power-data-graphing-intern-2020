@@ -51,6 +51,8 @@ def get_data():
     cache_filename = utils.generate_filename_on_strategy(FILENAME, strategy)
     data = downsample.secondary_downsample(
         cache_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
+
+    # TODO(tangyifei@): Support csv file name in HTTP argument and upload new csv file.
     return jsonify(data)
 
 
