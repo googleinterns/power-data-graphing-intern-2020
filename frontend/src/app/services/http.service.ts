@@ -40,8 +40,6 @@ export class HttpService {
    */
   getRecords(path: string, strategy: STRATEGY, timespan: Date[]) {
     return this.http.get([this.url, this.port].join(':') + path, {
-      responseType: 'json',
-      observe: 'response',
       params: new HttpParams()
         .set('strategy', strategy)
         .set('start', timespan ? String(timespan[0].getTime() * 1000) : null)

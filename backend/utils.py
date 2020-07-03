@@ -22,10 +22,11 @@ import logging
 import os
 
 FLOAT_PRECISION = 4
+PREPROCESS_DIR = 'preprocess'
 
 
 def parse_csv_line(line):
-    """Parse record from csv file.
+    """Parses record from csv file.
 
     Parse record and return in list type, containing time, value, and
     source.
@@ -46,7 +47,7 @@ def parse_csv_line(line):
 
 
 def convert_to_csv(records):
-    """format record in list type to csv string format.
+    """Formats record in list type to csv string format.
 
     Transform records in list type to csv string format, separate columns
     with commas.
@@ -69,21 +70,18 @@ def convert_to_csv(records):
     return '\n'.join(csv_lines)
 
 
-def generate_filename_on_strategy(filename, strategy):
-    """Get filename of preprocessed result.
-
-    Get the filename of the preprocessed records in given
-    strategy.
+def generate_filename_on_strategy(original_filename, strategy):
+    """Generates filename of preprocessed result based on the strategy.
 
     Args:
-        filename: A string filename of the experiment (e.g. DMM_single_channel.csv)
+        original_filename: A string filename of the experiment (e.g. DMM_single_channel.csv)
         strategy: One of STRATEGIES in string.
 
     Returns:
         string: String filename of preprocessed records.
     """
-    experiment = filename.strip(' ').strip('\n').strip('.csv')
-    parent_path = os.path.join('preprocess', experiment)
+    experiment = original_filename.strip(' ').strip('\n').strip('.csv')
+    parent_path = os.path.join(PREPROCESS_DIR, experiment)
     if not os.path.isdir(parent_path):
         os.makedirs(parent_path)
     file_path = os.path.join(parent_path, experiment + '_' + strategy + '.csv')

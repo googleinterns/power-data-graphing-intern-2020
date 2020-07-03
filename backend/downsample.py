@@ -26,7 +26,7 @@ FLOAT_PRECISION = 4
 
 
 def triangle_area(point1, point2, point3):
-    """Calculate the area of triangle.
+    """Calculates the area of triangle.
 
     Args:
         point1: [float, float,] Index of the first point.
@@ -43,9 +43,9 @@ def triangle_area(point1, point2, point3):
 
 
 def lttb_downsample(records, max_records):
-    """Downsample records by triangle area significance.
+    """Downsamples records by triangle area significance.
 
-    Downsample records and select those of highest significance.
+    Downsamples records and select those of highest significance.
     The time series to be downsampled is split into buckets of the same number
     as max_records, then select one record for each bucket.
     Significance is defined by the area form by the point in the current bucket and
@@ -56,7 +56,7 @@ def lttb_downsample(records, max_records):
 
     Args:
         records: List of records in 1 second.
-        max_records: Int limit of returned records.
+        max_records: An integer of the limit of returned records.
 
     Returns:
         list: downsampled records.
@@ -85,7 +85,7 @@ def lttb_downsample(records, max_records):
             result.append(bucket[0])
             continue
 
-        # Calculate average in the next bucket
+        # Calculates average in the next bucket
         next_index = index + 1
         while not buckets[next_index]:
             next_index += 1
@@ -106,9 +106,7 @@ def lttb_downsample(records, max_records):
 
 
 def max_min_downsample(records, method, max_records):
-    """Downsample records by maximum or minimum value.
-
-    Downsample the records with max or min strategy specified by parameter.
+    """Downsamples records by maximum or minimum value.
 
     Args:
         records: List of records in 1 second.
@@ -136,9 +134,7 @@ def max_min_downsample(records, method, max_records):
 
 
 def average_downsample(records, max_records):
-    """Downsample records by average value.
-
-    Downsample the records with average strategy.
+    """Downsamples records by average value.
 
     Args:
         records: List of records in 1 second.
@@ -169,7 +165,7 @@ def average_downsample(records, max_records):
 
 
 def downsample(filename, strategy, max_records_per_second):
-    """Read the raw data file and downsample with the given strategy.
+    """Reads the raw data file and downsample with the given strategy.
 
     Assume the records file is on local disk, read the records and
     downsample the records in one-second-at-a-time fashion.
@@ -213,7 +209,7 @@ def downsample(filename, strategy, max_records_per_second):
 
 
 def secondary_downsample(filename, strategy, max_records, start, end):
-    """Read the preprocessing file and downsample with the given strategy for HTTP request.
+    """Reads the preprocessing file and downsample with the given strategy for HTTP request.
 
     Assume the records file is on local disk, read the records and downsample the records
     to be within max records.

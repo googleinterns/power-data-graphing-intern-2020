@@ -81,7 +81,7 @@ def preprocessing():
 
 @app.before_first_request
 def initialize():
-    """Initialize with preprocessing.
+    """Initializes with preprocessing.
 
     Preprocess all power data at the first request.
     """

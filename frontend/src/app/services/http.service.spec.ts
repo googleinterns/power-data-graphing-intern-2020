@@ -14,17 +14,40 @@
 
 import { TestBed } from '@angular/core/testing';
 
-import { HttpService } from './http.service';
+import { HttpService, STRATEGY } from './http.service';
+import { HttpClient } from '@angular/common/http';
+import { from } from 'rxjs';
 
 describe('HttpService', () => {
   let service: HttpService;
+  let httpClientSpy: { get: jasmine.Spy };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(HttpService);
+    httpClientSpy = jasmine.createSpyObj('HttpClient', ['get']);
+    TestBed.configureTestingModule({
+      providers: [
+        HttpService,
+        { provide: HttpClient, useValue: httpClientSpy },
+      ],
+    });
+    // service = TestBed.inject(HttpService);
+    service = new HttpService(<any>httpClientSpy);
   });
 
-  it('should be created', () => {
+  it('HTTP service should be created', () => {
     expect(service).toBeTruthy();
+  });
+
+  it('getRecords should return list of records', () => {
+    const expectedRecords = [
+      [1, 1, 'a'],
+      [2, 2, 's'],
+      [3, 3, 'd'],
+    ];
+    httpClientSpy.get.and.returnValue(from([expectedRecords]));
+
+    service.getRecords('data', STRATEGY.MAX, null).subscribe((records) => {
+      expect(records).toEqual(expectedRecords);
+    });
   });
 });

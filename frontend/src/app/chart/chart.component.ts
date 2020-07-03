@@ -13,12 +13,10 @@
 // =============================================================================
 
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
-import { HttpService, STRATEGY } from '../services/http.service';
-import * as d3 from 'd3';
-
-import { Record } from '../record';
-import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
+import * as d3 from 'd3';
+import { HttpService, STRATEGY } from '../services/http.service';
+import { Record } from '../record';
 
 @Component({
   selector: 'main-chart',
@@ -72,16 +70,14 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.subscription = this.service
       .getRecords('/data', this.strategy, timespan)
-      .subscribe((response: HttpResponse<object>) => {
-        this.records = Object.values(response.body).map(
-          (d: [number, number, string]) => {
-            return {
-              time: this.timeParse(Math.floor(d[0] / 1000).toString()), // Ignoring microseconds in accord with the highest precision in JS
-              value: d[1],
-              source: d[2],
-            } as Record;
-          }
-        );
+      .subscribe((response: [number, number, string][]) => {
+        this.records = response.map((d: [number, number, string]) => {
+          return {
+            time: this.timeParse(Math.floor(d[0] / 1000).toString()), // Ignoring microseconds in accord with the highest precision in JS
+            value: d[1],
+            source: d[2],
+          } as Record;
+        });
         this.loading = false;
         this.svg ? this.updateChartDomain() : this.initChart();
       });
@@ -222,7 +218,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     }
   }
 
-  interactChart() {
+  private interactChart() {
     // What are the selected boundaries?
     const extent = d3.event.selection;
     if (!extent) return;
@@ -244,7 +240,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     });
   }
 
-  updateChartDomain() {
+  private updateChartDomain() {
     const xExtent = d3.extent(this.records, (d) => d.time);
     const yExtent = d3.extent(this.records, (d) => d.value);
 

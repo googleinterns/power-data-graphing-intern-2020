@@ -13,26 +13,136 @@
 // =============================================================================
 
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { from, empty } from 'rxjs';
 
 import { ChartComponent } from './chart.component';
+import { HttpService, STRATEGY } from '../services/http.service';
+import { Record } from '../record';
+
+const getMaxMin = (records: number[]) => {
+  return [
+    records.reduce((left, right) => (left < right ? left : right)),
+    records.reduce((left, right) => (left > right ? left : right)),
+  ];
+};
+
+const generateNewData = (length: number) => {
+  const newData: [number, number, string][] = [];
+  for (let index = 0; index < 600; index++) {
+    newData.push([1573149236356988 + index * 2000, Math.random() * 500, 'sys']);
+  }
+  return newData;
+};
 
 describe('ChartComponent', () => {
   let component: ChartComponent;
   let fixture: ComponentFixture<ChartComponent>;
+  let httpServiceSpy: jasmine.SpyObj<HttpService>;
+
+  const testRecords = generateNewData(100);
 
   beforeEach(async(() => {
+    httpServiceSpy = jasmine.createSpyObj('HttpService', ['getRecords']);
+
     TestBed.configureTestingModule({
       declarations: [ChartComponent],
+      providers: [{ provide: HttpService, useValue: httpServiceSpy }],
     }).compileComponents();
   }));
 
   beforeEach(() => {
+    httpServiceSpy.getRecords.and.callFake(() => {
+      return from([testRecords]);
+    });
+
     fixture = TestBed.createComponent(ChartComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+
+    // service = new HttpService(null);
   });
 
-  it('should create', () => {
+  it('should create chart', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('svg components should be valid', () => {
+    expect(component['brush']).toBeTruthy();
+    expect(component['line']).toBeTruthy();
+    expect(component['svg']).toBeTruthy();
+    expect(component['svgChart']).toBeTruthy();
+    expect(component['xAxis']).toBeTruthy();
+    expect(component['xScale']).toBeTruthy();
+    expect(component['yAxis']).toBeTruthy();
+    expect(component['yScale']).toBeTruthy();
+    expect(component.zoomIn).toBe(false);
+  });
+
+  it('chart x-domain and y-domain should match with data on initialization', () => {
+    const expectedDates = testRecords.map((record) => record[0]);
+    // Get timespan of the original records
+    const expectedTimespanUnix = getMaxMin(expectedDates);
+    // Convert Unix Timestamp to Date Object
+    const expectedTimespan = expectedTimespanUnix.map(
+      (time) => new Date(Math.floor(time / 1000))
+    );
+    expect(component['xScale'].domain()).toEqual(expectedTimespan);
+
+    const expectedPower = testRecords.map((record) => record[1]);
+    // Get power range of the original records
+    const expectedPowerRange = getMaxMin(expectedPower);
+    expect(component['yScale'].domain()).toEqual(expectedPowerRange);
+  });
+
+  it('updateChartDomain should update chart in accord with this.records', () => {
+    // Generate new records
+    const newTestRecords = generateNewData(600);
+    const formattedNewTestRecords = newTestRecords.map((record) => {
+      return {
+        time: new Date(Math.floor(record[0] / 1000)),
+        value: record[1],
+        source: record[2],
+      } as Record;
+    });
+
+    // Load data
+    httpServiceSpy.getRecords.and.callFake(() => {
+      return from([newTestRecords]);
+    });
+    component.loadRecords();
+    expect(httpServiceSpy.getRecords).toHaveBeenCalled();
+
+    expect(component.records).toEqual(formattedNewTestRecords);
+
+    // Test new x-domain
+    const expectedDates = newTestRecords.map((record) => record[0]);
+    const expectedTimespanUnix = getMaxMin(expectedDates);
+    const expectedTimespan = expectedTimespanUnix.map(
+      (time) => new Date(Math.floor(time / 1000))
+    );
+    expect(component['xScale'].domain()).toEqual(expectedTimespan);
+
+    // Test new y-domain
+    const expectedPower = newTestRecords.map((record) => record[1]);
+    const expectedPowerRange = getMaxMin(expectedPower);
+    expect(component['yScale'].domain()).toEqual(expectedPowerRange);
+  });
+
+  it('strategySwitch should send request with selected strategy', () => {
+    const strategies = Object.values(STRATEGY);
+    const newStategy =
+      strategies[Math.floor(Math.random() * strategies.length)];
+
+    httpServiceSpy.getRecords.and.callFake(
+      (path: string, strategy: string, timespan: Date[]) => {
+        expect(path).toEqual('/data');
+        expect(strategy).toEqual(newStategy.toString());
+        expect(timespan).toBeNull();
+        return empty();
+      }
+    );
+    component.strategy = newStategy;
+    component.strategySwitch();
+    expect(httpServiceSpy.getRecords).toHaveBeenCalled();
   });
 });
