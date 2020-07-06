@@ -189,10 +189,10 @@ def downsample(filename, strategy, max_records_per_second):
                 start_time = temp_store[-1][0]
                 if strategy == 'max':
                     res = max_min_downsample(
-                        temp_store, method='max', max_records=max_records_per_second)
+                        temp_store, is_max=True, max_records=max_records_per_second)
                 elif strategy == 'min':
                     res = max_min_downsample(
-                        temp_store, method='min', max_records=max_records_per_second)
+                        temp_store, is_max=False, max_records=max_records_per_second)
                 elif strategy == 'avg':
                     res = average_downsample(
                         temp_store, max_records=max_records_per_second)
@@ -233,10 +233,10 @@ def secondary_downsample(filename, strategy, max_records, start, end):
                 data.append(record)
         if strategy == 'max':
             res = max_min_downsample(
-                data, method='max', max_records=max_records)
+                data, is_max=True, max_records=max_records)
         elif strategy == 'min':
             res = max_min_downsample(
-                data, method='min', max_records=max_records)
+                data, is_max=False, max_records=max_records)
         elif strategy == 'avg':
             res = average_downsample(
                 data, max_records=max_records)
