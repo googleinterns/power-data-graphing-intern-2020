@@ -32,11 +32,12 @@ def parse_csv_line(line):
     source.
 
     Args:
-        line: String single line record in csv format.
+        line: A string representing single line record in csv format.
 
     Returns:
-        list: Single record list with time and value in float type,
-            source in string type.
+        A list of power data records each of which contains timestamp, power value, and source,
+            e.g. [[12345678, 80, "SYSTEM"],[23456789, 60, "SENSOR"]]. Returns None if the
+            given file is empty.
     """
     if not line:
         return None
@@ -47,16 +48,14 @@ def parse_csv_line(line):
 
 
 def convert_to_csv(records):
-    """Formats record in list type to csv string format.
-
-    Transform records in list type to csv string format, separate columns
-    with commas.
+    """Convert records in list type to csv string.
 
     Args:
-        records: List of power data record lists.
+        records: A list of power data records each of which contains timestamp, power value,
+        and source. e.g. [[12345678, 80, "SYSTEM"],[23456789, 60, "SENSOR"]].
 
     Returns:
-        string: List of string records in csv format.
+        A string that contains all CSV records, None if the given list if empty.
     """
     if not records:
         return None
@@ -74,13 +73,14 @@ def generate_filename_on_strategy(original_filename, strategy):
     """Generates filename of preprocessed result based on the strategy.
 
     Args:
-        original_filename: A string filename of the experiment (e.g. DMM_single_channel.csv)
+        original_filename: A string filename of the experiment (e.g. tmp/DMM_single_channel.csv)
         strategy: One of STRATEGIES in string.
 
     Returns:
-        string: String filename of preprocessed records.
+        A string representing the filename for the preprocessed results.
     """
-    experiment = original_filename.strip(' ').strip('\n').strip('.csv')
+    experiment = original_filename.strip(' ').strip(
+        '\n').strip('.csv').split('/')[-1]
     parent_path = os.path.join(PREPROCESS_DIR, experiment)
     if not os.path.isdir(parent_path):
         os.makedirs(parent_path)
@@ -88,6 +88,9 @@ def generate_filename_on_strategy(original_filename, strategy):
     return file_path
 
 
-def printd(string):
-    # DEBUG
-    logging.warning(string)
+def warning(message, *args):
+    logging.warning(message, *args)
+
+
+def error(message, *args):
+    logging.error(message, *args)

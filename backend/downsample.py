@@ -34,7 +34,7 @@ def triangle_area(point1, point2, point3):
         point3: [float, float,] Index of the third point.
 
     Returns:
-        float: Area in float.
+        A float number for area.
     """
     return abs(point1[0] * point2[1] -
                point1[1] * point2[0] + point2[0] * point3[1] -
@@ -55,11 +55,11 @@ def lttb_downsample(records, max_records):
     If a bucket has only one record, choose that record.
 
     Args:
-        records: List of records in 1 second.
+        records: A list of records in 1 second.
         max_records: An integer of the limit of returned records.
 
     Returns:
-        list: downsampled records.
+        A list for the downsampled records.
     """
     if len(records) <= max_records:
         return records
@@ -109,13 +109,12 @@ def max_min_downsample(records, method, max_records):
     """Downsamples records by maximum or minimum value.
 
     Args:
-        records: List of records in 1 second.
-        method: String one of {max, min} to specify the strategy you want to use.
-        max_records: Int limit of returned records.
+        records: A list representing of records in 1 second.
+        method: A string representing one of {max, min} to specify the strategy you want to use.
+        max_records: An interger indicating lower sampling rate.
 
     Returns:
-        list: downsampled records from the given records with number of
-        NUMBER_OF_RECORDS_PER_SECOND.
+        A list of records with lower sampling rate.
     """
     if len(records) <= max_records:
         return records
@@ -137,11 +136,11 @@ def average_downsample(records, max_records):
     """Downsamples records by average value.
 
     Args:
-        records: List of records in 1 second.
-        max_records: Int limit of returned records.
+        records: A list representing of records in 1 second.
+        max_records: An interger representing limit of returned records.
 
     Returns:
-        list: List of downsampled records.
+        A list of downsampled records.
     """
     if len(records) <= max_records:
         return records
@@ -171,12 +170,12 @@ def downsample(filename, strategy, max_records_per_second):
     downsample the records in one-second-at-a-time fashion.
 
     Args:
-        filename: String name of the records file.
-        strategy: String downsampling strategy.
-        max_records_per_second: Int number of records to save per second.
+        filename: A string representing name of the records file.
+        strategy: A string representing downsampling strategy.
+        max_records_per_second: An interger representing number of records to save per second.
 
     Returns:
-        list: Downsampled data in the given file.
+        A list of the downsampled data in the given file.
     """
     data = list()
 
@@ -216,14 +215,14 @@ def secondary_downsample(filename, strategy, max_records, start, end):
     Optional arguments start and end to specify a timespan in which records must be laid.
 
     Args:
-        filename: String name of the records file.
-        strategy: String downsampling strategy.
-        max_records: Int number of records to save.
-        start: Int start of timespan.
-        end: Int end of timespan.
+        filename: A string representing name of the records file.
+        strategy: A string representing downsampling strategy.
+        max_records: An interger representing number of records to save.
+        start: An interger representing start of timespan.
+        end: An interger representing the end of timespan.
 
     Returns:
-        list: Downsampled data in the given file.
+        Downsampled data in the given file.
     """
 
     with open(filename, 'r') as filereader:
