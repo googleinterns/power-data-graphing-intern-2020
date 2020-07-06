@@ -105,12 +105,12 @@ def lttb_downsample(records, max_records):
     return result
 
 
-def max_min_downsample(records, method, max_records):
+def max_min_downsample(records, is_max, max_records):
     """Downsamples records by maximum or minimum value.
 
     Args:
         records: A list representing of records in 1 second.
-        method: A string representing one of {max, min} to specify the strategy you want to use.
+        is_max: A boolean indicating if using max or not.
         max_records: An interger indicating lower sampling rate.
 
     Returns:
@@ -123,10 +123,10 @@ def max_min_downsample(records, method, max_records):
     result = list()
     for index in range(max_records):
         records_in_timespan = records[index * timespan: (index+1)*timespan]
-        if method == 'max':
+        if is_max:
             result.append(
                 max(records_in_timespan, key=lambda record: record[1]))
-        elif method == 'min':
+        else:
             result.append(
                 min(records_in_timespan, key=lambda record: record[1]))
     return result
