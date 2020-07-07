@@ -63,6 +63,10 @@ def lttb_downsample(records, max_records):
     """
     if len(records) <= max_records:
         return records
+
+    if max_records <= 2:
+        return [records[0], records[-1]][:max_records]
+
     timespan = (records[-2][0] - records[1][0]) / (max_records - 2)
     buckets = list()
 
@@ -89,7 +93,7 @@ def lttb_downsample(records, max_records):
         next_index = index + 1
         while not buckets[next_index]:
             next_index += 1
-        if next_index >= len(buckets) - 1:
+        if next_index > len(buckets) - 1:
             continue
         next_average = [0, 0]
         for record in buckets[next_index]:
@@ -116,6 +120,9 @@ def max_min_downsample(records, is_max, max_records):
     Returns:
         A list of records with lower sampling rate.
     """
+    if not max_records:
+        return []
+
     if len(records) <= max_records:
         return records
 
@@ -142,6 +149,9 @@ def average_downsample(records, max_records):
     Returns:
         A list of downsampled records.
     """
+    if not max_records:
+        return []
+
     if len(records) <= max_records:
         return records
 
@@ -163,6 +173,34 @@ def average_downsample(records, max_records):
     return result
 
 
+def strategy_reducer(records, strategy, max_records):
+    """Applies relative downsample function to the records, based on strategy string.
+
+    Args:
+        records: A list of records.
+        strategy: A string representing downsampling strategy.
+        max_records: An interger representing number of records to save per second.
+
+    Returns:
+        A list of downsampled records with number under max_records.
+    """
+    if strategy == 'max':
+        res = max_min_downsample(
+            records, is_max=True, max_records=max_records)
+    elif strategy == 'min':
+        res = max_min_downsample(
+            records, is_max=False, max_records=max_records)
+    elif strategy == 'avg':
+        res = average_downsample(
+            records, max_records=max_records)
+    elif strategy == 'lttb':
+        res = lttb_downsample(
+            records, max_records=max_records)
+    else:
+        res = list()
+    return res
+
+
 def downsample(filename, strategy, max_records_per_second):
     """Reads the raw data file and downsample with the given strategy.
 
@@ -181,29 +219,16 @@ def downsample(filename, strategy, max_records_per_second):
 
     with open(filename, 'r') as filereader:
         temp_store = list()
-        start_time = 0
         for line in filereader:
             temp_store.append(utils.parse_csv_line(line))
-            if temp_store[-1] is not None or temp_store[-1][0] - \
-                    start_time > SECOND_TO_MICROSECOND:
-                start_time = temp_store[-1][0]
-                if strategy == 'max':
-                    res = max_min_downsample(
-                        temp_store, is_max=True, max_records=max_records_per_second)
-                elif strategy == 'min':
-                    res = max_min_downsample(
-                        temp_store, is_max=False, max_records=max_records_per_second)
-                elif strategy == 'avg':
-                    res = average_downsample(
-                        temp_store, max_records=max_records_per_second)
-                elif strategy == 'lttb':
-                    res = lttb_downsample(
-                        temp_store, max_records=max_records_per_second)
-                else:
-                    res = list()
-
-                data.extend(res)
+            if temp_store[-1][0] - temp_store[0][0] >= SECOND_TO_MICROSECOND:
+                downsampled_records = strategy_reducer(
+                    temp_store, strategy, max_records_per_second)
+                data.extend(downsampled_records)
                 temp_store = list()
+        last_second_records = strategy_reducer(
+            temp_store, strategy, max_records_per_second)
+        data.extend(last_second_records)
     return data
 
 
@@ -231,18 +256,5 @@ def secondary_downsample(filename, strategy, max_records, start, end):
             record = utils.parse_csv_line(line)
             if start is None or end is None or start <= record[0] <= end:
                 data.append(record)
-        if strategy == 'max':
-            res = max_min_downsample(
-                data, is_max=True, max_records=max_records)
-        elif strategy == 'min':
-            res = max_min_downsample(
-                data, is_max=False, max_records=max_records)
-        elif strategy == 'avg':
-            res = average_downsample(
-                data, max_records=max_records)
-        elif strategy == 'lttb':
-            res = lttb_downsample(
-                data, max_records=max_records)
-        else:
-            res = list()
-        return res
+        downsampled_records = strategy_reducer(data, strategy, max_records)
+        return downsampled_records

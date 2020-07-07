@@ -30,7 +30,6 @@ describe('HttpService', () => {
         { provide: HttpClient, useValue: httpClientSpy },
       ],
     });
-    // service = TestBed.inject(HttpService);
     service = new HttpService(<any>httpClientSpy);
   });
 

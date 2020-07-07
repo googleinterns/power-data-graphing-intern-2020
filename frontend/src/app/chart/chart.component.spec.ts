@@ -28,7 +28,7 @@ const getMaxMin = (records: number[]) => {
 
 const generateNewData = (length: number) => {
   const newData: [number, number, string][] = [];
-  for (let index = 0; index < 600; index++) {
+  for (let index = 0; index < length; index++) {
     newData.push([1573149236356988 + index * 2000, Math.random() * 500, 'sys']);
   }
   return newData;
@@ -58,8 +58,6 @@ describe('ChartComponent', () => {
     fixture = TestBed.createComponent(ChartComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-
-    // service = new HttpService(null);
   });
 
   it('should create chart', () => {
