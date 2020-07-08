@@ -20,18 +20,18 @@ import tempfile
 
 import pytest
 
-from downsample import average_downsample
+from downsample import _average_downsample
 from downsample import downsample
-from downsample import lttb_downsample
-from downsample import max_min_downsample
+from downsample import _lttb_downsample
+from downsample import _max_min_downsample
 from downsample import secondary_downsample
-from downsample import strategy_reducer
-from downsample import triangle_area
+from downsample import _strategy_reducer
+from downsample import _triangle_area
 from utils import convert_to_csv
 
 
 class TestDownsampleClass:
-    """Test cllass for downsample.py"""
+    """Test class for downsample.py"""
 
     @pytest.fixture
     def records(self):
@@ -70,16 +70,27 @@ class TestDownsampleClass:
         return records_complex_case
 
     @pytest.mark.parametrize('max_records', [0, 5, 10, 20, 30, 40, 1000000])
-    def test_limit_of_records(self, records, max_records):
-        """Tests if data is within the threshold."""
+    def test_max_min_downsample_max_strategy_records_length_limit(self, records, max_records):
         limit = min(len(records), max_records)
-        assert len(max_min_downsample(
+        assert len(_max_min_downsample(
             records, True, max_records)) <= limit
-        assert len(max_min_downsample(
+
+    @pytest.mark.parametrize('max_records', [0, 5, 10, 20, 30, 40, 1000000])
+    def test_max_min_downsample_min_strategy_records_length_limit(self, records, max_records):
+        limit = min(len(records), max_records)
+        assert len(_max_min_downsample(
             records, False, max_records)) <= limit
-        assert len(average_downsample(
+
+    @pytest.mark.parametrize('max_records', [0, 5, 10, 20, 30, 40, 1000000])
+    def test_average_downsample_records_length_limit(self, records, max_records):
+        limit = min(len(records), max_records)
+        assert len(_average_downsample(
             records, max_records)) <= limit
-        assert len(lttb_downsample(
+
+    @pytest.mark.parametrize('max_records', [0, 5, 10, 20, 30, 40, 1000000])
+    def test_lttb_downsample_records_length_limit(self, records, max_records):
+        limit = min(len(records), max_records)
+        assert len(_lttb_downsample(
             records, max_records)) <= limit
 
     @pytest.mark.parametrize("point1,point2,point3,area", [
@@ -90,90 +101,61 @@ class TestDownsampleClass:
     ])
     def test_triangle_area(self, point1, point2, point3, area):
         """Tests on triangle area."""
-        assert abs(triangle_area(point1, point2, point3) - area) <= 0.01
+        assert abs(_triangle_area(point1, point2, point3) - area) <= 0.01
 
-    def test_lttb_downsample(self, records):
-        """Tests on lttb_downsample method"""
+    @pytest.mark.parametrize("max_records,expected_records_indices", [
+        (0, []),
+        (1, [0]),
+        (2, [0, -1]),
+        (3, [0, 2, 0-1]),
+        (4, [0, 2, 8, -1]),
+        (100, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    ])
+    def test_lttb_downsample(self, records, max_records, expected_records_indices):
+        """Tests on lttb_downsample method with differing input records."""
+        downsample_results = _lttb_downsample(records, max_records)
+        expected_records = [records[index]
+                            for index in expected_records_indices]
+        assert downsample_results == expected_records
+
+    @pytest.mark.parametrize("max_records,expected_records_indices", [
+        (0, []),
+        (1, [2]),
+        (2, [2, 5]),
+        (100, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    ])
+    def test_max_downsample(self, records, max_records, expected_records_indices):
+        """Tests on _max_min_downsample method in max downsample strategy,
+        with differing input records."""
+        downsample_results = _max_min_downsample(records, True, max_records)
+        expected_records = [records[index]
+                            for index in expected_records_indices]
+        assert downsample_results == expected_records
+
+    @pytest.mark.parametrize("max_records,expected_records_indices", [
+        (0, []),
+        (1, [8]),
+        (2, [0, 8]),
+        (100, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    ])
+    def test_min_downsample(self, records, max_records, expected_records_indices):
+        """Tests on _max_min_downsample method in min downsample strategy,
+        with differing input records."""
+        downsample_results = _max_min_downsample(records, False, max_records)
+        expected_records = [records[index]
+                            for index in expected_records_indices]
+        assert downsample_results == expected_records
+
+    def test_average_downsample_max_zero(self, records):
+        """Tests on _average_downsample method, with max_records=0."""
         max_records = 0
-        test_result = lttb_downsample(records, max_records)
+        test_result = _average_downsample(records, max_records)
         assert test_result == []
 
+    def test_average_downsample_max_one(self, records):
+        """Tests on _average_downsample method, with max_records=1."""
         max_records = 1
-        test_result = lttb_downsample(records, max_records)
-        assert test_result == [records[0]]
-
-        max_records = 2
-        test_result = lttb_downsample(records, max_records)
-        assert test_result == [records[0], records[-1]]
-
-        max_records = 3
-        test_result = lttb_downsample(records, max_records)
-        assert test_result == [records[0], records[2], records[-1]]
-
-        max_records = 4
-        test_result = lttb_downsample(records, max_records)
-        assert test_result == [records[0], records[2], records[8], records[-1]]
-
-        max_records = 100
-        test_result = lttb_downsample(records, max_records)
-        assert test_result == records
-
-        max_records = 100
-        test_result = lttb_downsample([], max_records)
-        assert test_result == []
-
-    def test_max_downsample(self, records):
-        """Tests on max_min_downsample method, only work on maximun downsample"""
-        max_records = 0
-        test_result = max_min_downsample(records, True, max_records)
-        assert test_result == []
-
-        max_records = 1
-        test_result = max_min_downsample(records, True, max_records)
-        assert test_result == [records[2]]
-
-        max_records = 2
-        test_result = max_min_downsample(records, True, max_records)
-        assert test_result == [records[2], records[5]]
-
-        max_records = 100
-        test_result = max_min_downsample(records, True, max_records)
-        assert test_result == records
-
-        max_records = 100
-        test_result = max_min_downsample([], True, max_records)
-        assert test_result == []
-
-    def test_min_downsample(self, records):
-        """Tests on max_min_downsample method, only work on minimum downsample"""
-        max_records = 0
-        test_result = max_min_downsample(records, False, max_records)
-        assert test_result == []
-
-        max_records = 1
-        test_result = max_min_downsample(records, False, max_records)
-        assert test_result == [records[8]]
-
-        max_records = 2
-        test_result = max_min_downsample(records, False, max_records)
-        assert test_result == [records[0], records[8]]
-
-        max_records = 100
-        test_result = max_min_downsample(records, False, max_records)
-        assert test_result == records
-
-        max_records = 100
-        test_result = max_min_downsample([], False, max_records)
-        assert test_result == []
-
-    def test_average_downsample(self, records):
-        """Tests on average_downsample method"""
-        max_records = 0
-        test_result = average_downsample(records, max_records)
-        assert test_result == []
-
-        max_records = 1
-        test_result = average_downsample(records, max_records)
+        test_result = _average_downsample(records, max_records)
         expected_average = [
             [
                 sum([record[0] for record in records]) / len(records),
@@ -183,8 +165,10 @@ class TestDownsampleClass:
         ]
         assert test_result == expected_average
 
+    def test_average_downsample_max_two(self, records):
+        """Tests on _average_downsample method, with max_records=2."""
         max_records = 2
-        test_result = average_downsample(records, max_records)
+        test_result = _average_downsample(records, max_records)
 
         # Calculates average over first and second halves.
         expected_average = [
@@ -205,14 +189,11 @@ class TestDownsampleClass:
         ]
         assert test_result == expected_average
 
+    def test_average_downsample_max_over_records(self, records):
+        """Tests on _average_downsample method, with max_records=1."""
         max_records = 100
-        test_result = average_downsample(records, max_records)
-        expected_average = records
-        assert test_result == expected_average
-
-        max_records = 100
-        test_result = average_downsample([], max_records)
-        assert test_result == []
+        test_result = _average_downsample(records, max_records)
+        assert test_result == records
 
     def assert_records_in_each_second(self, filename, max_records_per_second):
         """Asserts that records are sampled on a per-second basis.
@@ -241,63 +222,70 @@ class TestDownsampleClass:
         tmpfile.close()
         assert not os.path.exists(tmpfile.name)
 
-    def test_strategy_reducer(self, records):
-        """Tests on strategy_reducer method"""
+    @pytest.mark.parametrize('max_records', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    def test_strategy_reducer(self, records, max_records):
+        """Tests on _strategy_reducer method, check if right strategy is applied"""
+        assert _strategy_reducer(records, 'max', max_records) == _max_min_downsample(
+            records, True, max_records)
+        assert _strategy_reducer(records, 'min', max_records) == _max_min_downsample(
+            records, False, max_records)
+        assert _strategy_reducer(records, 'avg', max_records) == _average_downsample(
+            records, max_records)
+        assert _strategy_reducer(records, 'lttb', max_records) == _lttb_downsample(
+            records, max_records)
+        assert _strategy_reducer(
+            records, 'not_exist', max_records) == []
 
-        # Test if right strategy is applied.
-        for max_records in range(15):
-            assert strategy_reducer(records, 'max', max_records) == max_min_downsample(
-                records, True, max_records)
-            assert strategy_reducer(records, 'min', max_records) == max_min_downsample(
-                records, False, max_records)
-            assert strategy_reducer(records, 'avg', max_records) == average_downsample(
-                records, max_records)
-            assert strategy_reducer(records, 'lttb', max_records) == lttb_downsample(
-                records, max_records)
-            assert strategy_reducer(
-                records, 'not_exist', max_records) == []
-
-    def test_secondary_downsample(self, records_complex_case):
-        """Tests on secondary_downsample method"""
+    @pytest.mark.parametrize('max_records', [0, 40, 80, 120, 160, 200])
+    def test_secondary_downsample_no_timespan(self, records_complex_case, max_records):
+        """Tests on secondary_downsample method, with no timespan given"""
         tmpfile = tempfile.NamedTemporaryFile()
         assert os.path.exists(tmpfile.name)
         with open(tmpfile.name, 'w') as tmpfilewriter:
             data_csv = convert_to_csv(records_complex_case)
             tmpfilewriter.write(data_csv)
 
-        # Test without timespan.
-        for max_records in range(0, 200, 40):
-            assert secondary_downsample(tmpfile.name, 'max', max_records, None, None) \
-                == max_min_downsample(records_complex_case, True, max_records)
-            assert secondary_downsample(tmpfile.name, 'min', max_records, None, None) \
-                == max_min_downsample(records_complex_case, False, max_records)
-            assert secondary_downsample(tmpfile.name, 'avg', max_records, None, None) \
-                == average_downsample(records_complex_case, max_records)
-            assert secondary_downsample(tmpfile.name, 'lttb', max_records, None, None) \
-                == lttb_downsample(records_complex_case, max_records)
-            assert secondary_downsample(
-                tmpfile.name, 'not_exist', max_records, None, None) == []
+        assert secondary_downsample(tmpfile.name, 'max', max_records, None, None) \
+            == _max_min_downsample(records_complex_case, True, max_records)
+        assert secondary_downsample(tmpfile.name, 'min', max_records, None, None) \
+            == _max_min_downsample(records_complex_case, False, max_records)
+        assert secondary_downsample(tmpfile.name, 'avg', max_records, None, None) \
+            == _average_downsample(records_complex_case, max_records)
+        assert secondary_downsample(tmpfile.name, 'lttb', max_records, None, None) \
+            == _lttb_downsample(records_complex_case, max_records)
+        assert secondary_downsample(
+            tmpfile.name, 'not_exist', max_records, None, None) == []
 
-        # Test with timespan given.
-        for max_records in range(0, 200, 40):
-            middle_half = (125, 275)
-            middle_half_records = records_complex_case[middle_half[0]:
-                                                       middle_half[1]]
-            start, end = (
-                records_complex_case[middle_half[0]][0],
-                records_complex_case[middle_half[1] - 1][0]
-            )
+        tmpfile.close()
+        assert not os.path.exists(tmpfile.name)
 
-            assert secondary_downsample(tmpfile.name, 'max', max_records, start, end) \
-                == max_min_downsample(middle_half_records, True, max_records)
-            assert secondary_downsample(tmpfile.name, 'min', max_records, start, end) \
-                == max_min_downsample(middle_half_records, False, max_records)
-            assert secondary_downsample(tmpfile.name, 'avg', max_records, start, end) \
-                == average_downsample(middle_half_records, max_records)
-            assert secondary_downsample(tmpfile.name, 'lttb', max_records, start, end) \
-                == lttb_downsample(middle_half_records, max_records)
-            assert secondary_downsample(
-                tmpfile.name, 'not_exist', max_records, start, end) == []
+    @pytest.mark.parametrize('max_records', [0, 40, 80, 120, 160, 200])
+    def test_secondary_downsample_with_timespan(self, records_complex_case, max_records):
+        """Tests on secondary_downsample method, with with timespan given"""
+        tmpfile = tempfile.NamedTemporaryFile()
+        assert os.path.exists(tmpfile.name)
+        with open(tmpfile.name, 'w') as tmpfilewriter:
+            data_csv = convert_to_csv(records_complex_case)
+            tmpfilewriter.write(data_csv)
+
+        middle_half = (125, 275)
+        middle_half_records = records_complex_case[middle_half[0]:
+                                                   middle_half[1]]
+        start, end = (
+            records_complex_case[middle_half[0]][0],
+            records_complex_case[middle_half[1] - 1][0]
+        )
+
+        assert secondary_downsample(tmpfile.name, 'max', max_records, start, end) \
+            == _max_min_downsample(middle_half_records, True, max_records)
+        assert secondary_downsample(tmpfile.name, 'min', max_records, start, end) \
+            == _max_min_downsample(middle_half_records, False, max_records)
+        assert secondary_downsample(tmpfile.name, 'avg', max_records, start, end) \
+            == _average_downsample(middle_half_records, max_records)
+        assert secondary_downsample(tmpfile.name, 'lttb', max_records, start, end) \
+            == _lttb_downsample(middle_half_records, max_records)
+        assert secondary_downsample(
+            tmpfile.name, 'not_exist', max_records, start, end) == []
 
         tmpfile.close()
         assert not os.path.exists(tmpfile.name)

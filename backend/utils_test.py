@@ -69,12 +69,13 @@ class TestUtilsClass:
             assert parsed_records == test_records[:index+1]
 
     def test_generate_filename_on_strategy(self):
-        filename = 'path/to/a/experiment.csv'
+        """Tests on generate_filename_on_strategy."""
+        filename = 'path/to/a/some_experiment.csv'
 
-        filename_max = 'preprocess/experiment/experiment_max.csv'
-        filename_min = 'preprocess/experiment/experiment_min.csv'
-        filename_avg = 'preprocess/experiment/experiment_avg.csv'
-        filename_lttb = 'preprocess/experiment/experiment_lttb.csv'
+        filename_max = 'preprocess/path/to/a/some_experiment/some_experiment_max.csv'
+        filename_min = 'preprocess/path/to/a/some_experiment/some_experiment_min.csv'
+        filename_avg = 'preprocess/path/to/a/some_experiment/some_experiment_avg.csv'
+        filename_lttb = 'preprocess/path/to/a/some_experiment/some_experiment_lttb.csv'
 
         assert generate_filename_on_strategy(filename, 'max') == filename_max
         assert generate_filename_on_strategy(filename, 'min') == filename_min

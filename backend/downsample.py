@@ -25,7 +25,7 @@ SECOND_TO_MICROSECOND = 1E6
 FLOAT_PRECISION = 4
 
 
-def triangle_area(point1, point2, point3):
+def _triangle_area(point1, point2, point3):
     """Calculates the area of triangle.
 
     Args:
@@ -42,7 +42,7 @@ def triangle_area(point1, point2, point3):
                point3[1] * point1[0]) / 2
 
 
-def lttb_downsample(records, max_records):
+def _lttb_downsample(records, max_records):
     """Downsamples records by triangle area significance.
 
     Downsamples records and select those of highest significance.
@@ -105,11 +105,11 @@ def lttb_downsample(records, max_records):
         # Select record of highest triangle area in each bucket
         result.append(
             max(bucket, key=lambda record, next_average=next_average:
-                triangle_area(result[-1], record, next_average)))
+                _triangle_area(result[-1], record, next_average)))
     return result
 
 
-def max_min_downsample(records, is_max, max_records):
+def _max_min_downsample(records, is_max, max_records):
     """Downsamples records by maximum or minimum value.
 
     Args:
@@ -139,7 +139,7 @@ def max_min_downsample(records, is_max, max_records):
     return result
 
 
-def average_downsample(records, max_records):
+def _average_downsample(records, max_records):
     """Downsamples records by average value.
 
     Args:
@@ -173,7 +173,7 @@ def average_downsample(records, max_records):
     return result
 
 
-def strategy_reducer(records, strategy, max_records):
+def _strategy_reducer(records, strategy, max_records):
     """Applies relative downsample function to the records, based on strategy string.
 
     Args:
@@ -185,16 +185,16 @@ def strategy_reducer(records, strategy, max_records):
         A list of downsampled records with number under max_records.
     """
     if strategy == 'max':
-        res = max_min_downsample(
+        res = _max_min_downsample(
             records, is_max=True, max_records=max_records)
     elif strategy == 'min':
-        res = max_min_downsample(
+        res = _max_min_downsample(
             records, is_max=False, max_records=max_records)
     elif strategy == 'avg':
-        res = average_downsample(
+        res = _average_downsample(
             records, max_records=max_records)
     elif strategy == 'lttb':
-        res = lttb_downsample(
+        res = _lttb_downsample(
             records, max_records=max_records)
     else:
         res = list()
@@ -222,11 +222,11 @@ def downsample(filename, strategy, max_records_per_second):
         for line in filereader:
             temp_store.append(utils.parse_csv_line(line))
             if temp_store[-1][0] - temp_store[0][0] >= SECOND_TO_MICROSECOND:
-                downsampled_records = strategy_reducer(
+                downsampled_records = _strategy_reducer(
                     temp_store, strategy, max_records_per_second)
                 data.extend(downsampled_records)
                 temp_store = list()
-        last_second_records = strategy_reducer(
+        last_second_records = _strategy_reducer(
             temp_store, strategy, max_records_per_second)
         data.extend(last_second_records)
     return data
@@ -256,5 +256,5 @@ def secondary_downsample(filename, strategy, max_records, start, end):
             record = utils.parse_csv_line(line)
             if start is None or end is None or start <= record[0] <= end:
                 data.append(record)
-        downsampled_records = strategy_reducer(data, strategy, max_records)
+        downsampled_records = _strategy_reducer(data, strategy, max_records)
         return downsampled_records

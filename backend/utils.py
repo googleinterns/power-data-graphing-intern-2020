@@ -79,12 +79,14 @@ def generate_filename_on_strategy(original_filename, strategy):
     Returns:
         A string representing the filename for the preprocessed results.
     """
-    experiment = original_filename.strip(' ').strip(
-        '\n').strip('.csv').split('/')[-1]
-    parent_path = os.path.join(PREPROCESS_DIR, experiment)
-    if not os.path.isdir(parent_path):
-        os.makedirs(parent_path)
-    file_path = os.path.join(parent_path, experiment + '_' + strategy + '.csv')
+    original_path_no_postfix = original_filename.strip(' ').strip(
+        '\n').strip('.csv')
+    experiment_name = original_path_no_postfix.split('/')[-1]
+    target_parent_path = os.path.join(PREPROCESS_DIR, original_path_no_postfix)
+    if not os.path.isdir(target_parent_path):
+        os.makedirs(target_parent_path)
+    file_path = os.path.join(
+        target_parent_path, experiment_name + '_' + strategy + '.csv')
     return file_path
 
 
