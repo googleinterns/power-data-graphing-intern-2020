@@ -179,7 +179,7 @@ def _strategy_reducer(records, strategy, max_records):
     Args:
         records: A list of records.
         strategy: A string representing downsampling strategy.
-        max_records: An interger representing number of records to save per second.
+        max_records: An interger representing number of records to return.
 
     Returns:
         A list of downsampled records with number under max_records.
@@ -242,7 +242,7 @@ def secondary_downsample(filename, strategy, max_records, start, end):
     Args:
         filename: A string representing name of the records file.
         strategy: A string representing downsampling strategy.
-        max_records: An interger representing number of records to save.
+        max_records: An interger representing number of records to return.
         start: An interger representing start of timespan.
         end: An interger representing the end of timespan.
 
@@ -254,7 +254,7 @@ def secondary_downsample(filename, strategy, max_records, start, end):
         data = list()
         for line in filereader.readlines():
             record = utils.parse_csv_line(line)
-            if start is None or end is None or start <= record[0] <= end:
+            if (start is None or start <= record[0]) and (end is None or record[0] <= end):
                 data.append(record)
         downsampled_records = _strategy_reducer(data, strategy, max_records)
         return downsampled_records

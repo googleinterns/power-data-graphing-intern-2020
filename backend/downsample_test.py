@@ -124,7 +124,7 @@ class TestDownsampleClass:
         (2, [2, 5]),
         (100, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     ])
-    def test_max_downsample(self, records, max_records, expected_records_indices):
+    def test_max_min_downsample_max_strategy(self, records, max_records, expected_records_indices):
         """Tests on _max_min_downsample method in max downsample strategy,
         with differing input records."""
         downsample_results = _max_min_downsample(records, True, max_records)
@@ -138,7 +138,7 @@ class TestDownsampleClass:
         (2, [0, 8]),
         (100, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     ])
-    def test_min_downsample(self, records, max_records, expected_records_indices):
+    def test_max_min_downsample_min_strategy(self, records, max_records, expected_records_indices):
         """Tests on _max_min_downsample method in min downsample strategy,
         with differing input records."""
         downsample_results = _max_min_downsample(records, False, max_records)

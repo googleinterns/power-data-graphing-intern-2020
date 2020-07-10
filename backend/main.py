@@ -73,6 +73,8 @@ def preprocessing():
         data = downsample.downsample(
             FILENAME, strategy, NUMBER_OF_RECORDS_PER_SECOND)
         data_csv = utils.convert_to_csv(data)
+        if data_csv is None:
+            return 'Empty records', 500
         with open(output_filename, 'w') as filewriter:
             filewriter.write(data_csv)
             filewriter.flush()
