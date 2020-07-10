@@ -2,9 +2,9 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     https://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -12,59 +12,83 @@
 # limitations under the License.
 # =============================================================================
 
+"""HTTP server module.
+
+Expose HTTP endpoints for triggering preprocess and send downsampled data.
+"""
+import logging
+import os
 from flask import request
 from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
+import utils
+import downsample
+
+NUMBER_OF_RECORDS_PER_REQUEST = 600
+NUMBER_OF_RECORDS_PER_SECOND = 2000
+FLOAT_PRECISION = 4
+STRATEGIES = ['max', 'min', 'lttb', 'avg']
+
+FILENAME = 'DMM_result_single_channel.csv'
 
 app = Flask(__name__)
 CORS(app)
 
 
-def downsample_raw_data(file_name, num_records, max_records):
-    '''Desample power data
-
-        Read power data from given filename, desample and limit number of records to the given number.
-        The desample strategy is to select one data point per certain number to ensure that output 
-        data points are kept under threshold.
-
-        Args:
-            file_name: The filename of data csv
-            num_records: Total number of data points 
-            max_records: Max number of data points to output
-        
-        Returns:
-            A list of power data. For example:
-            [
-                ['1532523212', '53', 'SYSTEM'],
-                ['1532523242', '33', 'SYSTEM']
-            ]
-    '''
-    data = list()
-    frequency = num_records / max_records
-
-    with open(file_name, 'r') as fr:
-        for i, line in enumerate(fr):
-            if i % frequency == 0:
-                data.append(line.strip('\n').split(','))
-    return data
-    
-
-
 @app.route('/data')
-def getData():
-    '''HTTP endpoint to get data
-        
-        Retrives all power data from local file given a limit on number of records from request body.
-    '''
+def get_data():
+    """HTTP endpoint to get data.
 
-    fn = 'Power_sample_data.csv'
-    num_records = 7200000  # assume number of records is accessible upon deployment
-    max_records = request.args.get('number', default=6000, type=int)
-    
-    data = downsample_raw_data(fn, num_records, max_records)
-    # TODO(tangyifei@): Implementation too naive, will improve with selected time interval, better desample strategy.
+    Retrives all power data from local file given a limit on number of
+    records from request body.
+    """
+    strategy = request.args.get('strategy', default='avg', type=str)
+    start = request.args.get('start', default=None, type=int)
+    end = request.args.get('end', default=None, type=int)
+    if not strategy in STRATEGIES:
+        logging.error('Incorrect Strategy: %s', strategy)
+        return 'Incorrect Strategy', 400
+
+    cache_filename = utils.generate_filename_on_strategy(FILENAME, strategy)
+    data = downsample.secondary_downsample(
+        cache_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
+
+    # TODO(tangyifei@): Support csv file name in HTTP argument and upload new csv file.
     return jsonify(data)
+
+
+@app.route('/preprocessing')
+def preprocessing():
+    """HTTP endpoint to preprocess data.
+
+    Preprocess data for all strategy and save results locally,
+    each strategy in a file.
+    """
+    for strategy in STRATEGIES:
+        output_filename = utils.generate_filename_on_strategy(
+            FILENAME, strategy)
+        if os.path.isfile(output_filename):
+            continue
+        data = downsample.downsample(
+            FILENAME, strategy, NUMBER_OF_RECORDS_PER_SECOND)
+        data_csv = utils.convert_to_csv(data)
+        if data_csv is None:
+            return 'Empty records', 500
+        with open(output_filename, 'w') as filewriter:
+            filewriter.write(data_csv)
+            filewriter.flush()
+    return 'Preprocessing Successful!'
+
+
+@app.before_first_request
+def initialize():
+    """Initializes with preprocessing.
+
+    Preprocess all power data at the first request.
+    """
+    # TODO(tangyifei@): Initialize at the start of service, instead of first request.
+    preprocessing()
 
 
 if __name__ == '__main__':

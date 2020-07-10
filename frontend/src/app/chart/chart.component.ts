@@ -12,12 +12,11 @@
 // limitations under the License.
 // =============================================================================
 
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { GetDataService } from '../services/getData.service';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { Subscription } from 'rxjs';
 import * as d3 from 'd3';
-
+import { HttpService, STRATEGY } from '../services/http.service';
 import { Record } from '../record';
-import { HttpResponse } from '@angular/common/http';
 
 @Component({
   selector: 'main-chart',
@@ -25,57 +24,75 @@ import { HttpResponse } from '@angular/common/http';
   styleUrls: ['./chart.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
-export class ChartComponent implements OnInit {
+export class ChartComponent implements OnInit, OnDestroy {
+  // Bind strategy type
+  strategyType = STRATEGY;
+
+  // Bind Subscription
+  subscription: Subscription;
+
   // Data related variable
-  records: Record[];
   loading = false;
+  number = 600;
+  records: Record[];
+  strategy = STRATEGY.AVG;
+  zoomIn = false;
 
   // Chart d3 SVG Elements
+  private brush: d3.BrushBehavior<unknown>;
+  private line: d3.Line<[number, number]>;
+  private svg: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private svgChart: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private xAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private xScale: d3.ScaleTime<number, number>;
+  private yAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private yScale: d3.ScaleLinear<number, number>;
-  private svgChart: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private brush: d3.BrushBehavior<unknown>;
 
   // Chart size constants
-  chartWidth = 1100;
-  chartHeight = 700;
+  chartHeight = 400;
   chartPadding = 50;
-  timeParse = d3.timeParse('%s');
-  timeFormat = d3.timeFormat('%m/%d-%H:%M');
+  chartWidth = 1100;
+  timeParse = d3.timeParse('%Q');
+  timeFormat = d3.timeFormat('%H:%M:%S.%L');
+  animationDuration = 500;
 
-  constructor(private service: GetDataService) {}
+  constructor(private service: HttpService) {}
 
   ngOnInit(): void {
-    this.loading = true;
-    this.service
-      .getRecords('/data', 400)
-      .subscribe((response: HttpResponse<Object>) => {
-        this.records = Object.values(response.body).map(
-          (d: [string, string, string]) => {
-            return <Record>{
-              time: this.timeParse(d[0]),
-              value: +d[1],
-              source: d[2],
-            };
-          }
-        );
+    this.loadRecords();
+  }
 
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
+
+  loadRecords(timespan?: Date[]) {
+    this.loading = true;
+    this.subscription = this.service
+      .getRecords('/data', this.strategy, timespan)
+      .subscribe((response: [number, number, string][]) => {
+        this.records = response.map((d: [number, number, string]) => {
+          return {
+            time: this.timeParse(Math.floor(d[0] / 1000).toString()), // Ignoring microseconds in accord with the highest precision in JS
+            value: d[1],
+            source: d[2],
+          } as Record;
+        });
         this.loading = false;
-        this.createLineChart();
+        this.svg ? this.updateChartDomain() : this.initChart();
       });
   }
 
-  createLineChart() {
+  initChart() {
     // Chart SVG Component
-    const svg = d3
+    this.svg = d3
       .select('#chart-component')
       .append('svg')
       .attr('width', this.chartWidth)
       .attr('height', this.chartHeight);
 
     // Add a clipPath: everything out of this area won't be drawn.
-    svg
+    this.svg
       .append('defs')
       .append('svg:clipPath')
       .attr('id', 'clip')
@@ -86,7 +103,7 @@ export class ChartComponent implements OnInit {
       .attr('y', 0);
 
     // Create the chart variable: where both the chart and the brush take place
-    this.svgChart = svg.append('g').attr('clip-path', 'url(#clip)');
+    this.svgChart = this.svg.append('g').attr('clip-path', 'url(#clip)');
 
     // Scales
     this.xScale = d3
@@ -96,11 +113,11 @@ export class ChartComponent implements OnInit {
 
     this.yScale = d3
       .scaleLinear()
-      .domain([0, d3.max(this.records, (d: Record) => d.value)])
+      .domain(d3.extent(this.records, (d: Record) => d.value))
       .range([this.chartHeight - this.chartPadding, this.chartPadding]);
 
     // Create Axis
-    this.xAxis = svg
+    this.xAxis = this.svg
       .append('g')
       .classed('x-axis', true)
       .attr(
@@ -108,27 +125,11 @@ export class ChartComponent implements OnInit {
         `translate(0, ${this.chartHeight - this.chartPadding})`
       )
       .call(d3.axisBottom(this.xScale));
-    svg
+    this.yAxis = this.svg
       .append('g')
       .classed('y-axis', true)
       .attr('transform', `translate(${this.chartPadding},0)`)
       .call(d3.axisLeft(this.yScale));
-
-    // Draw Area under the curve
-    this.svgChart
-      .append('path')
-      .datum(<any>this.records)
-      .classed('area', true)
-      .attr('fill', '#F2EEB3')
-      .attr(
-        'd',
-        d3
-          .area()
-          .defined((d: any) => d.value >= 0)
-          .x((d: any) => this.xScale(d.time))
-          .y0(() => this.yScale.range()[0])
-          .y1((d: any) => this.yScale(d.value))
-      );
 
     const bisect = d3.bisector((d: Record) => d.time).left;
 
@@ -138,7 +139,7 @@ export class ChartComponent implements OnInit {
       .append('circle')
       .style('fill', 'none')
       .attr('stroke', 'black')
-      .attr('r', 8.5)
+      .attr('r', 4)
       .style('opacity', 0);
 
     // Create the text that travels along the curve of chart
@@ -148,24 +149,21 @@ export class ChartComponent implements OnInit {
       .attr('opacity', 1)
       .attr('text-anchor', 'left')
       .attr('alignment-baseline', 'middle')
-      .attr('font-size', '20px');
+      .attr('font-size', '15px');
 
     // Draw lines
+    this.line = d3
+      .line()
+      .x((d: any) => this.xScale(d.time))
+      .y((d: any) => this.yScale(d.value));
 
     this.svgChart
       .append('path')
-      .datum(<any>this.records)
       .classed('line', true)
       .attr('fill', 'none')
       .attr('stroke', '#F29F05')
       .attr('stroke-width', 2)
-      .attr(
-        'd',
-        d3
-          .line()
-          .x((d: any) => this.xScale(d.time))
-          .y((d: any) => this.yScale(d.value))
-      )
+      .attr('d', this.line(this.records as any))
       .attr('opacity', 0.4);
 
     // Brush functionality
@@ -178,104 +176,94 @@ export class ChartComponent implements OnInit {
           this.chartHeight - this.chartPadding,
         ],
       ])
-      .on('end', this.updateChart.bind(this));
+      .on('end', this.interactChart.bind(this));
 
-    // Variable references for mouseover function
-    const records = this.records;
-    const xScale = this.xScale;
-    const yScale = this.yScale;
-    const timeFormat = this.timeFormat;
+    const setFocusOpacity = (opacity: number) => {
+      focus.style('opacity', opacity);
+      focusText.style('opacity', opacity);
+    };
+
+    const setFocus = (container: d3.ContainerElement) => {
+      // recover coordinate we need
+      const x0 = this.xScale.invert(d3.mouse(container)[0]);
+      const i = bisect(this.records, x0, 1);
+      const selectedData = this.records[i];
+
+      focus
+        .attr('cx', this.xScale(selectedData.time))
+        .attr('cy', this.yScale(selectedData.value));
+      focusText
+        .html(
+          `Time: ${this.timeFormat(selectedData.time)} - 
+          Power: ${selectedData.value}`
+        )
+        .attr('x', this.xScale(selectedData.time) + 15)
+        .attr('y', this.yScale(selectedData.value));
+    };
     // Mouse over displaying text
     this.svgChart
       .append('g')
       .attr('class', 'brush')
       .call(this.brush)
-      .on('mouseover', mouseover) //this mouse over value display functionality
+      .on('mouseover', () => {
+        setFocusOpacity(1);
+      }) // this mouse over value display functionality
       .on('mousemove', mousemove)
-      .on('mouseout', mouseout);
-
-    // What happens when the mouse move -> show the annotations at the right positions.
-    function mouseover() {
-      focus.style('opacity', 1);
-      focusText.style('opacity', 1);
-    }
+      .on('mouseout', () => {
+        setFocusOpacity(0);
+      });
 
     function mousemove() {
-      // recover coordinate we need
-      const x0 = xScale.invert(d3.mouse(this)[0]);
-      const i = bisect(records, x0, 1);
-      const selectedData = records[i];
-
-      focus
-        .attr('cx', xScale(selectedData.time))
-        .attr('cy', yScale(selectedData.value));
-      focusText
-        .html(`x: ${timeFormat(selectedData.time)} - y: ${selectedData.value}`)
-        .attr('x', xScale(selectedData.time) + 15)
-        .attr('y', yScale(selectedData.value));
-    }
-    function mouseout() {
-      focus.style('opacity', 0);
-      focusText.style('opacity', 0);
+      setFocus(this);
     }
   }
-  updateChart() {
+
+  private interactChart() {
     // What are the selected boundaries?
     const extent = d3.event.selection;
+    if (!extent) return;
+    const selectedTimeSpan = [
+      this.xScale.invert(extent[0]),
+      this.xScale.invert(extent[1]),
+    ];
+    // This remove the grey brush area as soon as the selection has been done
+    this.svgChart.select('.brush').call(this.brush.move, null);
 
-    // A function that set idleTimeOut to null
-    let idleTimeout: number;
-    // If no selection, back to initial coordinate. Otherwise, update X axis domain
-    if (!extent) {
-      if (!idleTimeout)
-        setTimeout(() => {
-          idleTimeout = null;
-        }, 350); // This allows to wait a little bit
-      return;
-    } else {
-      this.xScale.domain([
-        this.xScale.invert(extent[0]),
-        this.xScale.invert(extent[1]),
-      ]);
-      this.svgChart.select('.brush').call(this.brush.move, null); // This remove the grey brush area as soon as the selection has been done
-    }
-    // Update axis, line and area position
-    this.updateDomain(1000);
+    // Update axis, line and area position, and load new data with the range
+    this.zoomIn = true;
+    this.loadRecords(selectedTimeSpan);
 
     this.svgChart.on('dblclick', () => {
-      // Reset x scale domain
-      this.xScale.domain(d3.extent(this.records, (d) => d.time));
-      // Reset axis, line and area position
-      this.updateDomain(250);
+      // // Reset scale domain
+      this.zoomIn = false;
+      this.loadRecords();
     });
   }
 
-  // Update area, domain, line positions in accord with new interval
-  updateDomain(duration: number) {
-    this.xAxis.transition().duration(duration).call(d3.axisBottom(this.xScale));
+  private updateChartDomain() {
+    const xExtent = d3.extent(this.records, (d) => d.time);
+    const yExtent = d3.extent(this.records, (d) => d.value);
+
+    this.xScale.domain(xExtent);
+    this.yScale.domain(yExtent);
+    this.xAxis
+      .transition()
+      .duration(this.animationDuration)
+      .call(d3.axisBottom(this.xScale));
+    this.yAxis
+      .transition()
+      .duration(this.animationDuration)
+      .call(d3.axisLeft(this.yScale));
     this.svgChart
       .select('.line')
       .transition()
-      .duration(duration)
-      .attr(
-        'd',
-        d3
-          .line()
-          .x((d: any) => this.xScale(d.time))
-          .y((d: any) => this.yScale(d.value))
-      );
-    this.svgChart
-      .select('.area')
-      .transition()
-      .duration(duration)
-      .attr(
-        'd',
-        d3
-          .area()
-          .defined((d: any) => d.value >= 0)
-          .x((d: any) => this.xScale(d.time))
-          .y0(() => this.yScale.range()[0])
-          .y1((d: any) => this.yScale(d.value))
-      );
+      .duration(this.animationDuration)
+      .attr('d', this.line(this.records as any));
+  }
+
+  strategySwitch() {
+    this.loadRecords(
+      this.zoomIn ? d3.extent(this.records, (d) => d.time) : null
+    );
   }
 }
