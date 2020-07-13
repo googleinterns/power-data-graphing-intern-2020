@@ -13,6 +13,7 @@
 # =============================================================================
 
 """Test Module for downsample.py"""
+# pylint: disable=E1126
 
 import os
 import random
@@ -239,6 +240,7 @@ class TestDownsampleClass:
     @pytest.mark.parametrize('max_records', [0, 40, 80, 120, 160, 200])
     def test_secondary_downsample_no_timespan_one_channel(self, records_complex_case, max_records):
         """Tests on secondary_downsample method, with no timespan given"""
+
         tmpfile = tempfile.NamedTemporaryFile()
         assert os.path.exists(tmpfile.name)
         with open(tmpfile.name, 'w') as tmpfilewriter:
@@ -260,7 +262,8 @@ class TestDownsampleClass:
         assert not os.path.exists(tmpfile.name)
 
     @pytest.mark.parametrize('max_records', [0, 40, 80, 120, 160, 200])
-    def test_secondary_downsample_with_timespan_one_channel(self, records_complex_case, max_records):
+    def test_secondary_downsample_with_timespan_one_channel(self,
+                                                            records_complex_case, max_records):
         """Tests on secondary_downsample method, with with timespan given"""
         tmpfile = tempfile.NamedTemporaryFile()
         assert os.path.exists(tmpfile.name)
