@@ -18,5 +18,22 @@
 export interface Record {
   time: Date;
   value: number;
-  source: string;
 }
+
+export interface RecordsOneChannel {
+  color: string;
+  show: boolean;
+  data: Record[];
+  name: string;
+}
+
+export const COLORS = [
+  '#488f31',
+  '#7ba542',
+  '#a9ba59',
+  '#d5d074',
+  '#ffe692',
+  '#fdc072',
+  '#f8995e',
+  '#de425b',
+];

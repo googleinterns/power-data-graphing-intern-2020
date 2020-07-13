@@ -21,6 +21,11 @@ export enum STRATEGY {
   MAX = 'max',
   MIN = 'min',
 }
+
+export interface RecordsResponse {
+  data: [number, number][];
+  name: string;
+}
 @Injectable({
   providedIn: 'root',
 })

@@ -38,3 +38,9 @@
 .y-axis path .y-axis line {
   shape-rendering: crispEdges;
 }
+
+.legends-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}

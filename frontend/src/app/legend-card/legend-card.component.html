@@ -1,0 +1,27 @@
+<mat-card class="channel-metrics">
+  <div class="legends">
+    <mat-slide-toggle
+      class="toggle-section"
+      [color]="'primary'"
+      [checked]="checked"
+      (change)="toggled($event)"
+    >
+      <span [style.color]="recordsOneChannel.color">{{
+        recordsOneChannel.name
+      }}</span>
+    </mat-slide-toggle>
+
+    <div class="numbers-section">
+      <div class="numbers-column">
+        <div>Average: {{ getAvg() }}</div>
+        <div>Maximum: {{ getMax() }}</div>
+        <div>Minimum: {{ getMin() }}</div>
+      </div>
+      <div class="numbers-column">
+        <div>Power: {{ power }}</div>
+        <div>Time: {{ time }}</div>
+        <div>Date: {{ date }}</div>
+      </div>
+    </div>
+  </div>
+</mat-card>

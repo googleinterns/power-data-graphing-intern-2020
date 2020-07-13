@@ -15,8 +15,12 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
 import * as d3 from 'd3';
-import { HttpService, STRATEGY } from '../services/http.service';
-import { Record } from '../record';
+import {
+  HttpService,
+  STRATEGY,
+  RecordsResponse,
+} from '../services/http.service';
+import { Record, COLORS, RecordsOneChannel } from './record';
 
 @Component({
   selector: 'main-chart',
@@ -34,13 +38,13 @@ export class ChartComponent implements OnInit, OnDestroy {
   // Data related variable
   loading = false;
   number = 600;
-  records: Record[];
+  records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
   zoomIn = false;
 
   // Chart d3 SVG Elements
   private brush: d3.BrushBehavior<unknown>;
-  private line: d3.Line<[number, number]>;
+  private lines: object = {};
   private svg: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private svgChart: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private xAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
@@ -55,10 +59,17 @@ export class ChartComponent implements OnInit, OnDestroy {
   timeParse = d3.timeParse('%Q');
   timeFormat = d3.timeFormat('%H:%M:%S.%L');
   animationDuration = 500;
+  svgPadding = 10;
+
+  // Chart selection
+  date = '';
+  time = '';
+  power = 0;
 
   constructor(private service: HttpService) {}
 
   ngOnInit(): void {
+    this.initChart();
     this.loadRecords();
   }
 
@@ -70,16 +81,26 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.subscription = this.service
       .getRecords('/data', this.strategy, timespan)
-      .subscribe((response: [number, number, string][]) => {
-        this.records = response.map((d: [number, number, string]) => {
-          return {
-            time: this.timeParse(Math.floor(d[0] / 1000).toString()), // Ignoring microseconds in accord with the highest precision in JS
-            value: d[1],
-            source: d[2],
-          } as Record;
-        });
+      .subscribe((response: RecordsResponse[]) => {
+        this.records = response.map(
+          (channel: RecordsResponse, index: number) => {
+            const recordsOneChannel = {
+              color: COLORS[index],
+              show: true,
+              name: channel.name,
+              data: channel.data.map((d: [number, number]) => {
+                return {
+                  time: this.timeParse(Math.floor(d[0] / 1000).toString()), // Ignoring microseconds in accord with the highest precision in JS
+                  value: d[1],
+                } as Record;
+              }),
+            };
+            return recordsOneChannel;
+          }
+        );
         this.loading = false;
-        this.svg ? this.updateChartDomain() : this.initChart();
+        this.updateChartDomain();
+        console.log(this.records);
       });
   }
 
@@ -108,12 +129,12 @@ export class ChartComponent implements OnInit, OnDestroy {
     // Scales
     this.xScale = d3
       .scaleTime()
-      .domain(d3.extent(this.records, (d: Record) => d.time))
+      .domain(this.getTimeRange())
       .range([this.chartPadding, this.chartWidth - this.chartPadding]);
 
     this.yScale = d3
       .scaleLinear()
-      .domain(d3.extent(this.records, (d: Record) => d.value))
+      .domain(this.getValueRange())
       .range([this.chartHeight - this.chartPadding, this.chartPadding]);
 
     // Create Axis
@@ -125,46 +146,18 @@ export class ChartComponent implements OnInit, OnDestroy {
         `translate(0, ${this.chartHeight - this.chartPadding})`
       )
       .call(d3.axisBottom(this.xScale));
+
     this.yAxis = this.svg
       .append('g')
       .classed('y-axis', true)
       .attr('transform', `translate(${this.chartPadding},0)`)
       .call(d3.axisLeft(this.yScale));
 
-    const bisect = d3.bisector((d: Record) => d.time).left;
-
-    // Create the circle that travels along the curve of chart
-    const focus = this.svgChart
+    const focusLine = this.svgChart
       .append('g')
-      .append('circle')
-      .style('fill', 'none')
+      .append('line')
       .attr('stroke', 'black')
-      .attr('r', 4)
       .style('opacity', 0);
-
-    // Create the text that travels along the curve of chart
-    const focusText = this.svgChart
-      .append('g')
-      .append('text')
-      .attr('opacity', 1)
-      .attr('text-anchor', 'left')
-      .attr('alignment-baseline', 'middle')
-      .attr('font-size', '15px');
-
-    // Draw lines
-    this.line = d3
-      .line()
-      .x((d: any) => this.xScale(d.time))
-      .y((d: any) => this.yScale(d.value));
-
-    this.svgChart
-      .append('path')
-      .classed('line', true)
-      .attr('fill', 'none')
-      .attr('stroke', '#F29F05')
-      .attr('stroke-width', 2)
-      .attr('d', this.line(this.records as any))
-      .attr('opacity', 0.4);
 
     // Brush functionality
     this.brush = d3
@@ -179,26 +172,29 @@ export class ChartComponent implements OnInit, OnDestroy {
       .on('end', this.interactChart.bind(this));
 
     const setFocusOpacity = (opacity: number) => {
-      focus.style('opacity', opacity);
-      focusText.style('opacity', opacity);
+      focusLine.style('opacity', opacity);
     };
 
     const setFocus = (container: d3.ContainerElement) => {
       // recover coordinate we need
-      const x0 = this.xScale.invert(d3.mouse(container)[0]);
-      const i = bisect(this.records, x0, 1);
-      const selectedData = this.records[i];
+      const mouseFocus = this.xScale.invert(d3.mouse(container)[0]);
+      if (mouseFocus === undefined) return;
+      focusLine
+        .attr('x1', this.xScale(mouseFocus))
+        .attr('y1', this.chartPadding)
+        .attr('x2', this.xScale(mouseFocus))
+        .attr('y2', this.chartHeight - this.chartPadding);
+      this.date =
+        `${mouseFocus.getFullYear()}-` +
+        `${mouseFocus.getMonth()}-` +
+        `${mouseFocus.getDay()}`;
+      this.time =
+        `${mouseFocus.getHours()}:` +
+        `${mouseFocus.getMinutes()}:` +
+        `${mouseFocus.getSeconds()}.` +
+        `${mouseFocus.getMilliseconds()}`;
 
-      focus
-        .attr('cx', this.xScale(selectedData.time))
-        .attr('cy', this.yScale(selectedData.value));
-      focusText
-        .html(
-          `Time: ${this.timeFormat(selectedData.time)} - 
-          Power: ${selectedData.value}`
-        )
-        .attr('x', this.xScale(selectedData.time) + 15)
-        .attr('y', this.yScale(selectedData.value));
+      this.power = 1024;
     };
     // Mouse over displaying text
     this.svgChart
@@ -211,6 +207,9 @@ export class ChartComponent implements OnInit, OnDestroy {
       .on('mousemove', mousemove)
       .on('mouseout', () => {
         setFocusOpacity(0);
+        this.time = undefined;
+        this.date = undefined;
+        this.power = undefined;
       });
 
     function mousemove() {
@@ -241,8 +240,8 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   private updateChartDomain() {
-    const xExtent = d3.extent(this.records, (d) => d.time);
-    const yExtent = d3.extent(this.records, (d) => d.value);
+    const xExtent = this.getTimeRange();
+    const yExtent = this.getValueRange();
 
     this.xScale.domain(xExtent);
     this.yScale.domain(yExtent);
@@ -254,16 +253,70 @@ export class ChartComponent implements OnInit, OnDestroy {
       .transition()
       .duration(this.animationDuration)
       .call(d3.axisLeft(this.yScale));
-    this.svgChart
-      .select('.line')
-      .transition()
-      .duration(this.animationDuration)
-      .attr('d', this.line(this.records as any));
+
+    this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+      if (!this.lines[recordsOneChannel.name]) {
+        const line = d3
+          .line()
+          .x((d: any) => this.xScale(d.time))
+          .y((d: any) => this.yScale(d.value));
+        this.lines[recordsOneChannel.name] = line;
+
+        this.svgChart
+          .append('path')
+          .classed(this.getChannelLineClassName(recordsOneChannel.name), true)
+          .attr('fill', 'none')
+          .attr('stroke', recordsOneChannel.color)
+          .attr('stroke-width', 2)
+          .attr('d', line(recordsOneChannel.data as any))
+          .attr('opacity', 0.4);
+      } else {
+        this.svgChart
+          .select('.' + this.getChannelLineClassName(recordsOneChannel.name))
+          .transition()
+          .duration(this.animationDuration)
+          .attr(
+            'd',
+            this.lines[recordsOneChannel.name](recordsOneChannel.data as any)
+          );
+      }
+    });
   }
 
   strategySwitch() {
-    this.loadRecords(
-      this.zoomIn ? d3.extent(this.records, (d) => d.time) : null
-    );
+    this.loadRecords(this.zoomIn ? this.getTimeRange() : null);
+  }
+
+  getChannelLineClassName(channel: string) {
+    return 'line' + '_' + channel;
+  }
+
+  getTimeRange() {
+    let min, max;
+    this.records.map((recordsOneChannel: RecordsOneChannel) => {
+      recordsOneChannel.data.forEach((record: Record) => {
+        if (!min || record.time < min) min = record.time;
+        if (!max || record.time > max) max = record.time;
+      });
+    });
+    return [min, max];
+  }
+  getValueRange() {
+    let min, max;
+    this.records.map((recordsOneChannel: RecordsOneChannel) => {
+      recordsOneChannel.data.forEach((record: Record) => {
+        if (!min || record.value < min) min = record.value;
+        if (!max || record.value > max) max = record.value;
+      });
+    });
+    return [min, max];
+  }
+
+  buttonfn() {
+    this.svg.selectAll('*').remove();
+  }
+
+  myprint(checked: boolean) {
+    console.log(checked);
   }
 }

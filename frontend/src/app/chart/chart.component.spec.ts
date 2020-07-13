@@ -17,7 +17,7 @@ import { from, empty } from 'rxjs';
 
 import { ChartComponent } from './chart.component';
 import { HttpService, STRATEGY } from '../services/http.service';
-import { Record } from '../record';
+import { Record } from './record';
 
 const getMaxMin = (records: number[]) => {
   return [
@@ -99,7 +99,7 @@ describe('ChartComponent', () => {
       return {
         time: new Date(Math.floor(record[0] / 1000)),
         value: record[1],
-        source: record[2],
+        channel: record[2],
       } as Record;
     });
 
