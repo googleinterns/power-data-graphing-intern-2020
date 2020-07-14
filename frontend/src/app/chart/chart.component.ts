@@ -166,39 +166,21 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('transform', `translate(${this.chartMargin},0)`)
       .call(d3.axisLeft(this.yScale));
 
-    const focusLine = this.svgChart
-      .append('g')
-      .append('line')
-      .attr('stroke', 'black')
-      .style('opacity', 0);
-
     this.svgLine = this.svgChart.append('g');
 
     // Brush functionality
     this.brush = d3
       .brushX()
       .extent([
-        [this.chartMargin + this.chartPadding, this.chartMargin],
-        [
-          this.chartWidth - this.chartMargin - this.chartPadding,
-          this.chartHeight - this.chartMargin,
-        ],
+        [0, 0],
+        [this.chartWidth, this.chartHeight],
       ])
       .on('end', this.interactChart.bind(this));
-
-    const setFocusOpacity = (opacity: number) => {
-      focusLine.style('opacity', opacity);
-    };
 
     const setFocus = (container: d3.ContainerElement) => {
       // recover coordinate we need
       const mouseFocus = this.xScale.invert(d3.mouse(container)[0]);
       if (mouseFocus === undefined) return;
-      focusLine
-        .attr('x1', this.xScale(mouseFocus))
-        .attr('y1', this.chartMargin)
-        .attr('x2', this.xScale(mouseFocus))
-        .attr('y2', this.chartHeight - this.chartMargin);
 
       const timeParse = d3.timeParse('%Q');
       const dateFormat = d3.timeFormat('%Y-%m-%d');
@@ -213,21 +195,28 @@ export class ChartComponent implements OnInit, OnDestroy {
 
         if (!recordsOneChannel.data[left] || !recordsOneChannel.data[right])
           return;
+        const leftRecord = recordsOneChannel.data[left];
+        const rightRecord = recordsOneChannel.data[right];
+
         const index =
-          Math.abs(recordsOneChannel.data[left].time - mouseFocus) >
-          Math.abs(recordsOneChannel.data[right].time - mouseFocus)
+          Math.abs(leftRecord.time - mouseFocus) >
+          Math.abs(rightRecord.time - mouseFocus)
             ? right
             : left;
-
+        const selectedData = recordsOneChannel.data[index];
         const upperDate = timeParse(
-          Math.floor(recordsOneChannel.data[index].time / 1000).toString()
+          Math.floor(selectedData.time / 1000).toString()
         );
+
         recordsOneChannel.focusTime =
           timeFormat(upperDate) + '.' + Math.floor(mouseFocus % 1000);
         recordsOneChannel.focusDate = dateFormat(upperDate);
-        recordsOneChannel.focusPower = recordsOneChannel.data[
-          index
-        ].value.toString();
+        recordsOneChannel.focusPower = selectedData.value.toString();
+
+        this.svgLine
+          .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
+          .attr('cx', this.xScale(selectedData.time))
+          .attr('cy', this.yScale(selectedData.value));
       });
     };
     // Mouse over displaying text
@@ -235,9 +224,6 @@ export class ChartComponent implements OnInit, OnDestroy {
       .append('g')
       .attr('class', 'brush')
       .call(this.brush)
-      .on('mouseover', () => {
-        setFocusOpacity(1);
-      }) // this mouse over value display functionality
       .on('mousemove', mousemove);
 
     function mousemove() {
@@ -299,6 +285,15 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('stroke-width', 2)
           .attr('d', line(recordsOneChannel.data as any))
           .attr('opacity', 0.4);
+
+        this.svgLine
+          .append('g')
+          .append('circle')
+          .classed(this.getChannelCircleClassName(recordsOneChannel.name), true)
+          .style('fill', recordsOneChannel.color)
+          .attr('stroke', recordsOneChannel.color)
+          .attr('r', 2)
+          .style('opacity', 1);
       } else if (recordsOneChannel.data.length) {
         // Reposition focus line.
         this.svgLine
@@ -318,7 +313,10 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   getChannelLineClassName(channel: string) {
-    return 'line' + '_' + channel;
+    return 'line' + '-' + channel;
+  }
+  getChannelCircleClassName(channel: string) {
+    return 'circle' + '-' + channel;
   }
 
   getTimeRange() {
@@ -347,15 +345,24 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   showLine(event: [string, boolean]) {
-    if (event[1])
+    if (event[1]) {
       this.svgLine
         .select('.' + this.getChannelLineClassName(event[0]))
         .transition()
-        .attr('opacity', 1);
-    else
+        .style('opacity', 0.4);
+      this.svgLine
+        .select('.' + this.getChannelCircleClassName(event[0]))
+        .transition()
+        .style('opacity', 1);
+    } else {
       this.svgLine
         .select('.' + this.getChannelLineClassName(event[0]))
         .transition()
-        .attr('opacity', 0);
+        .style('opacity', 0);
+      this.svgLine
+        .select('.' + this.getChannelCircleClassName(event[0]))
+        .transition()
+        .style('opacity', 0);
+    }
   }
 }

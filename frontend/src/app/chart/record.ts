@@ -31,12 +31,12 @@ export interface RecordsOneChannel {
 }
 
 export const COLORS = [
-  '#488f31',
-  '#7ba542',
-  '#a9ba59',
-  '#d5d074',
-  '#ffe692',
-  '#fdc072',
-  '#f8995e',
-  '#de425b',
+  'red',
+  'blue',
+  'orange',
+  'cyan',
+  'black',
+  'green',
+  'purple',
+  'pink',
 ];
