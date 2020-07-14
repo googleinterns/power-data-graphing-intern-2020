@@ -16,7 +16,7 @@
  * Power data interface
  */
 export interface Record {
-  time: Date;
+  time: number;
   value: number;
 }
 
@@ -25,6 +25,9 @@ export interface RecordsOneChannel {
   show: boolean;
   data: Record[];
   name: string;
+  focusTime: string;
+  focusDate: string;
+  focusPower: string;
 }
 
 export const COLORS = [

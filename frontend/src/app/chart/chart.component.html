@@ -39,9 +39,9 @@
   <legend-card
     *ngFor="let recordsOneChannel of records"
     [recordsOneChannel]="recordsOneChannel"
-    [time]="time"
-    [date]="date"
-    [power]="power"
-    (showChange)="myprint($event)"
+    [time]="recordsOneChannel.focusTime"
+    [date]="recordsOneChannel.focusDate"
+    [power]="recordsOneChannel.focusPower"
+    (showChange)="showLine($event)"
   ></legend-card>
 </div>

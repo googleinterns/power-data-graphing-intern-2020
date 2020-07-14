@@ -13,7 +13,7 @@ export class LegendCardComponent implements OnInit {
   @Input() power: number;
 
   @Input() recordsOneChannel: RecordsOneChannel;
-  @Output() showChange = new EventEmitter<boolean>();
+  @Output() showChange = new EventEmitter<[string, boolean]>();
 
   checked = true;
 
@@ -49,7 +49,7 @@ export class LegendCardComponent implements OnInit {
   }
 
   toggled(event: MatSlideToggleChange) {
-    this.showChange.emit(event.checked);
+    this.showChange.emit([this.recordsOneChannel.name, event.checked]);
   }
 
   ngOnInit(): void {}
