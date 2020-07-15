@@ -49,6 +49,7 @@ export class LegendCardComponent implements OnInit {
   }
 
   toggled(event: MatSlideToggleChange) {
+    this.recordsOneChannel.show = event.checked;
     this.showChange.emit([this.recordsOneChannel.name, event.checked]);
   }
 

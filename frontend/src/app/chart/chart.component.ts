@@ -69,11 +69,6 @@ export class ChartComponent implements OnInit, OnDestroy {
     return formattedTime;
   };
 
-  // Chart selection
-  date = '';
-  time = '';
-  power = 0;
-
   constructor(private service: HttpService) {}
 
   ngOnInit(): void {
@@ -172,8 +167,11 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.brush = d3
       .brushX()
       .extent([
-        [0, 0],
-        [this.chartWidth, this.chartHeight],
+        [this.chartMargin, this.chartMargin],
+        [
+          this.chartWidth - this.chartMargin,
+          this.chartHeight - this.chartMargin,
+        ],
       ])
       .on('end', this.interactChart.bind(this));
 
@@ -269,6 +267,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .call(d3.axisLeft(this.yScale));
 
     this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+      // if (!recordsOneChannel.show) return;
       if (!this.lines[recordsOneChannel.name]) {
         // Initialize focus line.
         const line = d3
@@ -321,7 +320,8 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   getTimeRange() {
     let min, max;
-    this.records.map((recordsOneChannel: RecordsOneChannel) => {
+    this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+      if (!recordsOneChannel.show) return;
       recordsOneChannel.data.forEach((record: Record) => {
         if (!min || record.time < min) min = record.time;
         if (!max || record.time > max) max = record.time;
@@ -331,17 +331,14 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
   getValueRange() {
     let min, max;
-    this.records.map((recordsOneChannel: RecordsOneChannel) => {
+    this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+      if (!recordsOneChannel.show) return;
       recordsOneChannel.data.forEach((record: Record) => {
         if (!min || record.value < min) min = record.value;
         if (!max || record.value > max) max = record.value;
       });
     });
     return [min, max];
-  }
-
-  buttonfn() {
-    this.svg.selectAll('*').remove();
   }
 
   showLine(event: [string, boolean]) {
@@ -364,5 +361,6 @@ export class ChartComponent implements OnInit, OnDestroy {
         .transition()
         .style('opacity', 0);
     }
+    this.updateChartDomain();
   }
 }
