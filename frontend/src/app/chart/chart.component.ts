@@ -176,7 +176,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .on('end', this.interactChart.bind(this));
 
     const setFocus = (container: d3.ContainerElement) => {
-      // recover coordinate we need
+      // Recover coordinate of cursor.
       const mouseFocus = this.xScale.invert(d3.mouse(container)[0]);
       if (mouseFocus === undefined) return;
 
@@ -184,6 +184,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       const dateFormat = d3.timeFormat('%Y-%m-%d');
       const timeFormat = d3.timeFormat('%H:%M:%S.%L');
 
+      // Select the record closest to the cursor.
       const bisectLeft = d3.bisector((d: Record) => d.time).left;
       const bisectRight = d3.bisector((d: Record) => d.time).right;
 
@@ -206,11 +207,13 @@ export class ChartComponent implements OnInit, OnDestroy {
           Math.floor(selectedData.time / 1000).toString()
         );
 
+        // Sets legend text.
         recordsOneChannel.focusTime =
           timeFormat(upperDate) + '.' + Math.floor(mouseFocus % 1000);
         recordsOneChannel.focusDate = dateFormat(upperDate);
         recordsOneChannel.focusPower = selectedData.value.toString();
 
+        // Sets focus point.
         this.svgLine
           .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
           .attr('cx', this.xScale(selectedData.time))
