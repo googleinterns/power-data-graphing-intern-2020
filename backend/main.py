@@ -27,12 +27,9 @@ import utils
 import downsample
 
 NUMBER_OF_RECORDS_PER_REQUEST = 600
-NUMBER_OF_RECORDS_PER_SECOND = 100000
+NUMBER_OF_RECORDS_PER_SECOND = 10000
 FLOAT_PRECISION = 4
-STRATEGIES = ['max', 'min', 'lttb', 'avg']
 
-# FILENAME = 'DMM_result_single_channel.csv'
-FILENAME = 'DMM_result_multiple_channel.csv'
 
 app = Flask(__name__)
 CORS(app)
@@ -45,18 +42,19 @@ def get_data():
     Retrives all power data from local file given a limit on number of
     records from request body.
     """
+    name = request.args.get('name', type=str)
     strategy = request.args.get('strategy', default='avg', type=str)
     start = request.args.get('start', default=None, type=int)
     end = request.args.get('end', default=None, type=int)
-    if not strategy in STRATEGIES:
+    if not strategy in downsample.STRATEGIES:
         logging.error('Incorrect Strategy: %s', strategy)
         return 'Incorrect Strategy', 400
 
     preprocess_filename = utils.generate_filename_on_strategy(
-        FILENAME, strategy)
+        name, strategy)
 
     if not os.path.isfile(preprocess_filename):
-        preprocessing()
+        downsample.preprocess(name, NUMBER_OF_RECORDS_PER_SECOND)
 
     data = downsample.secondary_downsample(
         preprocess_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
@@ -72,30 +70,13 @@ def preprocessing():
     Preprocess data for all strategy and save results locally,
     each strategy in a file.
     """
-    for strategy in STRATEGIES:
-        output_filename = utils.generate_filename_on_strategy(
-            FILENAME, strategy)
-        if os.path.isfile(output_filename):
-            continue
-        data = downsample.downsample(
-            FILENAME, strategy, NUMBER_OF_RECORDS_PER_SECOND)
-        data_csv = utils.convert_to_csv(data)
-        if data_csv is None:
-            return 'Empty records', 500
-        with open(output_filename, 'w') as filewriter:
-            filewriter.write(data_csv)
-            filewriter.flush()
-    return 'Preprocessing Successful!'
-
-
-@app.before_first_request
-def initialize():
-    """Initializes with preprocessing.
-
-    Preprocess all power data at the first request.
-    """
-    # TODO(tangyifei@): Initialize at the start of service, instead of first request.
-    preprocessing()
+    name = request.args.get('name', type=str)
+    rate = request.args.get('name', type=int)
+    success = downsample.preprocess(name, rate)
+    if success:
+        return 'Preprocessing Successful!', 200
+    else:
+        return 'Preprocessing Incomplete', 400
 
 
 if __name__ == '__main__':

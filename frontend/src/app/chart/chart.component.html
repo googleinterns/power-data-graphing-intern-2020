@@ -15,26 +15,32 @@
 -->
 
 <div class="chart-header">
-  <mat-form-field>
-    <mat-label>Select a downsample strategy</mat-label>
-
-    <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
-      <mat-option *ngFor="let s of strategyType | keyvalue" [value]="s.value"
-        >{{ s.key }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <mat-spinner
-    *ngIf="loading"
-    diameter="20"
-    mode="indeterminate"
-    class="spinner"
-  >
-  </mat-spinner>
+  <div class="div char-header left">
+    <mat-form-field>
+      <mat-label>Select a downsample strategy</mat-label>
+      <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
+        <mat-option *ngFor="let s of strategyType | keyvalue" [value]="s.value"
+          >{{ s.key }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-spinner
+      *ngIf="loading"
+      diameter="20"
+      mode="indeterminate"
+      class="spinner"
+    >
+    </mat-spinner>
+  </div>
+  <div class="chart-header-middle"></div>
 </div>
 
 <div id="chart-component"></div>
 
+<div class="mouse-date">
+  {{ mouseDate }} <br />
+  {{ mouseTime }} <br />
+</div>
 <div class="legends-container">
   <legend-card
     *ngFor="let recordsOneChannel of records"

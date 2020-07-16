@@ -20,6 +20,14 @@
   margin: 10px auto;
   width: auto;
 }
+
+.legends-container {
+  margin: 5px 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
 .spinner {
   margin: auto 10px;
 }
@@ -39,8 +47,13 @@
   shape-rendering: crispEdges;
 }
 
-.legends-container {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+.mat-elevation-z8 {
+  width: 100%;
+}
+
+.mouse-date {
+  height: 50px;
+  width: auto;
+  margin: 5px;
+  text-align: center;
 }

@@ -21,7 +21,6 @@ import {
   RecordsResponse,
 } from '../services/http.service';
 import { Record, COLORS, RecordsOneChannel } from './record';
-
 @Component({
   selector: 'main-chart',
   templateUrl: './chart.component.html',
@@ -36,11 +35,15 @@ export class ChartComponent implements OnInit, OnDestroy {
   subscription: Subscription;
 
   // Data related variable
+  filename = 'DMM_result_multiple_channel.csv';
+  // filename = 'DMM_result_single_channel.csv';
   loading = false;
   number = 600;
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
   zoomIn = false;
+  mouseDate: string;
+  mouseTime: string;
 
   // Chart d3 SVG Elements
   private brush: d3.BrushBehavior<unknown>;
@@ -55,9 +58,9 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   // Chart size constants
   animationDuration = 500;
-  chartHeight = 400;
-  chartMargin = 50;
-  chartPadding = 5;
+  chartHeight = 500;
+  chartMargin = 70;
+  chartPadding = 10;
   chartWidth = 1100;
   svgPadding = 10;
   timeFormat = (time: number) => {
@@ -83,27 +86,48 @@ export class ChartComponent implements OnInit, OnDestroy {
   loadRecords(timespan?: number[]) {
     this.loading = true;
     this.subscription = this.service
-      .getRecords('/data', this.strategy, timespan)
+      .getRecords('/data', this.filename, this.strategy, timespan)
       .subscribe((response: RecordsResponse[]) => {
-        this.records = response.map(
-          (channel: RecordsResponse, index: number) => {
-            const recordsOneChannel = {
-              color: COLORS[index],
-              data: channel.data.map((d: [number, number]) => {
-                return {
-                  time: d[0],
-                  value: d[1],
-                } as Record;
-              }),
-              focusDate: '',
-              focusTime: '',
-              focusPower: '',
-              name: channel.name,
-              show: true,
-            };
-            return recordsOneChannel;
-          }
-        );
+        if (this.records.length === 0) {
+          this.records = response.map(
+            (channel: RecordsResponse, index: number) => {
+              const recordsOneChannel = {
+                color: COLORS[index],
+                data: channel.data.map((d: [number, number]) => {
+                  return {
+                    time: d[0],
+                    value: d[1],
+                  } as Record;
+                }),
+                focusDate: '',
+                focusTime: '',
+                focusPower: '',
+                name: channel.name,
+                show: true,
+              };
+              return recordsOneChannel;
+            }
+          );
+        } else {
+          this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+            let newDataArrived = false;
+            response.forEach((channel: RecordsResponse) => {
+              if (recordsOneChannel.name !== channel.name) return;
+              newDataArrived = true;
+              recordsOneChannel.data = channel.data.map(
+                (d: [number, number]) => {
+                  return {
+                    time: d[0],
+                    value: d[1],
+                  } as Record;
+                }
+              );
+            });
+            if (!newDataArrived) {
+              recordsOneChannel.data = [];
+            }
+          });
+        }
         this.loading = false;
         this.updateChartDomain();
       });
@@ -161,7 +185,102 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('transform', `translate(${this.chartMargin},0)`)
       .call(d3.axisLeft(this.yScale));
 
+    this.svgChart
+      .append('g')
+      .append('text')
+      .classed('x-axis-legend', true)
+      .attr('text-anchor', 'left')
+      .attr('alignment-baseline', 'middle')
+      .attr('font-size', '10px')
+      .attr('opacity', 0.5)
+      .attr('x', this.chartWidth / 2)
+      .attr('y', this.chartHeight - this.chartMargin / 2)
+      .text('Time (m:s.ms)');
+
+    this.svgChart
+      .append('g')
+      .append('text')
+      .classed('y-axis-legend', true)
+      .attr('text-anchor', 'left')
+      .attr('transform', 'rotate(-90)')
+      .attr('alignment-baseline', 'middle')
+      .attr('font-size', '10px')
+      .attr('opacity', 0.5)
+      .attr('x', -this.chartMargin * 2)
+      .attr('y', this.chartMargin + this.chartPadding * 2)
+      .text('Power (mW)');
+
     this.svgLine = this.svgChart.append('g');
+
+    const setFocus = (container: d3.ContainerElement) => {
+      // Recover coordinate of cursor.
+      const mouseFocus = this.xScale.invert(d3.mouse(container)[0]);
+      if (mouseFocus === undefined) return;
+
+      const timeParse = d3.timeParse('%Q');
+      const dateFormat = d3.timeFormat('%Y %b %d');
+      const timeFormat = d3.timeFormat('%H:%M:%S.%L');
+
+      this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+        if (!recordsOneChannel.show) return;
+
+        let selectedData = recordsOneChannel.data[0];
+        recordsOneChannel.data.forEach((record: Record) => {
+          selectedData =
+            Math.abs(selectedData.time - mouseFocus) <
+            Math.abs(record.time - mouseFocus)
+              ? selectedData
+              : record;
+        });
+        if (!selectedData) return;
+
+        const upperDate = timeParse(
+          Math.floor(selectedData.time / 1000).toString()
+        );
+
+        // Sets focus point.
+        this.svgLine
+          .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
+          .style('opacity', 1)
+          .attr('cx', this.xScale(selectedData.time))
+          .attr('cy', this.yScale(selectedData.value));
+
+        this.svg
+          .select('.' + this.getFocusTextClassName(recordsOneChannel.name))
+          .attr('opacity', 1)
+          .attr('x', this.xScale(selectedData.time))
+          .attr('y', this.yScale(selectedData.value) - this.chartPadding)
+          .text(selectedData.value.toString());
+
+        this.mouseDate = 'Date: ' + dateFormat(upperDate);
+        this.mouseTime =
+          'Time: ' +
+          timeFormat(upperDate) +
+          '.' +
+          Math.floor(mouseFocus % 1000);
+      });
+    };
+
+    const removeFocus = () => {
+      this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+        recordsOneChannel.focusTime = undefined;
+        recordsOneChannel.focusDate = undefined;
+        recordsOneChannel.focusPower = undefined;
+
+        this.svgLine
+          .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
+          .transition()
+          .style('opacity', 0);
+
+        this.svg
+          .select('.' + this.getFocusTextClassName(recordsOneChannel.name))
+          .transition()
+          .attr('opacity', 0);
+
+        this.mouseDate = '';
+        this.mouseTime = '';
+      });
+    };
 
     // Brush functionality
     this.brush = d3
@@ -173,59 +292,16 @@ export class ChartComponent implements OnInit, OnDestroy {
           this.chartHeight - this.chartMargin,
         ],
       ])
-      .on('end', this.interactChart.bind(this));
+      .on('end', this.interactChart.bind(this))
+      .on('start', removeFocus);
 
-    const setFocus = (container: d3.ContainerElement) => {
-      // Recover coordinate of cursor.
-      const mouseFocus = this.xScale.invert(d3.mouse(container)[0]);
-      if (mouseFocus === undefined) return;
-
-      const timeParse = d3.timeParse('%Q');
-      const dateFormat = d3.timeFormat('%Y-%m-%d');
-      const timeFormat = d3.timeFormat('%H:%M:%S.%L');
-
-      // Select the record closest to the cursor.
-      const bisectLeft = d3.bisector((d: Record) => d.time).left;
-      const bisectRight = d3.bisector((d: Record) => d.time).right;
-
-      this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
-        const left = bisectLeft(recordsOneChannel.data, mouseFocus);
-        const right = bisectRight(recordsOneChannel.data, mouseFocus);
-
-        if (!recordsOneChannel.data[left] || !recordsOneChannel.data[right])
-          return;
-        const leftRecord = recordsOneChannel.data[left];
-        const rightRecord = recordsOneChannel.data[right];
-
-        const index =
-          Math.abs(leftRecord.time - mouseFocus) >
-          Math.abs(rightRecord.time - mouseFocus)
-            ? right
-            : left;
-        const selectedData = recordsOneChannel.data[index];
-        const upperDate = timeParse(
-          Math.floor(selectedData.time / 1000).toString()
-        );
-
-        // Sets legend text.
-        recordsOneChannel.focusTime =
-          timeFormat(upperDate) + '.' + Math.floor(mouseFocus % 1000);
-        recordsOneChannel.focusDate = dateFormat(upperDate);
-        recordsOneChannel.focusPower = selectedData.value.toString();
-
-        // Sets focus point.
-        this.svgLine
-          .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
-          .attr('cx', this.xScale(selectedData.time))
-          .attr('cy', this.yScale(selectedData.value));
-      });
-    };
     // Mouse over displaying text
     this.svgChart
       .append('g')
       .attr('class', 'brush')
       .call(this.brush)
-      .on('mousemove', mousemove);
+      .on('mousemove', mousemove)
+      .on('mouseout', removeFocus);
 
     function mousemove() {
       setFocus(this);
@@ -267,10 +343,10 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.yAxis
       .transition()
       .duration(this.animationDuration)
-      .call(d3.axisLeft(this.yScale));
+      .call(d3.axisLeft(this.yScale).tickFormat(d3.format('.3')));
 
     this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
-      // if (!recordsOneChannel.show) return;
+      if (!recordsOneChannel.show) return;
       if (!this.lines[recordsOneChannel.name]) {
         // Initialize focus line.
         const line = d3
@@ -295,9 +371,19 @@ export class ChartComponent implements OnInit, OnDestroy {
           .style('fill', recordsOneChannel.color)
           .attr('stroke', recordsOneChannel.color)
           .attr('r', 2)
-          .style('opacity', 1);
-      } else if (recordsOneChannel.data.length) {
-        // Reposition focus line.
+          .attr('opacity', 0);
+
+        this.svg
+          .append('g')
+          .append('text')
+          .classed(this.getFocusTextClassName(recordsOneChannel.name), true)
+          .attr('text-anchor', 'right')
+          .attr('alignment-baseline', 'right')
+          .attr('font-size', '10px')
+          .attr('pointer-events', 'none')
+          .attr('opacity', 0);
+      } else {
+        // Bind new data to lines.
         this.svgLine
           .select('.' + this.getChannelLineClassName(recordsOneChannel.name))
           .transition()
@@ -319,6 +405,10 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
   getChannelCircleClassName(channel: string) {
     return 'circle' + '-' + channel;
+  }
+
+  getFocusTextClassName(channel: string) {
+    return 'focus-text' + '-' + channel;
   }
 
   getTimeRange() {
@@ -347,22 +437,26 @@ export class ChartComponent implements OnInit, OnDestroy {
   showLine(event: [string, boolean]) {
     if (event[1]) {
       this.svgLine
-        .select('.' + this.getChannelLineClassName(event[0]))
-        .transition()
-        .style('opacity', 0.4);
+        .selectAll('.' + this.getChannelLineClassName(event[0]))
+        .attr('opacity', 0.4);
       this.svgLine
         .select('.' + this.getChannelCircleClassName(event[0]))
         .transition()
         .style('opacity', 1);
+      this.svg
+        .select('.' + this.getFocusTextClassName(event[0]))
+        .attr('opacity', 1);
     } else {
       this.svgLine
-        .select('.' + this.getChannelLineClassName(event[0]))
-        .transition()
-        .style('opacity', 0);
+        .selectAll('.' + this.getChannelLineClassName(event[0]))
+        .attr('opacity', 0);
       this.svgLine
         .select('.' + this.getChannelCircleClassName(event[0]))
         .transition()
         .style('opacity', 0);
+      this.svg
+        .select('.' + this.getFocusTextClassName(event[0]))
+        .attr('opacity', 0);
     }
     this.updateChartDomain();
   }

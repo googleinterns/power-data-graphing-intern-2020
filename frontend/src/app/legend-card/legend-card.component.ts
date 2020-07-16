@@ -20,32 +20,32 @@ export class LegendCardComponent implements OnInit {
   constructor() {}
 
   getAvg() {
-    if (this.recordsOneChannel?.data.length == 0) return 0;
+    if (this.recordsOneChannel?.data.length == 0) return 'N/A';
     let sum = 0;
     this.recordsOneChannel.data.forEach((record: Record) => {
       sum += record.value;
     });
-    return (sum / this.recordsOneChannel.data.length).toPrecision(3);
+    return (sum / this.recordsOneChannel.data.length).toPrecision(3).toString();
   }
 
   getMax() {
-    if (this.recordsOneChannel.data.length == 0) return 0;
+    if (this.recordsOneChannel.data.length == 0) return 'N/A';
     const maxRecord = this.recordsOneChannel.data.reduce(
       (record0: Record, record1: Record) => {
         return record0.value >= record1.value ? record0 : record1;
       }
     );
-    return maxRecord.value.toPrecision(3);
+    return maxRecord.value.toPrecision(3).toString();
   }
 
   getMin() {
-    if (this.recordsOneChannel.data.length == 0) return 0;
+    if (this.recordsOneChannel.data.length == 0) return 'N/A';
     const maxRecord = this.recordsOneChannel.data.reduce(
       (record0: Record, record1: Record) => {
         return record0.value <= record1.value ? record0 : record1;
       }
     );
-    return maxRecord.value.toPrecision(3);
+    return maxRecord.value.toPrecision(3).toString();
   }
 
   toggled(event: MatSlideToggleChange) {

@@ -43,12 +43,26 @@ export class HttpService {
    * @param strategy Strategy used for downsampling.
    * @param timespan A time range in which user wish to see the records.
    */
-  getRecords(path: string, strategy: STRATEGY, timespan: number[]) {
+  getRecords(
+    path: string,
+    filename: string,
+    strategy: STRATEGY,
+    timespan: number[]
+  ) {
     return this.http.get([this.url, this.port].join(':') + path, {
       params: new HttpParams()
+        .set('name', filename)
         .set('strategy', strategy)
         .set('start', timespan ? '' + Math.floor(timespan[0]) : null)
         .set('end', timespan ? '' + Math.floor(timespan[1]) : null),
+    });
+  }
+
+  preprocess(path: string, filename: string, rate: number) {
+    return this.http.get([this.url, this.port].join(':') + path, {
+      params: new HttpParams()
+        .set('name', filename)
+        .set('rate', rate.toString()),
     });
   }
 }
