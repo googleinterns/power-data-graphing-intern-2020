@@ -187,8 +187,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       // Select the record closest to the cursor.
       const bisectLeft = d3.bisector((d: Record) => d.time).left;
       const bisectRight = d3.bisector((d: Record) => d.time).right;
-
-      this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+      for (const recordsOneChannel of this.records) {
         const left = bisectLeft(recordsOneChannel.data, mouseFocus);
         const right = bisectRight(recordsOneChannel.data, mouseFocus);
 
@@ -218,7 +217,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
           .attr('cx', this.xScale(selectedData.time))
           .attr('cy', this.yScale(selectedData.value));
-      });
+      }
     };
     // Mouse over displaying text
     this.svgChart
@@ -269,7 +268,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .duration(this.animationDuration)
       .call(d3.axisLeft(this.yScale));
 
-    this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+    for (const recordsOneChannel of this.records) {
       // if (!recordsOneChannel.show) return;
       if (!this.lines[recordsOneChannel.name]) {
         // Initialize focus line.
@@ -307,7 +306,7 @@ export class ChartComponent implements OnInit, OnDestroy {
             this.lines[recordsOneChannel.name](recordsOneChannel.data as any)
           );
       }
-    });
+    }
   }
 
   strategySwitch() {
@@ -323,24 +322,24 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   getTimeRange() {
     let min, max;
-    this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+    for (const recordsOneChannel of this.records) {
       if (!recordsOneChannel.show) return;
-      recordsOneChannel.data.forEach((record: Record) => {
+      for (const record of recordsOneChannel.data) {
         if (!min || record.time < min) min = record.time;
         if (!max || record.time > max) max = record.time;
-      });
-    });
+      }
+    }
     return [min, max];
   }
   getValueRange() {
     let min, max;
-    this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+    for (const recordsOneChannel of this.records) {
       if (!recordsOneChannel.show) return;
-      recordsOneChannel.data.forEach((record: Record) => {
+      for (const record of recordsOneChannel.data) {
         if (!min || record.value < min) min = record.value;
         if (!max || record.value > max) max = record.value;
-      });
-    });
+      }
+    }
     return [min, max];
   }
 
