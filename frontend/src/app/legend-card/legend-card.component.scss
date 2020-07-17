@@ -1,0 +1,28 @@
+.legends {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+}
+
+.channel-metrics {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  justify-content: center;
+  margin: 10px 5px;
+  width: 300px;
+}
+
+.numbers-section {
+  display: flex;
+  flex-direction: row;
+}
+
+.numbers-column {
+  display: flex;
+  flex-direction: column;
+  margin: 5px;
+}
+.toggle-section {
+  color: #f29f05;
+}

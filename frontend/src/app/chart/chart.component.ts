@@ -15,8 +15,12 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
 import * as d3 from 'd3';
-import { HttpService, STRATEGY } from '../services/http.service';
-import { Record } from '../record';
+import {
+  HttpService,
+  STRATEGY,
+  RecordsResponse,
+} from '../services/http.service';
+import { Record, COLORS, RecordsOneChannel } from './record';
 
 @Component({
   selector: 'main-chart',
@@ -34,31 +38,41 @@ export class ChartComponent implements OnInit, OnDestroy {
   // Data related variable
   loading = false;
   number = 600;
-  records: Record[];
+  records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
   zoomIn = false;
 
   // Chart d3 SVG Elements
   private brush: d3.BrushBehavior<unknown>;
-  private line: d3.Line<[number, number]>;
+  private lines: object = {};
   private svg: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private svgChart: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private svgLine: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private xAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private xScale: d3.ScaleTime<number, number>;
+  private xScale: d3.ScaleLinear<number, number>;
   private yAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
   private yScale: d3.ScaleLinear<number, number>;
 
   // Chart size constants
-  chartHeight = 400;
-  chartPadding = 50;
-  chartWidth = 1100;
-  timeParse = d3.timeParse('%Q');
-  timeFormat = d3.timeFormat('%H:%M:%S.%L');
   animationDuration = 500;
+  chartHeight = 400;
+  chartMargin = 50;
+  chartPadding = 5;
+  chartWidth = 1100;
+  svgPadding = 10;
+  timeFormat = (time: number) => {
+    const timeParse = d3.timeParse('%Q');
+    const timeFormat = d3.timeFormat('%M:%S.%L');
+
+    const upperDate = timeParse(Math.floor(time / 1000).toString());
+    const formattedTime = timeFormat(upperDate);
+    return formattedTime;
+  };
 
   constructor(private service: HttpService) {}
 
   ngOnInit(): void {
+    this.initChart();
     this.loadRecords();
   }
 
@@ -66,20 +80,32 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
   }
 
-  loadRecords(timespan?: Date[]) {
+  loadRecords(timespan?: number[]) {
     this.loading = true;
     this.subscription = this.service
       .getRecords('/data', this.strategy, timespan)
-      .subscribe((response: [number, number, string][]) => {
-        this.records = response.map((d: [number, number, string]) => {
-          return {
-            time: this.timeParse(Math.floor(d[0] / 1000).toString()), // Ignoring microseconds in accord with the highest precision in JS
-            value: d[1],
-            source: d[2],
-          } as Record;
-        });
+      .subscribe((response: RecordsResponse[]) => {
+        this.records = response.map(
+          (channel: RecordsResponse, index: number) => {
+            const recordsOneChannel = {
+              color: COLORS[index],
+              data: channel.data.map((d: [number, number]) => {
+                return {
+                  time: d[0],
+                  value: d[1],
+                } as Record;
+              }),
+              focusDate: '',
+              focusTime: '',
+              focusPower: '',
+              name: channel.name,
+              show: true,
+            };
+            return recordsOneChannel;
+          }
+        );
         this.loading = false;
-        this.svg ? this.updateChartDomain() : this.initChart();
+        this.updateChartDomain();
       });
   }
 
@@ -97,9 +123,9 @@ export class ChartComponent implements OnInit, OnDestroy {
       .append('svg:clipPath')
       .attr('id', 'clip')
       .append('svg:rect')
-      .attr('width', this.chartWidth - this.chartPadding * 2)
+      .attr('width', this.chartWidth - this.chartMargin * 2)
       .attr('height', this.chartHeight)
-      .attr('x', this.chartPadding)
+      .attr('x', this.chartMargin)
       .attr('y', 0);
 
     // Create the chart variable: where both the chart and the brush take place
@@ -107,111 +133,98 @@ export class ChartComponent implements OnInit, OnDestroy {
 
     // Scales
     this.xScale = d3
-      .scaleTime()
-      .domain(d3.extent(this.records, (d: Record) => d.time))
-      .range([this.chartPadding, this.chartWidth - this.chartPadding]);
+      .scaleLinear()
+      .domain(this.getTimeRange())
+      .range([
+        this.chartMargin + this.chartPadding,
+        this.chartWidth - this.chartMargin - this.chartPadding,
+      ]);
 
     this.yScale = d3
       .scaleLinear()
-      .domain(d3.extent(this.records, (d: Record) => d.value))
-      .range([this.chartHeight - this.chartPadding, this.chartPadding]);
+      .domain(this.getValueRange())
+      .range([
+        this.chartHeight - this.chartMargin - this.chartPadding,
+        this.chartMargin + this.chartPadding,
+      ]);
 
     // Create Axis
     this.xAxis = this.svg
       .append('g')
       .classed('x-axis', true)
-      .attr(
-        'transform',
-        `translate(0, ${this.chartHeight - this.chartPadding})`
-      )
+      .attr('transform', `translate(0, ${this.chartHeight - this.chartMargin})`)
       .call(d3.axisBottom(this.xScale));
+
     this.yAxis = this.svg
       .append('g')
       .classed('y-axis', true)
-      .attr('transform', `translate(${this.chartPadding},0)`)
+      .attr('transform', `translate(${this.chartMargin},0)`)
       .call(d3.axisLeft(this.yScale));
 
-    const bisect = d3.bisector((d: Record) => d.time).left;
-
-    // Create the circle that travels along the curve of chart
-    const focus = this.svgChart
-      .append('g')
-      .append('circle')
-      .style('fill', 'none')
-      .attr('stroke', 'black')
-      .attr('r', 4)
-      .style('opacity', 0);
-
-    // Create the text that travels along the curve of chart
-    const focusText = this.svgChart
-      .append('g')
-      .append('text')
-      .attr('opacity', 1)
-      .attr('text-anchor', 'left')
-      .attr('alignment-baseline', 'middle')
-      .attr('font-size', '15px');
-
-    // Draw lines
-    this.line = d3
-      .line()
-      .x((d: any) => this.xScale(d.time))
-      .y((d: any) => this.yScale(d.value));
-
-    this.svgChart
-      .append('path')
-      .classed('line', true)
-      .attr('fill', 'none')
-      .attr('stroke', '#F29F05')
-      .attr('stroke-width', 2)
-      .attr('d', this.line(this.records as any))
-      .attr('opacity', 0.4);
+    this.svgLine = this.svgChart.append('g');
 
     // Brush functionality
     this.brush = d3
       .brushX()
       .extent([
-        [this.chartPadding, this.chartPadding],
+        [this.chartMargin, this.chartMargin],
         [
-          this.chartWidth - this.chartPadding,
-          this.chartHeight - this.chartPadding,
+          this.chartWidth - this.chartMargin,
+          this.chartHeight - this.chartMargin,
         ],
       ])
       .on('end', this.interactChart.bind(this));
 
-    const setFocusOpacity = (opacity: number) => {
-      focus.style('opacity', opacity);
-      focusText.style('opacity', opacity);
-    };
-
     const setFocus = (container: d3.ContainerElement) => {
-      // recover coordinate we need
-      const x0 = this.xScale.invert(d3.mouse(container)[0]);
-      const i = bisect(this.records, x0, 1);
-      const selectedData = this.records[i];
+      // Recover coordinate of cursor.
+      const mouseFocus = this.xScale.invert(d3.mouse(container)[0]);
+      if (mouseFocus === undefined) return;
 
-      focus
-        .attr('cx', this.xScale(selectedData.time))
-        .attr('cy', this.yScale(selectedData.value));
-      focusText
-        .html(
-          `Time: ${this.timeFormat(selectedData.time)} - 
-          Power: ${selectedData.value}`
-        )
-        .attr('x', this.xScale(selectedData.time) + 15)
-        .attr('y', this.yScale(selectedData.value));
+      const timeParse = d3.timeParse('%Q');
+      const dateFormat = d3.timeFormat('%Y-%m-%d');
+      const timeFormat = d3.timeFormat('%H:%M:%S.%L');
+
+      // Select the record closest to the cursor.
+      const bisectLeft = d3.bisector((d: Record) => d.time).left;
+      const bisectRight = d3.bisector((d: Record) => d.time).right;
+      for (const recordsOneChannel of this.records) {
+        const left = bisectLeft(recordsOneChannel.data, mouseFocus);
+        const right = bisectRight(recordsOneChannel.data, mouseFocus);
+
+        if (!recordsOneChannel.data[left] || !recordsOneChannel.data[right])
+          return;
+        const leftRecord = recordsOneChannel.data[left];
+        const rightRecord = recordsOneChannel.data[right];
+
+        const index =
+          Math.abs(leftRecord.time - mouseFocus) >
+          Math.abs(rightRecord.time - mouseFocus)
+            ? right
+            : left;
+        const selectedData = recordsOneChannel.data[index];
+        const upperDate = timeParse(
+          Math.floor(selectedData.time / 1000).toString()
+        );
+
+        // Sets legend text.
+        recordsOneChannel.focusTime =
+          timeFormat(upperDate) + '.' + Math.floor(mouseFocus % 1000);
+        recordsOneChannel.focusDate = dateFormat(upperDate);
+        recordsOneChannel.focusPower = selectedData.value.toString();
+
+        // Sets focus point.
+        this.svgLine
+          .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
+          .attr('cx', this.xScale(selectedData.time))
+          .attr('cy', this.yScale(selectedData.value));
+      }
     };
     // Mouse over displaying text
     this.svgChart
       .append('g')
       .attr('class', 'brush')
       .call(this.brush)
-      .on('mouseover', () => {
-        setFocusOpacity(1);
-      }) // this mouse over value display functionality
-      .on('mousemove', mousemove)
-      .on('mouseout', () => {
-        setFocusOpacity(0);
-      });
+      .on('mousemove', mousemove);
 
     function mousemove() {
       setFocus(this);
@@ -241,29 +254,115 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   private updateChartDomain() {
-    const xExtent = d3.extent(this.records, (d) => d.time);
-    const yExtent = d3.extent(this.records, (d) => d.value);
+    const xExtent = this.getTimeRange();
+    const yExtent = this.getValueRange();
 
     this.xScale.domain(xExtent);
     this.yScale.domain(yExtent);
     this.xAxis
       .transition()
       .duration(this.animationDuration)
-      .call(d3.axisBottom(this.xScale));
+      .call(d3.axisBottom(this.xScale).ticks(7).tickFormat(this.timeFormat));
     this.yAxis
       .transition()
       .duration(this.animationDuration)
       .call(d3.axisLeft(this.yScale));
-    this.svgChart
-      .select('.line')
-      .transition()
-      .duration(this.animationDuration)
-      .attr('d', this.line(this.records as any));
+
+    for (const recordsOneChannel of this.records) {
+      // if (!recordsOneChannel.show) return;
+      if (!this.lines[recordsOneChannel.name]) {
+        // Initialize focus line.
+        const line = d3
+          .line()
+          .x((d: any) => this.xScale(d.time))
+          .y((d: any) => this.yScale(d.value));
+        this.lines[recordsOneChannel.name] = line;
+
+        this.svgLine
+          .append('path')
+          .classed(this.getChannelLineClassName(recordsOneChannel.name), true)
+          .attr('fill', 'none')
+          .attr('stroke', recordsOneChannel.color)
+          .attr('stroke-width', 2)
+          .attr('d', line(recordsOneChannel.data as any))
+          .attr('opacity', 0.4);
+
+        this.svgLine
+          .append('g')
+          .append('circle')
+          .classed(this.getChannelCircleClassName(recordsOneChannel.name), true)
+          .style('fill', recordsOneChannel.color)
+          .attr('stroke', recordsOneChannel.color)
+          .attr('r', 2)
+          .style('opacity', 1);
+      } else if (recordsOneChannel.data.length) {
+        // Reposition focus line.
+        this.svgLine
+          .select('.' + this.getChannelLineClassName(recordsOneChannel.name))
+          .transition()
+          .duration(this.animationDuration)
+          .attr(
+            'd',
+            this.lines[recordsOneChannel.name](recordsOneChannel.data as any)
+          );
+      }
+    }
   }
 
   strategySwitch() {
-    this.loadRecords(
-      this.zoomIn ? d3.extent(this.records, (d) => d.time) : null
-    );
+    this.loadRecords(this.zoomIn ? this.getTimeRange() : null);
+  }
+
+  getChannelLineClassName(channel: string) {
+    return 'line' + '-' + channel;
+  }
+  getChannelCircleClassName(channel: string) {
+    return 'circle' + '-' + channel;
+  }
+
+  getTimeRange() {
+    let min, max;
+    for (const recordsOneChannel of this.records) {
+      if (!recordsOneChannel.show) return;
+      for (const record of recordsOneChannel.data) {
+        if (!min || record.time < min) min = record.time;
+        if (!max || record.time > max) max = record.time;
+      }
+    }
+    return [min, max];
+  }
+  getValueRange() {
+    let min, max;
+    for (const recordsOneChannel of this.records) {
+      if (!recordsOneChannel.show) return;
+      for (const record of recordsOneChannel.data) {
+        if (!min || record.value < min) min = record.value;
+        if (!max || record.value > max) max = record.value;
+      }
+    }
+    return [min, max];
+  }
+
+  showLine(event: [string, boolean]) {
+    if (event[1]) {
+      this.svgLine
+        .select('.' + this.getChannelLineClassName(event[0]))
+        .transition()
+        .style('opacity', 0.4);
+      this.svgLine
+        .select('.' + this.getChannelCircleClassName(event[0]))
+        .transition()
+        .style('opacity', 1);
+    } else {
+      this.svgLine
+        .select('.' + this.getChannelLineClassName(event[0]))
+        .transition()
+        .style('opacity', 0);
+      this.svgLine
+        .select('.' + this.getChannelCircleClassName(event[0]))
+        .transition()
+        .style('opacity', 0);
+    }
+    this.updateChartDomain();
   }
 }

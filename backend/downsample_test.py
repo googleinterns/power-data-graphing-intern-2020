@@ -13,6 +13,7 @@
 # =============================================================================
 
 """Test Module for downsample.py"""
+# pylint: disable=E1126
 
 import os
 import random
@@ -237,30 +238,32 @@ class TestDownsampleClass:
             records, 'not_exist', max_records) == []
 
     @pytest.mark.parametrize('max_records', [0, 40, 80, 120, 160, 200])
-    def test_secondary_downsample_no_timespan(self, records_complex_case, max_records):
+    def test_secondary_downsample_no_timespan_one_channel(self, records_complex_case, max_records):
         """Tests on secondary_downsample method, with no timespan given"""
+
         tmpfile = tempfile.NamedTemporaryFile()
         assert os.path.exists(tmpfile.name)
         with open(tmpfile.name, 'w') as tmpfilewriter:
             data_csv = convert_to_csv(records_complex_case)
             tmpfilewriter.write(data_csv)
 
-        assert secondary_downsample(tmpfile.name, 'max', max_records, None, None) \
+        assert secondary_downsample(tmpfile.name, 'max', max_records, None, None)['SYS'] \
             == _max_min_downsample(records_complex_case, True, max_records)
-        assert secondary_downsample(tmpfile.name, 'min', max_records, None, None) \
+        assert secondary_downsample(tmpfile.name, 'min', max_records, None, None)['SYS'] \
             == _max_min_downsample(records_complex_case, False, max_records)
-        assert secondary_downsample(tmpfile.name, 'avg', max_records, None, None) \
+        assert secondary_downsample(tmpfile.name, 'avg', max_records, None, None)['SYS'] \
             == _average_downsample(records_complex_case, max_records)
-        assert secondary_downsample(tmpfile.name, 'lttb', max_records, None, None) \
+        assert secondary_downsample(tmpfile.name, 'lttb', max_records, None, None)['SYS'] \
             == _lttb_downsample(records_complex_case, max_records)
         assert secondary_downsample(
-            tmpfile.name, 'not_exist', max_records, None, None) == []
+            tmpfile.name, 'not_exist', max_records, None, None)['SYS'] == []
 
         tmpfile.close()
         assert not os.path.exists(tmpfile.name)
 
     @pytest.mark.parametrize('max_records', [0, 40, 80, 120, 160, 200])
-    def test_secondary_downsample_with_timespan(self, records_complex_case, max_records):
+    def test_secondary_downsample_with_timespan_one_channel(self,
+                                                            records_complex_case, max_records):
         """Tests on secondary_downsample method, with with timespan given"""
         tmpfile = tempfile.NamedTemporaryFile()
         assert os.path.exists(tmpfile.name)
@@ -276,16 +279,16 @@ class TestDownsampleClass:
             records_complex_case[middle_half[1] - 1][0]
         )
 
-        assert secondary_downsample(tmpfile.name, 'max', max_records, start, end) \
+        assert secondary_downsample(tmpfile.name, 'max', max_records, start, end)['SYS'] \
             == _max_min_downsample(middle_half_records, True, max_records)
-        assert secondary_downsample(tmpfile.name, 'min', max_records, start, end) \
+        assert secondary_downsample(tmpfile.name, 'min', max_records, start, end)['SYS'] \
             == _max_min_downsample(middle_half_records, False, max_records)
-        assert secondary_downsample(tmpfile.name, 'avg', max_records, start, end) \
+        assert secondary_downsample(tmpfile.name, 'avg', max_records, start, end)['SYS'] \
             == _average_downsample(middle_half_records, max_records)
-        assert secondary_downsample(tmpfile.name, 'lttb', max_records, start, end) \
+        assert secondary_downsample(tmpfile.name, 'lttb', max_records, start, end)['SYS'] \
             == _lttb_downsample(middle_half_records, max_records)
         assert secondary_downsample(
-            tmpfile.name, 'not_exist', max_records, start, end) == []
+            tmpfile.name, 'not_exist', max_records, start, end)['SYS'] == []
 
         tmpfile.close()
         assert not os.path.exists(tmpfile.name)

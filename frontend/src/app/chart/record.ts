@@ -16,7 +16,27 @@
  * Power data interface
  */
 export interface Record {
-  time: Date;
+  time: number;
   value: number;
-  source: string;
 }
+
+export interface RecordsOneChannel {
+  color: string;
+  show: boolean;
+  data: Record[];
+  name: string;
+  focusTime: string;
+  focusDate: string;
+  focusPower: string;
+}
+
+export const COLORS = [
+  'red',
+  'blue',
+  'orange',
+  'cyan',
+  'black',
+  'green',
+  'purple',
+  'pink',
+];

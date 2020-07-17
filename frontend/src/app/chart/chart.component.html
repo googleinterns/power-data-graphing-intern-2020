@@ -34,4 +34,14 @@
 </div>
 
 <div id="chart-component"></div>
-<div class="legends"></div>
+
+<div class="legends-container">
+  <legend-card
+    *ngFor="let recordsOneChannel of records"
+    [recordsOneChannel]="recordsOneChannel"
+    [time]="recordsOneChannel.focusTime"
+    [date]="recordsOneChannel.focusDate"
+    [power]="recordsOneChannel.focusPower"
+    (showChange)="showLine($event)"
+  ></legend-card>
+</div>

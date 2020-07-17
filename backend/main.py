@@ -18,6 +18,7 @@ Expose HTTP endpoints for triggering preprocess and send downsampled data.
 """
 import logging
 import os
+
 from flask import request
 from flask import jsonify
 from flask import Flask
@@ -26,11 +27,12 @@ import utils
 import downsample
 
 NUMBER_OF_RECORDS_PER_REQUEST = 600
-NUMBER_OF_RECORDS_PER_SECOND = 2000
+NUMBER_OF_RECORDS_PER_SECOND = 100000
 FLOAT_PRECISION = 4
 STRATEGIES = ['max', 'min', 'lttb', 'avg']
 
-FILENAME = 'DMM_result_single_channel.csv'
+# FILENAME = 'DMM_result_single_channel.csv'
+FILENAME = 'DMM_result_multiple_channel.csv'
 
 app = Flask(__name__)
 CORS(app)
@@ -50,9 +52,14 @@ def get_data():
         logging.error('Incorrect Strategy: %s', strategy)
         return 'Incorrect Strategy', 400
 
-    cache_filename = utils.generate_filename_on_strategy(FILENAME, strategy)
+    preprocess_filename = utils.generate_filename_on_strategy(
+        FILENAME, strategy)
+
+    if not os.path.isfile(preprocess_filename):
+        preprocessing()
+
     data = downsample.secondary_downsample(
-        cache_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
+        preprocess_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
 
     # TODO(tangyifei@): Support csv file name in HTTP argument and upload new csv file.
     return jsonify(data)

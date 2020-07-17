@@ -17,6 +17,7 @@
 Contains all of the downsample strategies. Use downsample(), and
 secondary_downsample() for downsampling records stored in files.
 """
+from collections import defaultdict
 
 import utils
 
@@ -218,17 +219,17 @@ def downsample(filename, strategy, max_records_per_second):
     data = list()
 
     with open(filename, 'r') as filereader:
-        temp_store = list()
+        store_per_second = list()
         for line in filereader:
-            temp_store.append(utils.parse_csv_line(line))
-            if temp_store[-1][0] - temp_store[0][0] >= SECOND_TO_MICROSECOND:
+            store_per_second.append(utils.parse_csv_line(line))
+            if store_per_second[-1][0] - store_per_second[0][0] >= SECOND_TO_MICROSECOND:
                 downsampled_records = _strategy_reducer(
-                    temp_store, strategy, max_records_per_second)
+                    store_per_second, strategy, max_records_per_second)
                 data.extend(downsampled_records)
-                temp_store = list()
-        last_second_records = _strategy_reducer(
-            temp_store, strategy, max_records_per_second)
-        data.extend(last_second_records)
+                store_per_second = list()
+        store_last_second = _strategy_reducer(
+            store_per_second, strategy, max_records_per_second)
+        data.extend(store_last_second)
     return data
 
 
@@ -249,12 +250,21 @@ def secondary_downsample(filename, strategy, max_records, start, end):
     Returns:
         Downsampled data in the given file.
     """
+    downsampled_data = list()
 
     with open(filename, 'r') as filereader:
-        data = list()
+        store = defaultdict(list)
         for line in filereader.readlines():
             record = utils.parse_csv_line(line)
             if (start is None or start <= record[0]) and (end is None or record[0] <= end):
-                data.append(record)
-        downsampled_records = _strategy_reducer(data, strategy, max_records)
-        return downsampled_records
+                store[record[2]].append(record)
+
+        for channel in store.keys():
+            downsampled_one_channel = _strategy_reducer(
+                store[channel], strategy, max_records)
+            downsampled_data.append({
+                'name': channel,
+                'data': [[record[0], record[1]] for record in downsampled_one_channel]
+            })
+
+        return downsampled_data

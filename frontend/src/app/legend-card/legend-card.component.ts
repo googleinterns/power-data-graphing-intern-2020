@@ -1,0 +1,55 @@
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { MatSlideToggleChange } from '@angular/material/slide-toggle';
+import { Record, RecordsOneChannel } from '../chart/record';
+
+@Component({
+  selector: 'legend-card',
+  templateUrl: './legend-card.component.html',
+  styleUrls: ['./legend-card.component.scss'],
+})
+export class LegendCardComponent implements OnInit {
+  @Input() time: string;
+  @Input() date: string;
+  @Input() power: number;
+
+  @Input() recordsOneChannel: RecordsOneChannel;
+  @Output() showChange = new EventEmitter<[string, boolean]>();
+
+  checked = true;
+
+  constructor() {}
+
+  getAvg() {
+    if (this.recordsOneChannel?.data.length == 0) return 0;
+    let sum = 0;
+    for (const record of this.recordsOneChannel.data) {
+      sum += record.value;
+    }
+    return (sum / this.recordsOneChannel.data.length).toPrecision(3);
+  }
+
+  getMax() {
+    if (this.recordsOneChannel.data.length == 0) return 0;
+    let max = this.recordsOneChannel.data[0].value;
+    for (const record of this.recordsOneChannel.data) {
+      if (record.value > max) max = record.value;
+    }
+    return max.toPrecision(3);
+  }
+
+  getMin() {
+    if (this.recordsOneChannel.data.length == 0) return 0;
+    let min = this.recordsOneChannel.data[0].value;
+    for (const record of this.recordsOneChannel.data) {
+      if (record.value < min) min = record.value;
+    }
+    return min.toPrecision(3);
+  }
+
+  toggled(event: MatSlideToggleChange) {
+    this.recordsOneChannel.show = event.checked;
+    this.showChange.emit([this.recordsOneChannel.name, event.checked]);
+  }
+
+  ngOnInit(): void {}
+}
