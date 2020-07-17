@@ -45,7 +45,7 @@ describe('HttpService', () => {
     ];
     httpClientSpy.get.and.returnValue(from([expectedRecords]));
 
-    service.getRecords('data', STRATEGY.MAX, null).subscribe((records) => {
+    service.getRecords('data', '', STRATEGY.MAX, null).subscribe((records) => {
       expect(records).toEqual(expectedRecords);
     });
   });

@@ -109,10 +109,10 @@ export class ChartComponent implements OnInit, OnDestroy {
             }
           );
         } else {
-          this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+          for (const recordsOneChannel of this.records) {
             let newDataArrived = false;
-            response.forEach((channel: RecordsResponse) => {
-              if (recordsOneChannel.name !== channel.name) return;
+            for (const channel of response) {
+              if (recordsOneChannel.name !== channel.name) continue;
               newDataArrived = true;
               recordsOneChannel.data = channel.data.map(
                 (d: [number, number]) => {
@@ -122,11 +122,11 @@ export class ChartComponent implements OnInit, OnDestroy {
                   } as Record;
                 }
               );
-            });
+            }
             if (!newDataArrived) {
               recordsOneChannel.data = [];
             }
-          });
+          }
         }
         this.loading = false;
         this.updateChartDomain();
@@ -221,18 +221,17 @@ export class ChartComponent implements OnInit, OnDestroy {
       const dateFormat = d3.timeFormat('%Y %b %d');
       const timeFormat = d3.timeFormat('%H:%M:%S.%L');
 
-      this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
-        if (!recordsOneChannel.show) return;
-
+      for (const recordsOneChannel of this.records) {
+        if (!recordsOneChannel.show) continue;
         let selectedData = recordsOneChannel.data[0];
-        recordsOneChannel.data.forEach((record: Record) => {
+        for (const record of recordsOneChannel.data) {
           selectedData =
             Math.abs(selectedData.time - mouseFocus) <
             Math.abs(record.time - mouseFocus)
               ? selectedData
               : record;
-        });
-        if (!selectedData) return;
+        }
+        if (!selectedData) continue;
 
         const upperDate = timeParse(
           Math.floor(selectedData.time / 1000).toString()
@@ -258,11 +257,11 @@ export class ChartComponent implements OnInit, OnDestroy {
           timeFormat(upperDate) +
           '.' +
           Math.floor(mouseFocus % 1000);
-      });
+      }
     };
 
     const removeFocus = () => {
-      this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
+      for (const recordsOneChannel of this.records) {
         recordsOneChannel.focusTime = undefined;
         recordsOneChannel.focusDate = undefined;
         recordsOneChannel.focusPower = undefined;
@@ -279,7 +278,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 
         this.mouseDate = '';
         this.mouseTime = '';
-      });
+      }
     };
 
     // Brush functionality
@@ -345,8 +344,8 @@ export class ChartComponent implements OnInit, OnDestroy {
       .duration(this.animationDuration)
       .call(d3.axisLeft(this.yScale).tickFormat(d3.format('.3')));
 
-    this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
-      if (!recordsOneChannel.show) return;
+    for (const recordsOneChannel of this.records) {
+      if (!recordsOneChannel.show) continue;
       if (!this.lines[recordsOneChannel.name]) {
         // Initialize focus line.
         const line = d3
@@ -393,7 +392,7 @@ export class ChartComponent implements OnInit, OnDestroy {
             this.lines[recordsOneChannel.name](recordsOneChannel.data as any)
           );
       }
-    });
+    }
   }
 
   strategySwitch() {
@@ -413,24 +412,24 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   getTimeRange() {
     let min, max;
-    this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
-      if (!recordsOneChannel.show) return;
-      recordsOneChannel.data.forEach((record: Record) => {
+    for (const recordsOneChannel of this.records) {
+      if (!recordsOneChannel.show) continue;
+      for (const record of recordsOneChannel.data) {
         if (!min || record.time < min) min = record.time;
         if (!max || record.time > max) max = record.time;
-      });
-    });
+      }
+    }
     return [min, max];
   }
   getValueRange() {
     let min, max;
-    this.records.forEach((recordsOneChannel: RecordsOneChannel) => {
-      if (!recordsOneChannel.show) return;
-      recordsOneChannel.data.forEach((record: Record) => {
+    for (const recordsOneChannel of this.records) {
+      if (!recordsOneChannel.show) continue;
+      for (const record of recordsOneChannel.data) {
         if (!min || record.value < min) min = record.value;
         if (!max || record.value > max) max = record.value;
-      });
-    });
+      }
+    }
     return [min, max];
   }
 
@@ -439,23 +438,9 @@ export class ChartComponent implements OnInit, OnDestroy {
       this.svgLine
         .selectAll('.' + this.getChannelLineClassName(event[0]))
         .attr('opacity', 0.4);
-      this.svgLine
-        .select('.' + this.getChannelCircleClassName(event[0]))
-        .transition()
-        .style('opacity', 1);
-      this.svg
-        .select('.' + this.getFocusTextClassName(event[0]))
-        .attr('opacity', 1);
     } else {
       this.svgLine
         .selectAll('.' + this.getChannelLineClassName(event[0]))
-        .attr('opacity', 0);
-      this.svgLine
-        .select('.' + this.getChannelCircleClassName(event[0]))
-        .transition()
-        .style('opacity', 0);
-      this.svg
-        .select('.' + this.getFocusTextClassName(event[0]))
         .attr('opacity', 0);
     }
     this.updateChartDomain();

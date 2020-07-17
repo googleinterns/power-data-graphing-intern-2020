@@ -7,7 +7,7 @@ import { Record, RecordsOneChannel } from '../chart/record';
   templateUrl: './legend-card.component.html',
   styleUrls: ['./legend-card.component.scss'],
 })
-export class LegendCardComponent implements OnInit {
+export class LegendCardComponent {
   @Input() time: string;
   @Input() date: string;
   @Input() power: number;
@@ -22,36 +22,33 @@ export class LegendCardComponent implements OnInit {
   getAvg() {
     if (this.recordsOneChannel?.data.length == 0) return 'N/A';
     let sum = 0;
-    this.recordsOneChannel.data.forEach((record: Record) => {
+    for (const record of this.recordsOneChannel.data) {
       sum += record.value;
-    });
+    }
+
     return (sum / this.recordsOneChannel.data.length).toPrecision(3).toString();
   }
 
   getMax() {
     if (this.recordsOneChannel.data.length == 0) return 'N/A';
-    const maxRecord = this.recordsOneChannel.data.reduce(
-      (record0: Record, record1: Record) => {
-        return record0.value >= record1.value ? record0 : record1;
-      }
-    );
-    return maxRecord.value.toPrecision(3).toString();
+    let max = this.recordsOneChannel.data[0].value;
+    for (const record of this.recordsOneChannel.data) {
+      if (record.value > max) max = record.value;
+    }
+    return max.toPrecision(3).toString();
   }
 
   getMin() {
     if (this.recordsOneChannel.data.length == 0) return 'N/A';
-    const maxRecord = this.recordsOneChannel.data.reduce(
-      (record0: Record, record1: Record) => {
-        return record0.value <= record1.value ? record0 : record1;
-      }
-    );
-    return maxRecord.value.toPrecision(3).toString();
+    let min = this.recordsOneChannel.data[0].value;
+    for (const record of this.recordsOneChannel.data) {
+      if (record.value < min) min = record.value;
+    }
+    return min.toPrecision(3).toString();
   }
 
   toggled(event: MatSlideToggleChange) {
     this.recordsOneChannel.show = event.checked;
     this.showChange.emit([this.recordsOneChannel.name, event.checked]);
   }
-
-  ngOnInit(): void {}
 }
