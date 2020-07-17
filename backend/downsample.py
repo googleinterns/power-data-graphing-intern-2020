@@ -283,8 +283,6 @@ def preprocess(filename, max_records_per_second):
     Returns:
         A boolean that represents if successful.
     """
-    import time
-    start = time.time()
     for strategy in STRATEGIES:
         output_filename = utils.generate_filename_on_strategy(
             filename, strategy)
@@ -299,5 +297,4 @@ def preprocess(filename, max_records_per_second):
         with open(output_filename, 'w') as filewriter:
             filewriter.write(data_csv)
             filewriter.flush()
-    utils.warning(('time: ', time.time() - start))
     return True

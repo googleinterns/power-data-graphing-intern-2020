@@ -2,14 +2,14 @@ $small-font: 12px;
 $small-margin: 5px;
 
 .channel-metrics {
-  padding: 2px;
   display: flex;
   flex-direction: column;
   height: auto;
   justify-content: center;
   margin: 10px 5px;
-  width: auto;
   min-width: 80px;
+  padding: 2px;
+  width: auto;
 }
 .legends {
   display: flex;

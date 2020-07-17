@@ -75,8 +75,7 @@ def preprocessing():
     success = downsample.preprocess(name, rate)
     if success:
         return 'Preprocessing Successful!', 200
-    else:
-        return 'Preprocessing Incomplete', 400
+    return 'Preprocessing Incomplete', 400
 
 
 if __name__ == '__main__':

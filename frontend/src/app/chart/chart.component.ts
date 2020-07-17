@@ -35,8 +35,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   subscription: Subscription;
 
   // Data related variable
-  filename = 'DMM_result_multiple_channel.csv';
-  // filename = 'DMM_result_single_channel.csv';
+  filename = 'DMM_result_single_channel.csv';
   loading = false;
   number = 600;
   records: RecordsOneChannel[] = [];
