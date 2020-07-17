@@ -81,71 +81,66 @@ describe('ChartComponent', () => {
     expect(component.zoomIn).toBe(false);
   });
 
-  // it('chart x-domain and y-domain should match with data on initialization', () => {
-  //   const expectedDates = testRecords.map((record) => record[0]);
-  //   // Get timespan of the original records
-  //   const expectedTimespanUnix = getMaxMin(expectedDates);
-  //   // Convert Unix Timestamp to Date Object
-  //   const expectedTimespan = expectedTimespanUnix.map(
-  //     (time) => new Date(Math.floor(time / 1000))
-  //   );
-  //   expect(component['xScale'].domain()).toEqual(expectedTimespan);
+  it('chart x-domain and y-domain should match with data on initialization', () => {
+    const expectedDates = testRecords[0].data.map((record) => record[0]);
+    // Get timespan of the original records
+    const expectedTimespanUnix = getMaxMin(expectedDates);
+    // Convert Unix Timestamp to Date Object
 
-  //   const expectedPower = testRecords.map((record) => record[1]);
-  //   // Get power range of the original records
-  //   const expectedPowerRange = getMaxMin(expectedPower);
-  //   expect(component['yScale'].domain()).toEqual(expectedPowerRange);
-  // });
+    expect(component['xScale'].domain()).toEqual(expectedTimespanUnix);
 
-  // it('updateChartDomain should update chart in accord with this.records', () => {
-  //   // Generate new records
-  //   const newTestRecords = generateNewData(600);
-  //   const formattedNewTestRecords = newTestRecords.map((record) => {
-  //     return {
-  //       time: new Date(Math.floor(record[0] / 1000)),
-  //       value: record[1],
-  //       channel: record[2],
-  //     } as Record;
-  //   });
+    const expectedPower = testRecords[0].data.map((record) => record[1]);
+    // Get power range of the original records
+    const expectedPowerRange = getMaxMin(expectedPower);
+    expect(component['yScale'].domain()).toEqual(expectedPowerRange);
+  });
 
-  //   // Load data
-  //   httpServiceSpy.getRecords.and.callFake(() => {
-  //     return from([newTestRecords]);
-  //   });
-  //   component.loadRecords();
-  //   expect(httpServiceSpy.getRecords).toHaveBeenCalled();
+  it('updateChartDomain should update chart in accord with this.records', () => {
+    // Generate new records
+    const newTestRecords = generateNewData(600);
+    const formattedNewTestRecords = newTestRecords[0].data.map((record) => {
+      return {
+        time: record[0],
+        value: record[1],
+      } as Record;
+    });
 
-  //   expect(component.records).toEqual(formattedNewTestRecords);
+    // Load data
+    httpServiceSpy.getRecords.and.callFake(() => {
+      return from([newTestRecords]);
+    });
+    component.loadRecords();
+    expect(httpServiceSpy.getRecords).toHaveBeenCalled();
 
-  //   // Test new x-domain
-  //   const expectedDates = newTestRecords.map((record) => record[0]);
-  //   const expectedTimespanUnix = getMaxMin(expectedDates);
-  //   const expectedTimespan = expectedTimespanUnix.map(
-  //     (time) => new Date(Math.floor(time / 1000))
-  //   );
-  //   expect(component['xScale'].domain()).toEqual(expectedTimespan);
+    expect(component.records[0].data).toEqual(formattedNewTestRecords);
+    expect(component.records[0].name).toEqual(newTestRecords[0].name);
 
-  //   // Test new y-domain
-  //   const expectedPower = newTestRecords.map((record) => record[1]);
-  //   const expectedPowerRange = getMaxMin(expectedPower);
-  //   expect(component['yScale'].domain()).toEqual(expectedPowerRange);
-  // });
+    // Test new x-domain
+    const expectedDates = newTestRecords[0].data.map((record) => record[0]);
+    const expectedTimespanUnix = getMaxMin(expectedDates);
+    expect(component['xScale'].domain()).toEqual(expectedTimespanUnix);
 
-  // it('strategySwitch should send request with selected strategy', () => {
-  //   const strategies = Object.values(STRATEGY);
-  //   const newStategy =
-  //     strategies[Math.floor(Math.random() * strategies.length)];
+    // Test new y-domain
+    const expectedPower = newTestRecords[0].data.map((record) => record[1]);
+    const expectedPowerRange = getMaxMin(expectedPower);
+    expect(component['yScale'].domain()).toEqual(expectedPowerRange);
+  });
 
-  //   httpServiceSpy.getRecords.and.callFake(
-  //     (path: string, strategy: string, timespan: Date[]) => {
-  //       expect(path).toEqual('/data');
-  //       expect(strategy).toEqual(newStategy.toString());
-  //       expect(timespan).toBeNull();
-  //       return empty();
-  //     }
-  //   );
-  //   component.strategy = newStategy;
-  //   component.strategySwitch();
-  //   expect(httpServiceSpy.getRecords).toHaveBeenCalled();
-  // });
+  it('strategySwitch should send request with selected strategy', () => {
+    const strategies = Object.values(STRATEGY);
+    const newStategy =
+      strategies[Math.floor(Math.random() * strategies.length)];
+
+    httpServiceSpy.getRecords.and.callFake(
+      (path: string, strategy: string, timespan: number[]) => {
+        expect(path).toEqual('/data');
+        expect(strategy).toEqual(newStategy.toString());
+        expect(timespan).toBeNull();
+        return empty();
+      }
+    );
+    component.strategy = newStategy;
+    component.strategySwitch();
+    expect(httpServiceSpy.getRecords).toHaveBeenCalled();
+  });
 });
