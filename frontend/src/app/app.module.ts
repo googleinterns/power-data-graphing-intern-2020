@@ -23,12 +23,7 @@ import { ChartComponent } from './chart/chart.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatTableModule } from '@angular/material/table';
 import { LegendCardComponent } from './legend-card/legend-card.component';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatInputModule } from '@angular/material/input';
 
 @NgModule({
   declarations: [AppComponent, ChartComponent, LegendCardComponent],
@@ -41,11 +36,6 @@ import { MatInputModule } from '@angular/material/input';
     MatProgressSpinnerModule,
     MatSelectModule,
     MatCheckboxModule,
-    MatTableModule,
-    MatIconModule,
-    MatButtonModule,
-    MatDialogModule,
-    MatInputModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

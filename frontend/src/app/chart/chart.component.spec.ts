@@ -22,9 +22,6 @@ import {
   RecordsResponse,
 } from '../services/http.service';
 import { Record } from './record';
-import { DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
-import { tree } from 'd3';
 
 const getMaxMin = (records: number[]) => {
   return [
@@ -62,7 +59,7 @@ describe('ChartComponent', () => {
   let httpServiceSpy: jasmine.SpyObj<HttpService>;
 
   const testRecordsSingleChannel = generateSingleChannelData(100);
-  const testRecordsMultipleChannel = generateMultiChannelData(100);
+  const testRecordsMultipleChannel = generateMultiChannelData(20);
 
   beforeEach(async(() => {
     httpServiceSpy = jasmine.createSpyObj('HttpService', ['getRecords']);
