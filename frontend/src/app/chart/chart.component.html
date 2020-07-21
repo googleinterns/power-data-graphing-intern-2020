@@ -15,8 +15,8 @@
 -->
 
 <div class="chart-header">
-  <div class="div char-header left">
-    <mat-form-field>
+  <div class="chart-header-left">
+    <mat-form-field class="selector">
       <mat-label>Select a downsample strategy</mat-label>
       <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
         <mat-option *ngFor="let s of strategyType | keyvalue" [value]="s.value"
@@ -24,25 +24,45 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
+
+    <mat-form-field class="selector">
+      <mat-label>Select a file to view</mat-label>
+      <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
+        <mat-option value="DMM_result_single_channel.csv">
+          DMM_result_single_channel.csv
+        </mat-option>
+        <mat-option value="DMM_result_multiple_channel.csv">
+          DMM_result_multiple_channel.csv
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="chart-header-right">
     <mat-spinner
       *ngIf="loading"
-      diameter="20"
+      diameter="30"
       mode="indeterminate"
       class="spinner"
     >
     </mat-spinner>
   </div>
-  <div class="chart-header-middle"></div>
 </div>
 
 <div id="chart-component"></div>
 
-<div class="mouse-date">
-  {{ mouseTime }} <br />
-  {{ mouseDate }} <br />
+<div class="mouse-date-container">
+  <div class="mouse-date">
+    <div>
+      {{ mouseTime }}
+    </div>
+    <div>
+      {{ mouseDate }}
+    </div>
+  </div>
 </div>
 <div class="legends-container">
   <legend-card
+    class="legend-card"
     *ngFor="let recordsOneChannel of records"
     [recordsOneChannel]="recordsOneChannel"
     [time]="recordsOneChannel.focusTime"

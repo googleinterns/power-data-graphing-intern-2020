@@ -162,7 +162,7 @@ def _average_downsample(records, max_records):
     result = list()
     for index in range(max_records):
         records_in_timespan = records[index * timespan: (index+1)*timespan]
-        average = [0, 0, records_in_timespan[0][2]]
+        average = [0, 0]
         for record in records_in_timespan:
             average[0] += record[0]
             average[1] += record[1]

@@ -35,7 +35,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   subscription: Subscription;
 
   // Data related variable
-  filename = 'DMM_result_single_channel.csv';
+  filename = 'DMM_result_multiple_channel.csv';
   loading = false;
   number = 600;
   records: RecordsOneChannel[] = [];
@@ -291,7 +291,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         ],
       ])
       .on('end', this.interactChart.bind(this))
-      .on('start', removeFocus);
+      .on('brush', mousemove);
 
     // Mouse over displaying text
     this.svgChart
@@ -381,7 +381,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('pointer-events', 'none')
           .attr('opacity', 0);
       } else {
-        // Bind new data to lines.
+        // Bind the data to lines.
         this.svgLine
           .select('.' + this.getChannelLineClassName(recordsOneChannel.name))
           .transition()
@@ -396,6 +396,15 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   strategySwitch() {
     this.loadRecords(this.zoomIn ? this.getTimeRange() : null);
+  }
+
+  fileSwitch() {
+    this.lines = {};
+    this.records = [];
+    this.zoomIn = false;
+    d3.select('#chart-component').selectAll('*').remove();
+    this.initChart();
+    this.loadRecords();
   }
 
   getChannelLineClassName(channel: string) {
@@ -418,7 +427,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         if (!max || record.time > max) max = record.time;
       }
     }
-    return [min, max];
+    return [min, max] as number[];
   }
   getValueRange() {
     let min, max;
@@ -429,7 +438,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         if (!max || record.value > max) max = record.value;
       }
     }
-    return [min, max];
+    return [min, max] as number[];
   }
 
   showLine(event: [string, boolean]) {

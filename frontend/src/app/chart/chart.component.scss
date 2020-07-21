@@ -16,9 +16,18 @@
   align-items: center;
   display: flex;
   flex-direction: row;
+  text-align: center;
   height: 60px;
   margin: 10px auto;
   width: auto;
+}
+
+.chart-header-left {
+  display: flex;
+  flex-direction: row;
+}
+.chart-header-left .selector {
+  margin-right: 5px;
 }
 
 .legends-container {
@@ -52,8 +61,21 @@
 }
 
 .mouse-date {
-  height: 50px;
+  height: auto;
   margin: 5px;
-  text-align: center;
-  width: auto;
+  width: 200px;
+}
+.mouse-date-container {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  height: 50px;
+  justify-content: center;
+}
+
+.chart-header-right {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
 }
