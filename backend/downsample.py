@@ -98,7 +98,6 @@ def _lttb_downsample(records, max_records):
             next_index += 1
         if next_index > len(buckets) - 1:
             continue
-        # next_average = [0, 0, bucket[0][2]]
         next_average = [0, 0]
         for record in buckets[next_index]:
             next_average[0] += record[0]
@@ -164,7 +163,6 @@ def _average_downsample(records, max_records):
     for index in range(max_records):
         records_in_timespan = records[index * timespan: (index+1)*timespan]
         average = [0, 0]
-        # average = [0, 0, records[0][2]]
         for record in records_in_timespan:
             average[0] += record[0]
             average[1] += record[1]
