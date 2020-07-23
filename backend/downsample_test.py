@@ -224,7 +224,6 @@ class TestDownsampleClass:
                     ) / (len(records) // 2)
             ],
         ]
-        print(test_result[0])
         assert test_result == expected_average
 
     def test_average_downsample_avg_over_records(self, records):
