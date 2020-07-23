@@ -59,9 +59,6 @@ def get_data():
     data = downsample.secondary_downsample(
         preprocess_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
 
-    start = int(data[0]['data'][0][0])
-    end = int(data[0]['data'][-1][0])
-
     return jsonify(data)
 
 
