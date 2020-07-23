@@ -1,39 +1,9 @@
-$small-font: 12px;
-$small-margin: 5px;
+$small-font: 14px;
 
-.channel-metrics {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  justify-content: center;
-  margin: 10px 5px;
-  min-width: 80px;
-  padding: 2px;
-  width: auto;
-}
-.legends {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  margin: $small-margin;
-}
 .legend-checkbox {
   font-size: $small-font;
 }
 
-.numbers-section {
-  display: flex;
-  flex-direction: row;
+td {
   font-size: $small-font;
-  margin-top: 5px;
-}
-
-.numbers-section-column {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-}
-
-.numbers-section-row {
-  margin: -2px auto;
 }

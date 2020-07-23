@@ -1,22 +1,15 @@
-<mat-card class="channel-metrics">
-  <div class="legends">
-    <mat-checkbox
-      class="legend-checkbox"
-      color="primary"
-      [checked]="recordsOneChannel.show"
-      (change)="toggled($event)"
-    >
-      <span [style.color]="recordsOneChannel.color">{{
-        recordsOneChannel.name
-      }}</span>
-    </mat-checkbox>
-
-    <mat-card-content class="numbers-section">
-      <div class="numbers-section-column">
-        <div class="numbers-section-row">Avg: {{ getAvg() }}</div>
-        <div class="numbers-section-row">Max: {{ getMax() }}</div>
-        <div class="numbers-section-row">Min: {{ getMin() }}</div>
-      </div>
-    </mat-card-content>
-  </div>
-</mat-card>
+<td>
+  <mat-checkbox
+    class="legend-checkbox"
+    color="primary"
+    [checked]="recordsOneChannel.show"
+    (change)="toggled($event)"
+  >
+    <span [style.color]="recordsOneChannel.color">{{
+      recordsOneChannel.name
+    }}</span>
+  </mat-checkbox>
+</td>
+<td>{{ getMax() }}</td>
+<td>{{ getMin() }}</td>
+<td>{{ getAvg() }}</td>

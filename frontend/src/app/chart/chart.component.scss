@@ -75,3 +75,11 @@
   flex-direction: row;
   justify-content: flex-end;
 }
+
+.legends-container tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+.legends-container table {
+  width: 100%;
+}

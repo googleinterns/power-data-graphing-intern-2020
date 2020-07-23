@@ -250,12 +250,9 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('y', this.yScale(selectedData.value) - this.chartPadding)
           .text(selectedData.value.toString());
 
-        this.mouseDate = 'Date: ' + dateFormat(upperDate);
+        this.mouseDate = dateFormat(upperDate);
         this.mouseTime =
-          'Time: ' +
-          timeFormat(upperDate) +
-          '.' +
-          Math.floor(mouseFocus % 1000);
+          timeFormat(upperDate) + '.' + Math.floor(mouseFocus % 1000);
       }
     };
 
@@ -360,7 +357,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('stroke', recordsOneChannel.color)
           .attr('stroke-width', 2)
           .attr('d', line(recordsOneChannel.data as any))
-          .attr('opacity', 0.4);
+          .attr('opacity', 0.6);
 
         this.svgLine
           .append('g')
@@ -423,8 +420,8 @@ export class ChartComponent implements OnInit, OnDestroy {
     for (const recordsOneChannel of this.records) {
       if (!recordsOneChannel.show) continue;
       for (const record of recordsOneChannel.data) {
-        if (!min || record.time < min) min = record.time;
-        if (!max || record.time > max) max = record.time;
+        if (min === undefined || record.time < min) min = record.time;
+        if (max === undefined || record.time > max) max = record.time;
       }
     }
     return [min, max] as number[];
@@ -434,8 +431,8 @@ export class ChartComponent implements OnInit, OnDestroy {
     for (const recordsOneChannel of this.records) {
       if (!recordsOneChannel.show) continue;
       for (const record of recordsOneChannel.data) {
-        if (!min || record.value < min) min = record.value;
-        if (!max || record.value > max) max = record.value;
+        if (min === undefined || record.value < min) min = record.value;
+        if (max === undefined || record.value > max) max = record.value;
       }
     }
     return [min, max] as number[];
@@ -445,7 +442,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     if (event[1]) {
       this.svgLine
         .selectAll('.' + this.getChannelLineClassName(event[0]))
-        .attr('opacity', 0.4);
+        .attr('opacity', 0.6);
     } else {
       this.svgLine
         .selectAll('.' + this.getChannelLineClassName(event[0]))

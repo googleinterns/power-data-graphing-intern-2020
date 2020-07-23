@@ -39,4 +39,8 @@ export const COLORS = [
   'green',
   'purple',
   'pink',
+  'yellow',
+  'cadetBlue',
+  'Chartreuse',
+  'DarkSalmon',
 ];

@@ -192,7 +192,7 @@ class TestDownsampleClass:
         test_result = _average_downsample(records, max_records)
         assert test_result == []
 
-    def test_average_downsample_max_one(self, records):
+    def test_average_downsample_avg_one(self, records):
         """Tests on _average_downsample method, with max_records=1."""
         max_records = 1
         test_result = _average_downsample(records, max_records)
@@ -204,7 +204,7 @@ class TestDownsampleClass:
         ]
         assert test_result == expected_average
 
-    def test_average_downsample_max_two(self, records):
+    def test_average_downsample_avg_two(self, records):
         """Tests on _average_downsample method, with max_records=2."""
         max_records = 2
         test_result = _average_downsample(records, max_records)
@@ -224,9 +224,10 @@ class TestDownsampleClass:
                     ) / (len(records) // 2)
             ],
         ]
+        print(test_result[0])
         assert test_result == expected_average
 
-    def test_average_downsample_max_over_records(self, records):
+    def test_average_downsample_avg_over_records(self, records):
         """Tests on _average_downsample method, with max_records=1."""
         max_records = 100
         test_result = _average_downsample(records, max_records)

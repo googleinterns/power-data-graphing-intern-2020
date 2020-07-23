@@ -1,17 +1,13 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
-import { Record, RecordsOneChannel } from '../chart/record';
+import { RecordsOneChannel } from '../chart/record';
 
 @Component({
-  selector: 'legend-card',
+  selector: 'tr[legend-card]',
   templateUrl: './legend-card.component.html',
   styleUrls: ['./legend-card.component.scss'],
 })
 export class LegendCardComponent {
-  @Input() time: string;
-  @Input() date: string;
-  @Input() power: number;
-
   @Input() recordsOneChannel: RecordsOneChannel;
   @Output() showChange = new EventEmitter<[string, boolean]>();
 

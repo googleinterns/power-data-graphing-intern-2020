@@ -27,7 +27,7 @@ import utils
 import downsample
 
 NUMBER_OF_RECORDS_PER_REQUEST = 600
-NUMBER_OF_RECORDS_PER_SECOND = 10000
+NUMBER_OF_RECORDS_PER_SECOND = 2000
 FLOAT_PRECISION = 4
 
 
@@ -59,7 +59,14 @@ def get_data():
     data = downsample.secondary_downsample(
         preprocess_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
 
-    # TODO(tangyifei@): Support csv file name in HTTP argument and upload new csv file.
+    start = int(data[0]['data'][0][0])
+    end = int(data[0]['data'][-1][0])
+
+    import random
+    for i in range(7):
+        data.append({'name': str(i), "data": [[time, random.randint(
+            0, 100)] for time in range(start, end, (end-start)//20)]})
+
     return jsonify(data)
 
 

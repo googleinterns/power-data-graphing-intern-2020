@@ -61,13 +61,19 @@
   </div>
 </div>
 <div class="legends-container">
-  <legend-card
-    class="legend-card"
-    *ngFor="let recordsOneChannel of records"
-    [recordsOneChannel]="recordsOneChannel"
-    [time]="recordsOneChannel.focusTime"
-    [date]="recordsOneChannel.focusDate"
-    [power]="recordsOneChannel.focusPower"
-    (showChange)="showLine($event)"
-  ></legend-card>
+  <table>
+    <tr>
+      <th>Channel</th>
+      <th>Maximum</th>
+      <th>Minimum</th>
+      <th>Average</th>
+    </tr>
+    <tr
+      legend-card
+      class="legend-card"
+      *ngFor="let recordsOneChannel of records"
+      [recordsOneChannel]="recordsOneChannel"
+      (showChange)="showLine($event)"
+    ></tr>
+  </table>
 </div>
