@@ -62,11 +62,6 @@ def get_data():
     start = int(data[0]['data'][0][0])
     end = int(data[0]['data'][-1][0])
 
-    import random
-    for i in range(7):
-        data.append({'name': str(i), "data": [[time, random.randint(
-            0, 100)] for time in range(start, end, (end-start)//20)]})
-
     return jsonify(data)
 
 
