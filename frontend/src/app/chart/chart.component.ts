@@ -28,6 +28,10 @@ import { Record, COLORS, RecordsOneChannel } from './record';
   encapsulation: ViewEncapsulation.None,
 })
 export class ChartComponent implements OnInit, OnDestroy {
+  /**
+   * The major chart component that draw lines, axis, and all the interaction logics.
+   */
+
   // Bind strategy type
   strategyType = STRATEGY;
 
@@ -98,9 +102,6 @@ export class ChartComponent implements OnInit, OnDestroy {
                     value: d[1],
                   } as Record;
                 }),
-                focusDate: '',
-                focusTime: '',
-                focusPower: '',
                 name: channel.name,
                 show: true,
               };
@@ -184,6 +185,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('transform', `translate(${this.chartMargin},0)`)
       .call(d3.axisLeft(this.yScale));
 
+    // Create x axis legend
     this.svgChart
       .append('g')
       .append('text')
@@ -196,6 +198,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('y', this.chartHeight - this.chartMargin / 2)
       .text('Time (m:s.ms)');
 
+    // Create y axis legend
     this.svgChart
       .append('g')
       .append('text')
@@ -211,6 +214,11 @@ export class ChartComponent implements OnInit, OnDestroy {
 
     this.svgLine = this.svgChart.append('g');
 
+    /**
+     * Sets time legend and value overlays as mouse hover on the chart.
+     * To be bind with brush event.
+     * @param container The container DOM element that contains the SVG area.
+     */
     const setFocus = (container: d3.ContainerElement) => {
       // Recover coordinate of cursor.
       const mouseFocus = this.xScale.invert(d3.mouse(container)[0]);
@@ -258,10 +266,6 @@ export class ChartComponent implements OnInit, OnDestroy {
 
     const removeFocus = () => {
       for (const recordsOneChannel of this.records) {
-        recordsOneChannel.focusTime = undefined;
-        recordsOneChannel.focusDate = undefined;
-        recordsOneChannel.focusPower = undefined;
-
         this.svgLine
           .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
           .transition()
@@ -302,9 +306,10 @@ export class ChartComponent implements OnInit, OnDestroy {
       setFocus(this);
     }
   }
-
-  private interactChart() {
-    // What are the selected boundaries?
+  /**
+   * Loads data and rescale chart when zoom-in/out
+   */
+  interactChart() {
     const extent = d3.event.selection;
     if (!extent) return;
     const selectedTimeSpan = [
@@ -325,7 +330,10 @@ export class ChartComponent implements OnInit, OnDestroy {
     });
   }
 
-  private updateChartDomain() {
+  /**
+   * Scales or rescales the chart wrt lines to be shown.
+   */
+  updateChartDomain() {
     const xExtent = this.getTimeRange();
     const yExtent = this.getValueRange();
 
@@ -391,10 +399,16 @@ export class ChartComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Reloads data when downsample strategy is switched, keeping original zoom-in level.
+   */
   strategySwitch() {
     this.loadRecords(this.zoomIn ? this.getTimeRange() : null);
   }
 
+  /**
+   * Reloads data and re-initialize chart component when switching to another experiment.
+   */
   fileSwitch() {
     this.lines = {};
     this.records = [];
@@ -404,17 +418,33 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.loadRecords();
   }
 
+  /**
+   * Get the class name for the lines.
+   * @param channel The name of the channel.
+   */
   getChannelLineClassName(channel: string) {
     return 'line' + '-' + channel;
   }
+
+  /**
+   * Get the class name for the focus circle.
+   * @param channel The name of the channel.
+   */
   getChannelCircleClassName(channel: string) {
     return 'circle' + '-' + channel;
   }
 
+  /**
+   * Get the class name for the focus text.
+   * @param channel The name of the channel.
+   */
   getFocusTextClassName(channel: string) {
     return 'focus-text' + '-' + channel;
   }
 
+  /**
+   * Get the global max and min time for all channels
+   */
   getTimeRange() {
     let min, max;
     for (const recordsOneChannel of this.records) {
@@ -426,6 +456,10 @@ export class ChartComponent implements OnInit, OnDestroy {
     }
     return [min, max] as number[];
   }
+
+  /**
+   * Get the global max and min value for all channels
+   */
   getValueRange() {
     let min, max;
     for (const recordsOneChannel of this.records) {
@@ -438,6 +472,10 @@ export class ChartComponent implements OnInit, OnDestroy {
     return [min, max] as number[];
   }
 
+  /**
+   * Shows or hides the channel when toggle the checkbox.
+   * @param event The channel name and to show or to hide.
+   */
   showLine(event: [string, boolean]) {
     if (event[1]) {
       this.svgLine

@@ -38,8 +38,9 @@ export class HttpService {
   constructor(private readonly http: HttpClient) {}
 
   /**
-   *
+   * Returns an observable that retrieves the data from server.
    * @param path The http endpoint.
+   * @param filename The file name for the experiment.
    * @param strategy Strategy used for downsampling.
    * @param timespan A time range in which user wish to see the records.
    */
@@ -57,7 +58,12 @@ export class HttpService {
         .set('end', timespan ? '' + Math.floor(timespan[1]) : null),
     });
   }
-
+  /**
+   * Requests the server to do first-level downsampling.
+   * @param path The http endpoint.
+   * @param filename The file name for the experiment.
+   * @param rate The frequency for downsampling.
+   */
   preprocess(path: string, filename: string, rate: number) {
     return this.http.get([this.url, this.port].join(':') + path, {
       params: new HttpParams()

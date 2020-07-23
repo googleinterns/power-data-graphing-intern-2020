@@ -23,6 +23,8 @@ import {
 } from '../services/http.service';
 import { Record } from './record';
 
+const TEST_START_TIME = 1573149236356988;
+
 const getMaxMin = (records: number[]) => {
   return [
     records.reduce((left, right) => (left < right ? left : right)),
@@ -30,24 +32,23 @@ const getMaxMin = (records: number[]) => {
   ];
 };
 
-const generateSingleChannelData = (length: number) => {
-  const recordsData: [number, number][] = [];
+/**
+ * Generate records of random values, following chronological order.
+ * Records have a arbitrary frequency of 2Hz.
+ * @param length The number of records to be generated.
+ */
+const generateRandomRecords = (length: number) => {
+  const randomRecords: [number, number][] = [];
   for (let index = 0; index < length; index++) {
-    recordsData.push([1573149236356988 + index * 2000, Math.random() * 500]);
+    randomRecords.push([TEST_START_TIME + index * 2000, Math.random() * 500]);
   }
-  const channelData: RecordsResponse[] = [];
-  channelData.push({ name: 'sys', data: recordsData });
-  return channelData;
+  return randomRecords;
 };
 
-const generateMultiChannelData = (length: number) => {
+const generateTestData = (channels: string[], length: number) => {
   const channelData: RecordsResponse[] = [];
-  const channels = ['SYS', 'PPX_ASYS', 'PP1800_SOC'];
   for (const channel of channels) {
-    const recordsData: [number, number][] = [];
-    for (let index = 0; index < length; index++) {
-      recordsData.push([1573149236356988 + index * 2000, Math.random() * 500]);
-    }
+    const recordsData = generateRandomRecords(length);
     channelData.push({ name: channel, data: recordsData });
   }
   return channelData;
@@ -58,8 +59,11 @@ describe('ChartComponent', () => {
   let fixture: ComponentFixture<ChartComponent>;
   let httpServiceSpy: jasmine.SpyObj<HttpService>;
 
-  const testRecordsSingleChannel = generateSingleChannelData(100);
-  const testRecordsMultipleChannel = generateMultiChannelData(20);
+  const testRecordsSingleChannel = generateTestData(['sys'], 100);
+  const testRecordsMultipleChannel = generateTestData(
+    ['SYS', 'PPX_ASYS', 'PP1800_SOC'],
+    20
+  );
 
   beforeEach(async(() => {
     httpServiceSpy = jasmine.createSpyObj('HttpService', ['getRecords']);
@@ -116,7 +120,8 @@ describe('ChartComponent', () => {
 
   it('updateChartDomain should update chart in accord with this.records', () => {
     // Generate new records
-    const newTestRecords = generateSingleChannelData(600);
+    const newTestRecords = generateTestData(['sys'], 600);
+
     const formattedNewTestRecords = newTestRecords[0].data.map((record) => {
       return {
         time: record[0],
@@ -177,7 +182,7 @@ describe('ChartComponent', () => {
     component.showLine(['sys', true]);
     expect(
       +component['svgLine'].selectAll('.line-sys').attr('opacity')
-    ).toEqual(0.4);
+    ).toEqual(0.6);
   });
 
   it('getValueRange should get max and min value on data with attribute show of true', () => {

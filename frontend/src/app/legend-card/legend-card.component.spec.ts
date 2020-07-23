@@ -27,9 +27,6 @@ describe('LegendCardComponent', () => {
     color: 'red',
     show: true,
     name: 'sys',
-    focusDate: '',
-    focusPower: '',
-    focusTime: '',
   };
 
   beforeEach(async(() => {

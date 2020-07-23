@@ -29,12 +29,38 @@
 .chart-header-left .selector {
   margin-right: 5px;
 }
+.chart-header-right {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  width: 100%;
+}
 
 .legends-container {
   margin: 5px 10px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+}
+
+.legends-container table {
+  width: 100%;
+}
+.legends-container tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+.mouse-date {
+  height: auto;
+  margin: 5px;
+  width: 200px;
+}
+.mouse-date-container {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  height: 50px;
+  justify-content: center;
 }
 
 .spinner {
@@ -54,32 +80,4 @@
 }
 .y-axis path .y-axis line {
   shape-rendering: crispEdges;
-}
-
-.mouse-date {
-  height: auto;
-  margin: 5px;
-  width: 200px;
-}
-.mouse-date-container {
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  height: 50px;
-  justify-content: center;
-}
-
-.chart-header-right {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-}
-
-.legends-container tr:nth-child(even) {
-  background-color: #dddddd;
-}
-
-.legends-container table {
-  width: 100%;
 }
