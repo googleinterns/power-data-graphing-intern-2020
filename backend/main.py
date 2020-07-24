@@ -62,20 +62,5 @@ def get_data():
     return jsonify(data)
 
 
-@app.route('/preprocessing')
-def preprocessing():
-    """HTTP endpoint to preprocess data.
-
-    Preprocess data for all strategy and save results locally,
-    each strategy in a file.
-    """
-    name = request.args.get('name', type=str)
-    rate = request.args.get('name', type=int)
-    success = downsample.preprocess(name, rate)
-    if success:
-        return 'Preprocessing Successful!', 200
-    return 'Preprocessing Incomplete', 400
-
-
 if __name__ == '__main__':
     app.run(port=5000)
