@@ -38,7 +38,7 @@ jobs:
 
       # Install python3-venv
       - name: install python3-venv
-        run: apt-get update && sudo apt-get install python3-venv
+        run: sudo apt-get install python3-venv
 
       # Create virtual env
       - name: create virtual env
