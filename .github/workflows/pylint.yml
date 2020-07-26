@@ -37,16 +37,16 @@ jobs:
         run: sudo apt-get install python3-pip
 
       # Install python3-venv
-      - name: install python3-venv
-        run: sudo apt-get install python3-venv
+      # - name: install python3-venv
+      #   run: sudo apt-get install python3-venv
 
-      # Create virtual env
-      - name: create virtual env
-        run: python3 -m venv venv
+      # # Create virtual env
+      # - name: create virtual env
+      #   run: python3 -m venv venv
 
-      # Activate virtual env
-      - name: activate virtual env
-        run: source venv/bin/activate
+      # # Activate virtual env
+      # - name: activate virtual env
+      #   run: source venv/bin/activate
 
       # Install wheel
       - name: install wheel
