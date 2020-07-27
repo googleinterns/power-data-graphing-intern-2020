@@ -1,28 +1,9 @@
-.legends {
-  display: flex;
-  flex-direction: column;
-  height: auto;
+$small-font: 14px;
+
+.legend-checkbox {
+  font-size: $small-font;
 }
 
-.channel-metrics {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  justify-content: center;
-  margin: 10px 5px;
-  width: 300px;
-}
-
-.numbers-section {
-  display: flex;
-  flex-direction: row;
-}
-
-.numbers-column {
-  display: flex;
-  flex-direction: column;
-  margin: 5px;
-}
-.toggle-section {
-  color: #f29f05;
+td {
+  font-size: $small-font;
 }

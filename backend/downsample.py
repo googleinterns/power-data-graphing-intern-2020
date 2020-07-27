@@ -18,12 +18,14 @@ Contains all of the downsample strategies. Use downsample(), and
 secondary_downsample() for downsampling records stored in files.
 """
 from collections import defaultdict
+import os
 
 import utils
 
 
-SECOND_TO_MICROSECOND = 1E6
 FLOAT_PRECISION = 4
+SECOND_TO_MICROSECOND = 1E6
+STRATEGIES = ['max', 'min', 'lttb', 'avg']
 
 
 def _triangle_area(point1, point2, point3):
@@ -160,7 +162,7 @@ def _average_downsample(records, max_records):
     result = list()
     for index in range(max_records):
         records_in_timespan = records[index * timespan: (index+1)*timespan]
-        average = [0, 0, records_in_timespan[0][2]]
+        average = [0, 0]
         for record in records_in_timespan:
             average[0] += record[0]
             average[1] += record[1]
@@ -268,3 +270,31 @@ def secondary_downsample(filename, strategy, max_records, start, end):
             })
 
         return downsampled_data
+
+
+def preprocess(filename, max_records_per_second):
+    """Preprocesses raw data from the given filename with all strategies.
+
+    Args:
+        filename: A string that represents filename of raw data.
+        max_records_per_second: An integer that threshold number of records
+            each second after preprocessing.
+
+    Returns:
+        A boolean that represents if successful.
+    """
+    for strategy in STRATEGIES:
+        output_filename = utils.generate_filename_on_strategy(
+            filename, strategy)
+        if os.path.isfile(output_filename):
+            continue
+        data = downsample(
+            filename, strategy, max_records_per_second)
+        data_csv = utils.convert_to_csv(data)
+        if data_csv is None:
+            utils.warning('data_csv is None')
+            return False
+        with open(output_filename, 'w') as filewriter:
+            filewriter.write(data_csv)
+            filewriter.flush()
+    return True

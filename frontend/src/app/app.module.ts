@@ -22,7 +22,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ChartComponent } from './chart/chart.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LegendCardComponent } from './legend-card/legend-card.component';
 
 @NgModule({
@@ -35,7 +35,7 @@ import { LegendCardComponent } from './legend-card/legend-card.component';
     BrowserAnimationsModule,
     MatProgressSpinnerModule,
     MatSelectModule,
-    MatSlideToggleModule,
+    MatCheckboxModule,
   ],
   providers: [],
   bootstrap: [AppComponent],
