@@ -12,10 +12,7 @@
 # limitations under the License.
 # =============================================================================
 
-"""String utilities
-
-A few functions for parsing csv records, get cache file names.
-"""
+"""String and downsample utility functions."""
 
 
 import logging
@@ -96,3 +93,38 @@ def warning(message, *args):
 
 def error(message, *args):
     logging.error(message, *args)
+
+
+def get_line_number(filename):
+    """Reads the given file and returns the number of lines.
+
+    Args:
+        filename: A string for the file name.
+
+    Returns:
+        An integer for the number of lines.
+    """
+    number = 0
+    with open(filename, 'r') as filereader:
+        for _ in filereader:
+            number += 1
+    return number
+
+
+def get_level_name(index):
+    return 'level' + str(index)
+
+
+def get_slice_name(level, index):
+    filename = 's{}.csv'.format(index)
+    return '/'.join([level, filename])
+
+
+def mkdir(path):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+
+# def write_records_to_file(records, filename):
+#     with open(filename, 'w') as filewriter:
+#         if type(records) is defaultdict:

@@ -24,7 +24,7 @@ from downsample import _average_downsample
 from downsample import downsample
 from downsample import _max_min_downsample
 from downsample import secondary_downsample
-from downsample import _strategy_reducer
+from downsample import strategy_reducer
 from utils import convert_to_csv
 
 
@@ -255,15 +255,15 @@ class TestDownsampleClass:
 
     @pytest.mark.parametrize('downsample_factor', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
     def test_strategy_reducer(self, records, downsample_factor):
-        """Tests on _strategy_reducer method, check if right strategy is applied"""
-        assert _strategy_reducer(records, 'max', downsample_factor) == _max_min_downsample(
+        """Tests on strategy_reducer method, check if right strategy is applied"""
+        assert strategy_reducer(records, 'max', downsample_factor) == _max_min_downsample(
             records, True, downsample_factor)
-        assert _strategy_reducer(records, 'min', downsample_factor) == _max_min_downsample(
+        assert strategy_reducer(records, 'min', downsample_factor) == _max_min_downsample(
             records, False, downsample_factor)
-        assert _strategy_reducer(records, 'avg', downsample_factor) == _average_downsample(
+        assert strategy_reducer(records, 'avg', downsample_factor) == _average_downsample(
             records, downsample_factor)
 
-        assert _strategy_reducer(
+        assert strategy_reducer(
             records, 'not_exist', downsample_factor) == []
 
     @pytest.mark.parametrize('max_records', [40, 80, 120, 160, 200])
