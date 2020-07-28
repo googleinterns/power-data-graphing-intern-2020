@@ -87,6 +87,14 @@ def generate_filename_on_strategy(original_filename, strategy):
     return file_path
 
 
+def get_experiment_name(path):
+    parent_path = path.strip(' ').strip(
+        '\n').strip('.csv')
+    experiment_name = parent_path.split('/')[-1]
+    return experiment_name
+    # return parent_path
+
+
 def warning(message, *args):
     logging.warning(message, *args)
 
