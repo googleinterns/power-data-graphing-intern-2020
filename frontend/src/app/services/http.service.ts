@@ -14,13 +14,7 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-
-export enum STRATEGY {
-  AVG = 'avg',
-  LTTB = 'lttb',
-  MAX = 'max',
-  MIN = 'min',
-}
+import { STRATEGY } from '../chart/record';
 
 export interface RecordsResponse {
   data: [number, number][];

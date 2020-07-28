@@ -1,15 +1,9 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
-
-import { HarnessLoader } from '@angular/cdk/testing';
-import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-
 import { LegendCardComponent } from './legend-card.component';
 import { RecordsOneChannel, Record } from '../chart/record';
 import { By } from '@angular/platform-browser';
 
 describe('LegendCardComponent', () => {
-  let loader: HarnessLoader;
   let component: LegendCardComponent;
   let fixture: ComponentFixture<LegendCardComponent>;
 
@@ -37,7 +31,6 @@ describe('LegendCardComponent', () => {
 
   beforeEach(() => {
     fixture = TestBed.createComponent(LegendCardComponent);
-    loader = TestbedHarnessEnvironment.loader(fixture);
     component = fixture.componentInstance;
     component.recordsOneChannel = mockChannel;
     fixture.detectChanges();
@@ -57,7 +50,7 @@ describe('LegendCardComponent', () => {
     expect(component.getAvg()).toEqual((100).toPrecision(3));
   });
 
-  it('check box should emit channel and checked', async () => {
+  it('check box should emit channel and checked', () => {
     component.showChange.subscribe((event: [string, boolean]) => {
       expect(event[0]).toEqual(mockChannel.name);
       expect(event[1]).toEqual(false);

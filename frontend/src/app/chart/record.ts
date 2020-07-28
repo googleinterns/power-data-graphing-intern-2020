@@ -41,3 +41,9 @@ export const COLORS = [
   'Chartreuse',
   'DarkSalmon',
 ];
+
+export enum STRATEGY {
+  AVG = 'avg',
+  MAX = 'max',
+  MIN = 'min',
+}

@@ -15,12 +15,8 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
 import * as d3 from 'd3';
-import {
-  HttpService,
-  STRATEGY,
-  RecordsResponse,
-} from '../services/http.service';
-import { Record, COLORS, RecordsOneChannel } from './record';
+import { HttpService, RecordsResponse } from '../services/http.service';
+import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
 @Component({
   selector: 'main-chart',
   templateUrl: './chart.component.html',

@@ -18,121 +18,42 @@ Contains all of the downsample strategies. Use downsample(), and
 secondary_downsample() for downsampling records stored in files.
 """
 from collections import defaultdict
-import os
+from math import ceil
+from os import path
 
 import utils
 
 
 FLOAT_PRECISION = 4
 SECOND_TO_MICROSECOND = 1E6
-STRATEGIES = ['max', 'min', 'lttb', 'avg']
+STRATEGIES = ['max', 'min', 'avg']
 
 
-def _triangle_area(point1, point2, point3):
-    """Calculates the area of triangle.
-
-    Args:
-        point1: [float, float,] Index of the first point.
-        point2: [float, float,] Index of the second point.
-        point3: [float, float,] Index of the third point.
-
-    Returns:
-        A float number for area.
-    """
-    return abs(point1[0] * point2[1] -
-               point1[1] * point2[0] + point2[0] * point3[1] -
-               point2[1] * point3[0] + point3[0] * point1[1] -
-               point3[1] * point1[0]) / 2
-
-
-def _lttb_downsample(records, max_records):
-    """Downsamples records by triangle area significance.
-
-    Downsamples records and select those of highest significance.
-    The time series to be downsampled is split into buckets of the same number
-    as max_records, then select one record for each bucket.
-    Significance is defined by the area form by the point in the current bucket and
-    records in the left and right bucket.
-    The process goes from left to right, so the left record is chosen already and
-    right record is the average in the right bucket.
-    If a bucket has only one record, choose that record.
-
-    Args:
-        records: A list of records in 1 second.
-        max_records: An integer of the limit of returned records.
-
-    Returns:
-        A list for the downsampled records.
-    """
-    if len(records) <= max_records:
-        return records
-
-    if max_records <= 2:
-        return [records[0], records[-1]][:max_records]
-
-    timespan = (records[-2][0] - records[1][0]) / (max_records - 2)
-    buckets = list()
-
-    start = -float('inf')
-    for index, record in enumerate(records):
-        if index in (0, len(records) - 1):
-            buckets.append([record])
-            continue
-        if record[0] - start > timespan:
-            buckets.append([record])
-            start = record[0]
-        else:
-            buckets[-1].append(record)
-
-    result = list()
-    for index, bucket in enumerate(buckets):
-        if not bucket:
-            continue
-        if len(bucket) == 1:
-            result.append(bucket[0])
-            continue
-
-        # Calculates average in the next bucket
-        next_index = index + 1
-        while not buckets[next_index]:
-            next_index += 1
-        if next_index > len(buckets) - 1:
-            continue
-        next_average = [0, 0]
-        for record in buckets[next_index]:
-            next_average[0] += record[0]
-            next_average[1] += record[1]
-        next_average[0] /= len(buckets[next_index])
-        next_average[1] /= len(buckets[next_index])
-
-        # Select record of highest triangle area in each bucket
-        result.append(
-            max(bucket, key=lambda record, next_average=next_average:
-                _triangle_area(result[-1], record, next_average)))
-    return result
-
-
-def _max_min_downsample(records, is_max, max_records):
+def _max_min_downsample(records, is_max, downsample_factor):
     """Downsamples records by maximum or minimum value.
 
     Args:
-        records: A list representing of records in 1 second.
+        records: A list of records ([time, power, channel]) in 1 second.
         is_max: A boolean indicating if using max or not.
-        max_records: An interger indicating lower sampling rate.
+        downsample_factor: Take one record per "downsample_factor" records.
 
     Returns:
         A list of records with lower sampling rate.
+        Example:
+            [
+                [time,power,channel1],
+                [time,power,channel1],
+                [time,power,channel1]
+            ]
     """
-    if not max_records:
-        return []
-
-    if len(records) <= max_records:
+    if downsample_factor <= 1:
         return records
 
-    timespan = len(records) // max_records
+    number_records = ceil(len(records) / downsample_factor)
     result = list()
-    for index in range(max_records):
-        records_in_timespan = records[index * timespan: (index+1)*timespan]
+    for index in range(number_records):
+        records_in_timespan = records[index *
+                                      downsample_factor: (index+1)*downsample_factor]
         if is_max:
             result.append(
                 max(records_in_timespan, key=lambda record: record[1]))
@@ -142,27 +63,31 @@ def _max_min_downsample(records, is_max, max_records):
     return result
 
 
-def _average_downsample(records, max_records):
+def _average_downsample(records, downsample_factor):
     """Downsamples records by average value.
 
     Args:
-        records: A list representing of records in 1 second.
-        max_records: An interger representing limit of returned records.
+        records: A list of records ([time, power, channel]) in 1 second.
+        downsample_factor: Take one record per "downsample_factor" records.
 
     Returns:
         A list of downsampled records.
+        Example:
+            [
+                [time,power,channel1],
+                [time,power,channel1],
+                [time,power,channel1]
+            ]
     """
-    if not max_records:
-        return []
-
-    if len(records) <= max_records:
+    if downsample_factor <= 1:
         return records
 
-    timespan = len(records) // max_records
+    number_records = ceil(len(records) / downsample_factor)
     result = list()
-    for index in range(max_records):
-        records_in_timespan = records[index * timespan: (index+1)*timespan]
-        average = [0, 0]
+    for index in range(number_records):
+        records_in_timespan = records[index *
+                                      downsample_factor: (index+1)*downsample_factor]
+        average = [0, 0, records_in_timespan[0][2]]
         for record in records_in_timespan:
             average[0] += record[0]
             average[1] += record[1]
@@ -176,35 +101,38 @@ def _average_downsample(records, max_records):
     return result
 
 
-def _strategy_reducer(records, strategy, max_records):
+def strategy_reducer(records, strategy, downsample_factor):
     """Applies relative downsample function to the records, based on strategy string.
 
     Args:
-        records: A list of records.
+        records: A list of records ([time, power, channel]).
         strategy: A string representing downsampling strategy.
-        max_records: An interger representing number of records to return.
+        downsample_factor: Take one record per "downsample_factor" records.
 
     Returns:
         A list of downsampled records with number under max_records.
+        Example:
+            [
+                [time,power,channel1],
+                [time,power,channel1],
+                [time,power,channel1]
+            ]
     """
     if strategy == 'max':
         res = _max_min_downsample(
-            records, is_max=True, max_records=max_records)
+            records, is_max=True, downsample_factor=downsample_factor)
     elif strategy == 'min':
         res = _max_min_downsample(
-            records, is_max=False, max_records=max_records)
+            records, is_max=False, downsample_factor=downsample_factor)
     elif strategy == 'avg':
         res = _average_downsample(
-            records, max_records=max_records)
-    elif strategy == 'lttb':
-        res = _lttb_downsample(
-            records, max_records=max_records)
+            records, downsample_factor=downsample_factor)
     else:
         res = list()
     return res
 
 
-def downsample(filename, strategy, max_records_per_second):
+def downsample(filename, strategy, frequency):
     """Reads the raw data file and downsample with the given strategy.
 
     Assume the records file is on local disk, read the records and
@@ -213,26 +141,42 @@ def downsample(filename, strategy, max_records_per_second):
     Args:
         filename: A string representing name of the records file.
         strategy: A string representing downsampling strategy.
-        max_records_per_second: An interger representing number of records to save per second.
+        frequency: An interger representing number of records to save per second.
 
     Returns:
         A list of the downsampled data in the given file.
+        Example:
+            [
+                [time,power,channel1],
+                [time,power,channel1],
+                [time,power,channel2]
+            ]
     """
     data = list()
 
     with open(filename, 'r') as filereader:
-        store_per_second = list()
+        store_per_second = defaultdict(list)
+        time = None
         for line in filereader:
-            store_per_second.append(utils.parse_csv_line(line))
-            if store_per_second[-1][0] - store_per_second[0][0] >= SECOND_TO_MICROSECOND:
-                downsampled_records = _strategy_reducer(
-                    store_per_second, strategy, max_records_per_second)
-                data.extend(downsampled_records)
-                store_per_second = list()
-        store_last_second = _strategy_reducer(
-            store_per_second, strategy, max_records_per_second)
-        data.extend(store_last_second)
-    return data
+            record = utils.parse_csv_line(line)
+            store_per_second[record[2]].append(record)
+            if time is None or record[0] - time >= SECOND_TO_MICROSECOND:
+                for channel in store_per_second.keys():
+                    downsample_factor = ceil(len(
+                        store_per_second[channel]) / frequency)
+                    downsampled_records = strategy_reducer(
+                        store_per_second[channel], strategy, downsample_factor)
+                    data.extend(downsampled_records)
+                store_per_second = defaultdict(list)
+                time = record[0]
+        for channel in store_per_second.keys():
+            downsample_factor = ceil(len(
+                store_per_second[channel]) / frequency)
+            downsampled_records = strategy_reducer(
+                store_per_second[channel], strategy, downsample_factor)
+            data.extend(downsampled_records)
+    timely_data = sorted(data, key=lambda record: record[0])
+    return timely_data
 
 
 def secondary_downsample(filename, strategy, max_records, start, end):
@@ -250,7 +194,22 @@ def secondary_downsample(filename, strategy, max_records, start, end):
         end: An interger representing the end of timespan.
 
     Returns:
-        Downsampled data in the given file.
+        A list of downsampled data in the given file.
+        Example:
+            [
+                {
+                    'name':'sys',
+                    'data':[
+                        [time,power],
+                        [time,power]
+                    ]},
+                {
+                    'name': 'channel2',
+                    'data': [
+                        [time,power]
+                    ]
+                }
+            ]
     """
     downsampled_data = list()
 
@@ -262,8 +221,9 @@ def secondary_downsample(filename, strategy, max_records, start, end):
                 store[record[2]].append(record)
 
         for channel in store.keys():
-            downsampled_one_channel = _strategy_reducer(
-                store[channel], strategy, max_records)
+            downsample_factor = ceil(len(store[channel]) / max_records)
+            downsampled_one_channel = strategy_reducer(
+                store[channel], strategy, downsample_factor)
             downsampled_data.append({
                 'name': channel,
                 'data': [[record[0], record[1]] for record in downsampled_one_channel]
@@ -272,12 +232,12 @@ def secondary_downsample(filename, strategy, max_records, start, end):
         return downsampled_data
 
 
-def preprocess(filename, max_records_per_second):
+def preprocess(filename, frequency):
     """Preprocesses raw data from the given filename with all strategies.
 
     Args:
         filename: A string that represents filename of raw data.
-        max_records_per_second: An integer that threshold number of records
+        frequency: An integer that threshold number of records
             each second after preprocessing.
 
     Returns:
@@ -286,10 +246,10 @@ def preprocess(filename, max_records_per_second):
     for strategy in STRATEGIES:
         output_filename = utils.generate_filename_on_strategy(
             filename, strategy)
-        if os.path.isfile(output_filename):
+        if path.isfile(output_filename):
             continue
         data = downsample(
-            filename, strategy, max_records_per_second)
+            filename, strategy, frequency)
         data_csv = utils.convert_to_csv(data)
         if data_csv is None:
             utils.warning('data_csv is None')
