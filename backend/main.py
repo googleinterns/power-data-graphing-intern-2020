@@ -27,7 +27,7 @@ import downsample
 import multiple_level_downsample as mld
 
 NUMBER_OF_RECORDS_PER_REQUEST = 600
-NUMBER_OF_RECORDS_PER_SECOND = 2000
+NUMBER_OF_RECORDS_PER_SECOND = 10000
 FLOAT_PRECISION = 4
 
 DOWNSAMPLE_LEVEL_FACTOR = 100
@@ -64,6 +64,7 @@ def get_data():
 
     # data = downsample.secondary_downsample(
     #     preprocess_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
+
     experiment = utils.get_experiment_name(name)
     preprocess_metadata = '/'.join([PREPROCESS_DIR, experiment,
                                     strategy, 'metadata.json'])
@@ -72,10 +73,13 @@ def get_data():
         mld.multilevel_preprocess(name, PREPROCESS_DIR, NUMBER_OF_RECORDS_PER_SLICE,
                                   DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
 
-    data = mld.multilevel_inference(
+    data, precision = mld.multilevel_inference(
         name, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
-
-    return jsonify(data)
+    response = {
+        'data': data,
+        'precision': precision
+    }
+    return jsonify(response)
 
 
 if __name__ == '__main__':

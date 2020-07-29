@@ -16,26 +16,33 @@
 
 <div class="chart-header">
   <div class="chart-header-left">
-    <mat-form-field class="selector">
-      <mat-label>Select a downsample strategy</mat-label>
-      <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
-        <mat-option *ngFor="let s of strategyType | keyvalue" [value]="s.value"
-          >{{ s.key }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+    <mat-card>
+      <mat-form-field class="selector">
+        <mat-label>Select a downsample strategy</mat-label>
+        <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
+          <mat-option
+            *ngFor="let s of strategyType | keyvalue"
+            [value]="s.value"
+            >{{ s.key }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
 
-    <mat-form-field class="selector">
-      <mat-label>Select a file to view</mat-label>
-      <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
-        <mat-option value="DMM_result_single_channel.csv">
-          DMM_result_single_channel.csv
-        </mat-option>
-        <mat-option value="DMM_result_multiple_channel.csv">
-          DMM_result_multiple_channel.csv
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+      <mat-form-field class="selector">
+        <mat-label>Select a file to view</mat-label>
+        <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
+          <mat-option value="rand.csv">
+            rand.csv
+          </mat-option>
+          <mat-option value="DMM_result_single_channel.csv">
+            DMM_result_single_channel.csv
+          </mat-option>
+          <mat-option value="DMM_result_multiple_channel.csv">
+            DMM_result_multiple_channel.csv
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-card>
   </div>
   <div class="chart-header-right">
     <mat-spinner
@@ -45,6 +52,7 @@
       class="spinner"
     >
     </mat-spinner>
+    <mat-card> Precision: {{ precision }}</mat-card>
   </div>
 </div>
 

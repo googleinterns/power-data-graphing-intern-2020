@@ -15,7 +15,11 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
 import * as d3 from 'd3';
-import { HttpService, RecordsResponse } from '../services/http.service';
+import {
+  HttpService,
+  RecordsResponse,
+  ResponseData,
+} from '../services/http.service';
 import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
 @Component({
   selector: 'main-chart',
@@ -35,7 +39,8 @@ export class ChartComponent implements OnInit, OnDestroy {
   subscription: Subscription;
 
   // Data related variable
-  filename = 'DMM_result_multiple_channel.csv';
+  filename = 'rand.csv';
+  precision: string;
   loading = false;
   number = 600;
   records: RecordsOneChannel[] = [];
@@ -67,7 +72,8 @@ export class ChartComponent implements OnInit, OnDestroy {
     const timeFormat = d3.timeFormat('%M:%S.%L');
 
     const upperDate = timeParse(Math.floor(time / 1000).toString());
-    const formattedTime = timeFormat(upperDate);
+    const formattedTime =
+      timeFormat(upperDate) + '.' + Math.floor((time % 1000) / 100).toString();
     return formattedTime;
   };
 
@@ -86,10 +92,10 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.subscription = this.service
       .getRecords('/data', this.filename, this.strategy, timespan)
-      .subscribe((response: RecordsResponse[]) => {
+      .subscribe((response: RecordsResponse) => {
         if (this.records.length === 0) {
-          this.records = response.map(
-            (channel: RecordsResponse, index: number) => {
+          this.records = response.data.map(
+            (channel: ResponseData, index: number) => {
               const recordsOneChannel = {
                 color: COLORS[index],
                 data: channel.data.map((d: [number, number]) => {
@@ -107,7 +113,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         } else {
           for (const recordsOneChannel of this.records) {
             let newDataArrived = false;
-            for (const channel of response) {
+            for (const channel of response.data) {
               if (recordsOneChannel.name !== channel.name) continue;
               newDataArrived = true;
               recordsOneChannel.data = channel.data.map(
@@ -124,6 +130,7 @@ export class ChartComponent implements OnInit, OnDestroy {
             }
           }
         }
+        this.precision = +(response.precision * 100).toPrecision(5) + '%';
         this.loading = false;
         this.updateChartDomain();
       });

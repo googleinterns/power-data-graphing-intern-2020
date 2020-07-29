@@ -17,6 +17,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { STRATEGY } from '../chart/record';
 
 export interface RecordsResponse {
+  precision: number;
+  data: ResponseData[];
+}
+
+export interface ResponseData {
   data: [number, number][];
   name: string;
 }
