@@ -19,9 +19,8 @@ secondary_downsample() for downsampling records stored in files.
 """
 from collections import defaultdict
 from math import ceil
-from os import path
 
-import utils
+from utils import parse_csv_line
 
 
 FLOAT_PRECISION = 4
@@ -158,7 +157,7 @@ def downsample(filename, strategy, frequency):
         store_per_second = defaultdict(list)
         time = None
         for line in filereader:
-            record = utils.parse_csv_line(line)
+            record = parse_csv_line(line)
             store_per_second[record[2]].append(record)
             if time is None or record[0] - time >= SECOND_TO_MICROSECOND:
                 for channel in store_per_second.keys():
@@ -177,84 +176,3 @@ def downsample(filename, strategy, frequency):
             data.extend(downsampled_records)
     timely_data = sorted(data, key=lambda record: record[0])
     return timely_data
-
-
-def secondary_downsample(filename, strategy, max_records, start, end):
-    """Reads the preprocessing file and downsample with the given strategy for HTTP request.
-
-    Assume the records file is on local disk, read the records and downsample the records
-    to be within max records.
-    Optional arguments start and end to specify a timespan in which records must be laid.
-
-    Args:
-        filename: A string representing name of the records file.
-        strategy: A string representing downsampling strategy.
-        max_records: An interger representing number of records to return.
-        start: An interger representing start of timespan.
-        end: An interger representing the end of timespan.
-
-    Returns:
-        A list of downsampled data in the given file.
-        Example:
-            [
-                {
-                    'name':'sys',
-                    'data':[
-                        [time,power],
-                        [time,power]
-                    ]},
-                {
-                    'name': 'channel2',
-                    'data': [
-                        [time,power]
-                    ]
-                }
-            ]
-    """
-    downsampled_data = list()
-
-    with open(filename, 'r') as filereader:
-        store = defaultdict(list)
-        for line in filereader.readlines():
-            record = utils.parse_csv_line(line)
-            if (start is None or start <= record[0]) and (end is None or record[0] <= end):
-                store[record[2]].append(record)
-
-        for channel in store.keys():
-            downsample_factor = ceil(len(store[channel]) / max_records)
-            downsampled_one_channel = strategy_reducer(
-                store[channel], strategy, downsample_factor)
-            downsampled_data.append({
-                'name': channel,
-                'data': [[record[0], record[1]] for record in downsampled_one_channel]
-            })
-
-        return downsampled_data
-
-
-def preprocess(filename, frequency):
-    """Preprocesses raw data from the given filename with all strategies.
-
-    Args:
-        filename: A string that represents filename of raw data.
-        frequency: An integer that threshold number of records
-            each second after preprocessing.
-
-    Returns:
-        A boolean that represents if successful.
-    """
-    for strategy in STRATEGIES:
-        output_filename = utils.generate_filename_on_strategy(
-            filename, strategy)
-        if path.isfile(output_filename):
-            continue
-        data = downsample(
-            filename, strategy, frequency)
-        data_csv = utils.convert_to_csv(data)
-        if data_csv is None:
-            utils.warning('data_csv is None')
-            return False
-        with open(output_filename, 'w') as filewriter:
-            filewriter.write(data_csv)
-            filewriter.flush()
-    return True
