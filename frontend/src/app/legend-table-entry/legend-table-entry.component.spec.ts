@@ -1,11 +1,11 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { LegendCardComponent } from './legend-card.component';
+import { LegendTableEntryComponent } from './legend-table-entry.component';
 import { RecordsOneChannel, Record } from '../chart/record';
 import { By } from '@angular/platform-browser';
 
 describe('LegendCardComponent', () => {
-  let component: LegendCardComponent;
-  let fixture: ComponentFixture<LegendCardComponent>;
+  let component: LegendTableEntryComponent;
+  let fixture: ComponentFixture<LegendTableEntryComponent>;
 
   const mockRecords: Record[] = [
     { time: 1, value: 200 },
@@ -25,12 +25,12 @@ describe('LegendCardComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [LegendCardComponent],
+      declarations: [LegendTableEntryComponent],
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(LegendCardComponent);
+    fixture = TestBed.createComponent(LegendTableEntryComponent);
     component = fixture.componentInstance;
     component.recordsOneChannel = mockChannel;
     fixture.detectChanges();

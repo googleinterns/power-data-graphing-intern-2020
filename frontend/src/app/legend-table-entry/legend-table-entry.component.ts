@@ -3,11 +3,11 @@ import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { RecordsOneChannel } from '../chart/record';
 
 @Component({
-  selector: 'tr[legend-card]',
-  templateUrl: './legend-card.component.html',
-  styleUrls: ['./legend-card.component.scss'],
+  selector: 'tr[legend-table-entry]',
+  templateUrl: './legend-table-entry.component.html',
+  styleUrls: ['./legend-table-entry.component.scss'],
 })
-export class LegendCardComponent {
+export class LegendTableEntryComponent {
   @Input() recordsOneChannel: RecordsOneChannel;
   @Output() showChange = new EventEmitter<[string, boolean]>();
 

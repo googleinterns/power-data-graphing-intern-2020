@@ -23,10 +23,10 @@ import { ChartComponent } from './chart/chart.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { LegendCardComponent } from './legend-card/legend-card.component';
+import { LegendTableEntryComponent } from './legend-table-entry/legend-table-entry.component';
 
 @NgModule({
-  declarations: [AppComponent, ChartComponent, LegendCardComponent],
+  declarations: [AppComponent, ChartComponent, LegendTableEntryComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,

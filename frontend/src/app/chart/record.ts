@@ -25,6 +25,7 @@ export interface RecordsOneChannel {
   show: boolean;
   data: Record[];
   name: string;
+  focusPower: number;
 }
 
 export const COLORS = [
