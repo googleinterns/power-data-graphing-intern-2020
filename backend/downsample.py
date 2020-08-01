@@ -159,7 +159,9 @@ def downsample(filename, strategy, frequency):
         for line in filereader:
             record = parse_csv_line(line)
             store_per_second[record[2]].append(record)
-            if time is None or record[0] - time >= SECOND_TO_MICROSECOND:
+            if time is None:
+                time = time = record[0]
+            if record[0] - time >= SECOND_TO_MICROSECOND:
                 for channel in store_per_second.keys():
                     downsample_factor = ceil(len(
                         store_per_second[channel]) / frequency)

@@ -62,6 +62,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   private yScale: d3.ScaleLinear<number, number>;
 
   // Chart size constants
+  isLeft = true;
   animationDuration = 500;
   chartHeight = 500;
   chartMargin = 70;
@@ -116,7 +117,7 @@ export class ChartComponent implements OnInit, OnDestroy {
                 }),
                 name: channel.name,
                 show: true,
-                focusPower: null,
+                focusPower: 'N/A',
               };
               return recordsOneChannel;
             }
@@ -138,6 +139,9 @@ export class ChartComponent implements OnInit, OnDestroy {
             }
             if (!newDataArrived) {
               recordsOneChannel.data = [];
+              recordsOneChannel.focusPower = 'N/A';
+              this.mouseDate = '';
+              this.mouseTime = '';
             }
           }
         }
@@ -274,13 +278,17 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('y', this.yScale(selectedData.value) - this.chartPadding)
           .text(selectedData.value.toString());
 
-        recordsOneChannel.focusPower = selectedData.value;
+        recordsOneChannel.focusPower = selectedData.value.toString();
         this.mouseDate = dateFormat(upperDate);
         this.mouseTime =
           timeFormat(upperDate) + '.' + Math.floor(mouseFocus % 1000);
       }
-      const mid = (this.xScale.domain()[1] + this.xScale.domain()[0]) / 2;
-      this.setLegend(mouseFocus < mid);
+      const duration = this.xScale.domain()[1] - this.xScale.domain()[0];
+      if (mouseFocus < this.xScale.domain()[0] + duration / 4)
+        this.isLeft = true;
+      if (mouseFocus > this.xScale.domain()[0] + (duration * 3) / 4)
+        this.isLeft = false;
+      this.setLegend();
     };
 
     const removeFocus = () => {
@@ -313,7 +321,10 @@ export class ChartComponent implements OnInit, OnDestroy {
           this.chartHeight - this.chartMargin,
         ],
       ])
-      .on('end', this.interactChart.bind(this))
+      .on('end', () => {
+        this.interactChart.bind(this)();
+        removeFocus();
+      })
       .on('brush', mousemove);
 
     // Mouse over displaying text
@@ -334,6 +345,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   interactChart() {
     const extent = d3.event.selection;
     if (!extent) return;
+
     const selectedTimeSpan = [
       this.xScale.invert(extent[0]),
       this.xScale.invert(extent[1]),
@@ -343,6 +355,9 @@ export class ChartComponent implements OnInit, OnDestroy {
 
     // Update axis, line and area position, and load new data with the range
     this.zoomIn = true;
+
+    if (selectedTimeSpan[0] >= selectedTimeSpan[1]) return;
+
     this.loadRecords(selectedTimeSpan);
 
     this.svgChart.on('dblclick', () => {
@@ -355,7 +370,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   /**
    * Sets text and labels of side legend
    */
-  setLegend(isLeft: boolean) {
+  setLegend() {
     const legendText: string[] = [];
     const legendLabels: string[] = [];
     for (const recordsOnechannel of this.records) {
@@ -378,18 +393,18 @@ export class ChartComponent implements OnInit, OnDestroy {
       legendText.length * (this.labelSize + this.labelPadding) +
       this.labelPadding * 2;
 
-    const backgroundX = isLeft
+    const backgroundX = this.isLeft
       ? this.chartWidth - this.chartMargin - backgroundWidth
       : this.chartMargin + this.chartPadding;
     const backgroundY = 100;
 
-    const labelX = isLeft
+    const labelX = this.isLeft
       ? this.chartWidth -
         this.chartMargin -
         this.chartPadding -
         this.labelPadding
       : this.chartMargin + this.chartPadding + this.labelPadding * 2;
-    const labelTextX = isLeft
+    const labelTextX = this.isLeft
       ? this.chartWidth -
         this.chartMargin -
         this.chartPadding -
@@ -445,7 +460,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       )
       .attr('font-size', this.labelSize + 'px')
       .text((d: string) => d)
-      .attr('text-anchor', isLeft ? 'end' : 'start');
+      .attr('text-anchor', this.isLeft ? 'end' : 'start');
   }
 
   /**
@@ -467,7 +482,6 @@ export class ChartComponent implements OnInit, OnDestroy {
       .call(d3.axisLeft(this.yScale).tickFormat(d3.format('.3')));
 
     for (const recordsOneChannel of this.records) {
-      if (!recordsOneChannel.show) continue;
       if (!this.lines[recordsOneChannel.name]) {
         // Initialize focus line.
         const line = d3
@@ -514,6 +528,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('d', this.lines[recordsOneChannel.name]);
       }
     }
+    this.setLegend();
   }
 
   /**

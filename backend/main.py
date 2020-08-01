@@ -66,8 +66,8 @@ def get_data():
     #     preprocess_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
 
     experiment = utils.get_experiment_name(name)
-    preprocess_metadata = '/'.join([PREPROCESS_DIR, experiment,
-                                    strategy, 'metadata.json'])
+    preprocess_metadata = '/'.join([PREPROCESS_DIR,
+                                    experiment, 'metadata.json'])
     if not os.path.isfile(preprocess_metadata):
 
         mld.multilevel_preprocess(name, PREPROCESS_DIR, NUMBER_OF_RECORDS_PER_SLICE,
