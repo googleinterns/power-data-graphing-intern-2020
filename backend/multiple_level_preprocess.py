@@ -417,6 +417,16 @@ def raw_preprocess(metadata,
 
 
 def read_records(target_slices, start, end):
+    """Reads records from given slices that are in the range.
+
+    Args:
+        target_slices: A list of string of slice names to read.
+        start: An int of the start time.
+        end: An int of the end time
+
+    Returns:
+        A list of records.
+    """
     data = defaultdict(list)
     for slice_path in target_slices:
         with open(slice_path, 'r') as filereader:
