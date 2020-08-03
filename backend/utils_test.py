@@ -18,6 +18,8 @@ import pytest
 
 from utils import convert_to_csv
 from utils import generate_filename_on_strategy
+from utils import get_experiment_name
+from utils import get_slice_path
 from utils import parse_csv_line
 
 
@@ -81,3 +83,29 @@ class TestUtilsClass:
         assert generate_filename_on_strategy(filename, 'min') == filename_min
         assert generate_filename_on_strategy(filename, 'avg') == filename_avg
         assert generate_filename_on_strategy(filename, 'lttb') == filename_lttb
+
+    @pytest.mark.parametrize('root_dir,level,level_slice,strategy,exp',
+                             [
+                                 ('tmp', 0, 0, None, 'tmp/level0/s0.csv'),
+                                 ('tmp', 0, 1, None, 'tmp/level0/s1.csv'),
+                                 ('tmp', 10, 'level1/s0.csv',
+                                  'max', 'tmp/max/level1/s0.csv'),
+                                 ('tmp', 10, 10,
+                                  'max', 'tmp/max/level10/s10.csv'),
+                                 ('tmp', 'level11', 10,
+                                  'max', 'tmp/max/level11/s10.csv'),
+                             ])
+    def test_get_slice_path(self, root_dir, level, level_slice, strategy, exp):
+        """Tests get_slice_path on different levels."""
+        result = get_slice_path(root_dir, level, level_slice, strategy)
+        assert result == exp
+
+    @pytest.mark.parametrize('filename,experiment', [
+        ('tmp/1.csv', '1'),
+        ('bin/tmp/1.csv', '1'),
+        ('tmp/name', 'name'),
+        ('name.csv', 'name'),
+    ])
+    def test_get_experiment_name(self, filename, experiment):
+        result = get_experiment_name(filename)
+        assert result == experiment

@@ -22,9 +22,13 @@ from flask import request
 from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
-import utils
-import downsample
-import multiple_level_downsample as mld
+
+from downsample import STRATEGIES
+from multiple_level_preprocess import multilevel_inference
+from multiple_level_preprocess import multilevel_preprocess
+from utils import error
+from utils import get_experiment_name
+
 
 NUMBER_OF_RECORDS_PER_REQUEST = 600
 NUMBER_OF_RECORDS_PER_SECOND = 10000
@@ -51,29 +55,18 @@ def get_data():
     strategy = request.args.get('strategy', default='avg', type=str)
     start = request.args.get('start', default=None, type=int)
     end = request.args.get('end', default=None, type=int)
-    if not strategy in downsample.STRATEGIES:
-        utils.error('Incorrect Strategy: %s', strategy)
+    if not strategy in STRATEGIES:
+        error('Incorrect Strategy: %s', strategy)
         return 'Incorrect Strategy', 400
 
-    # Old approach
-    # preprocess_filename = utils.generate_filename_on_strategy(
-    #     name, strategy)
-
-    # if not os.path.isfile(preprocess_filename):
-    #     downsample.preprocess(name, NUMBER_OF_RECORDS_PER_SECOND)
-
-    # data = downsample.secondary_downsample(
-    #     preprocess_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
-
-    experiment = utils.get_experiment_name(name)
+    experiment = get_experiment_name(name)
     preprocess_metadata = '/'.join([PREPROCESS_DIR,
                                     experiment, 'metadata.json'])
     if not os.path.isfile(preprocess_metadata):
+        multilevel_preprocess(name, PREPROCESS_DIR, NUMBER_OF_RECORDS_PER_SLICE,
+                              DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
 
-        mld.multilevel_preprocess(name, PREPROCESS_DIR, NUMBER_OF_RECORDS_PER_SLICE,
-                                  DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
-
-    data, precision = mld.multilevel_inference(
+    data, precision = multilevel_inference(
         name, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
     response = {
         'data': data,

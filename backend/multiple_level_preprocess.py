@@ -12,7 +12,7 @@
 # limitations under the License.
 # =============================================================================
 
-"""Multiple-level downsampling module."""
+"""Multiple-level preprocess module."""
 
 from collections import defaultdict
 from math import ceil
@@ -32,235 +32,6 @@ STRATEGIES = ['max', 'min', 'avg']
 UNIX_TIMESTAMP_LENGTH = 16
 
 TEST_FILENAME = 'rand.csv'
-
-
-def _preprocess_single_startegy(metadata,
-                                root_dir,
-                                strategy,
-                                number_per_slice,
-                                downsample_level_factor):
-    """Downsamples given data by the defined levels and strategy.
-
-    Preprocesses the raw data with the given downsanpling startegy.
-    Raw data is downsampeld to a set of levels of different downsample rate,
-    data of each level broken down to small slices of constant size.
-    Number of levels is determined by if number of records in the highest level
-    reaches minimum_number_level.
-    Info regarding levels and slices is kept in a metadata json file.
-
-    Args:
-        metadata: A dict that has metadata for downsample levels in dict type.
-        root_dir: A string that represents the name of the directory containing
-            the preprocess files.
-        strategy: A string representing downsampling strategy.
-        number_per_slice: An int that represents number of records for one slice.
-        downsample_level_factor: An int that represents downsample factor between levels.
-    """
-    if len(metadata['levels']['names']) <= 1:
-        return
-    prev_level = metadata['levels']['names'][0]
-    for curr_level in metadata['levels']['names'][1:]:
-        level_dir = '/'.join([root_dir, strategy, curr_level])
-        utils.mkdir(level_dir)
-        level_metadata = _single_level_downsample(
-            metadata,
-            root_dir,
-            strategy,
-            prev_level,
-            curr_level,
-            number_per_slice,
-            downsample_level_factor)
-        with open('/'.join([level_dir, METADATA]), 'w') as filewriter:
-            dump(level_metadata, filewriter)
-        prev_level = curr_level
-
-
-def _single_level_downsample(metadata,
-                             parent_dir,
-                             strategy,
-                             prev_level,
-                             curr_level,
-                             number_per_slice,
-                             downsample_level_factor):
-    """Downsamples for one single level.
-
-    Args:
-        metadata: A dict that has metadata for downsample levels in dict type.
-        parent_dir: A string that represents the name of the parent_dir
-            containing the preprocess files.
-        strategy: A string representing downsampling strategy.
-        prev_level: A string of the name of the current level.
-        curr_level: A string of the name of the previous level.
-        number_per_slice: An int that represents number of records for one slice.
-        downsample_level_factor: An int that represents downsample factor between levels.
-
-    Returns:
-        A dict of metadata for this level.
-    """
-    import time
-    start = time.time()
-
-    curr_level_store = defaultdict(list)
-    prev_level_store = defaultdict(list)
-    slice_start_time = None
-    slice_index = 0
-
-    curr_slices = metadata['levels'][curr_level]['names']
-    level_metadata = dict()
-
-    for prev_level_slice in metadata['levels'][prev_level]['names']:
-        with open(utils.get_slice_path(parent_dir,
-                                       prev_level, prev_level_slice, strategy), 'r') as filereader:
-            for line in filereader:
-                record = utils.parse_csv_line(line)
-                prev_level_store[record[2]].append(record)
-                if slice_start_time is None:
-                    slice_start_time = record[0]
-        for channel in prev_level_store.keys():
-            curr_level_store[channel].extend(strategy_reducer(
-                prev_level_store[channel], strategy, downsample_level_factor))
-        prev_level_store = defaultdict(list)
-
-        # Write to slice if number of records in current store is above threshold.
-        if sum([len(channel) for channel in curr_level_store.values()]) >= number_per_slice:
-            _write_records_to_file(
-                utils.get_slice_path(parent_dir,
-                                     curr_level, slice_index, strategy), curr_level_store)
-            level_metadata[curr_slices[slice_index]] = slice_start_time
-            curr_level_store = defaultdict(list)
-            slice_start_time = None
-            slice_index += 1
-    if slice_index < len(curr_slices):
-        _write_records_to_file(
-            utils.get_slice_path(parent_dir, curr_level, slice_index, strategy), curr_level_store)
-        level_metadata[curr_slices[slice_index]] = slice_start_time
-    utils.warning(('{}: '.format(curr_level), time.time()-start))
-    return level_metadata
-
-
-def _write_records_to_file(filename, records):
-    """Writes records to the given file.
-
-    Args:
-        filename: A string of the filename.
-        records: A list of records in chronological order.
-    """
-    if not records:
-        return
-    records_list = records
-    if isinstance(records, defaultdict):
-        records_list = list()
-        for channel in records.keys():
-            records_list.extend(records[channel])
-        records_list = sorted(records_list, key=lambda record: record[0])
-    with open(filename, 'w') as filewriter:
-        data_csv = utils.convert_to_csv(records_list)
-        filewriter.write(data_csv)
-        filewriter.flush()
-
-
-def _get_basic_meta_info(filename):
-    """Gets line number, start, and end time from the file.
-
-    Args:
-        filename: A string for the name of the file.
-
-    Returns:
-        A tuple of integer, float, float, that represents number of lines,
-            start time, and end time, respctively.
-    """
-    start = end = -1
-    raw_number_records = 0
-    with open(filename, 'r') as filereader:
-        for line in filereader:
-            if start == -1:
-                start = float(line[:UNIX_TIMESTAMP_LENGTH])
-            raw_number_records += 1
-            end = line
-        end = float(end[:UNIX_TIMESTAMP_LENGTH])
-
-    return raw_number_records, start, end
-
-
-def _get_levels_metadata(raw_number_records,
-                         duration,
-                         number_per_slice,
-                         downsample_level_factor,
-                         minimum_number_level):
-    """Gets level meta infomation for each level.
-
-    Args:
-        raw_number_records: An int that represents number of raw records.
-        duration: An int that represents duration of the experiment.
-        number_per_slice: An int that represents number of records for one slice.
-        downsample_level_factor: An int that represents downsample factor between levels.
-        minimum_number_level: An int that represents the minimum number of records for a level.
-
-    Returns:
-        A tuple of length 2, that contains level meta info ojbject and level names.
-    """
-    assert number_per_slice > 0
-    assert downsample_level_factor > 1
-
-    levels = []
-    level_names = []
-    number_records = raw_number_records
-    index = 0
-    while index == 0 or number_records > minimum_number_level:
-        frequency = number_records / duration
-        level_name = utils.get_level_name(index)
-        number_slices = ceil(
-            number_records / number_per_slice)
-        slice_names = [utils.get_slice_name(
-            level_name, index) for index in range(number_slices)]
-        level = {
-            "names": slice_names,
-            "frequency": frequency,
-            "number": number_records
-        }
-        levels.append(level)
-        level_names.append(level_name)
-
-        index += 1
-        number_records = number_records // downsample_level_factor
-    return levels, level_names
-
-
-def raw_preprocess(metadata,
-                   root_dir,
-                   number_per_slice):
-    """Splits raw data into slices. keep start time of each slice in a json file.
-
-    Args:
-        metadata: A dict that has metadata for downsample levels in dict type.
-        root_dir: A string that represents the directory of the raw data.
-        number_per_slice: An int of records to keep for each slice.
-    """
-    raw_store = list()
-    raw_slice_metadata = dict()
-    utils.mkdir('/'.join([root_dir, RAW_LEVEL_DIR]))
-    with open(metadata['raw_file']) as filereader:
-        slice_index = 0
-        for line in filereader:
-            record = utils.parse_csv_line(line)
-            raw_store.append(record)
-            if len(raw_store) >= number_per_slice:
-                output_filename = utils.get_slice_path(
-                    root_dir, 0, slice_index)
-                raw_slice_metadata[metadata['levels']
-                                   [RAW_LEVEL_DIR]['names'][slice_index]] = raw_store[0][0]
-                _write_records_to_file(output_filename, raw_store)
-                raw_store = list()
-                slice_index += 1
-        if raw_store and slice_index < len(metadata['levels'][RAW_LEVEL_DIR]['names']):
-            output_filename = utils.get_slice_path(
-                root_dir, 0, slice_index)
-            raw_slice_metadata[metadata['levels'][RAW_LEVEL_DIR]
-                               ['names'][slice_index]] = raw_store[0][0]
-            _write_records_to_file(output_filename, raw_store)
-    with open('/'.join([root_dir, RAW_LEVEL_DIR, METADATA]), 'w') as filewriter:
-        dump(raw_slice_metadata, filewriter)
-    return
 
 
 def multilevel_preprocess(filename,
@@ -283,7 +54,7 @@ def multilevel_preprocess(filename,
     """
     metadata = dict()
 
-    raw_number_records, start, end = _get_basic_meta_info(filename)
+    raw_number_records, start, end = _get_raw_meta_info(filename)
     metadata['start'] = int(start)
     metadata['end'] = int(end)
     metadata['raw_number'] = raw_number_records
@@ -368,9 +139,11 @@ def multilevel_inference(filename,
         end = metadata['end']
 
     if start > metadata['end'] or end < metadata['start']:
-        return [], 0
+        return [],
+
     required_frequency = number_records / (end - start)
 
+    # Finds Downsample Level.
     target_level_index = binary_search(
         [metadata['levels'][level_name]['frequency']
          for level_name in metadata['levels']['names']],
@@ -383,7 +156,7 @@ def multilevel_inference(filename,
     else:
         metadata_dir = '/'.join([preprocess_folder, strategy,
                                  utils.get_level_name(target_level_index), METADATA])
-
+    # Finds target slices.
     with open(metadata_dir, 'r') as filereader:
         level_metadata = load(filereader)
     first_slice = binary_search([level_metadata[single_slice]
@@ -394,7 +167,7 @@ def multilevel_inference(filename,
     target_slice_paths = [utils.get_slice_path(
         preprocess_folder,
         target_level_index, single_slice, strategy) for single_slice in target_slices]
-    print(target_slice_paths)
+    # Reads records and downsamples.
     target_records = read_records(target_slice_paths, start, end)
     for channel in target_records.keys():
         downsample_factor = ceil(len(target_records[channel]) / number_records)
@@ -404,6 +177,7 @@ def multilevel_inference(filename,
             'name': channel,
             'data': [[record[0], record[1]] for record in downsampled_one_channel]
         })
+    # Calculate precision.
     number_target_records = sum([len(target_channel)for target_channel in
                                  target_records.values()])
     number_result_records = sum([len(downsampeld_channel['data'])for downsampeld_channel in
@@ -415,6 +189,232 @@ def multilevel_inference(filename,
             number_target_records * \
             (target_level['number']/metadata['raw_number'])
     return downsampled_data, precision
+
+
+def _preprocess_single_startegy(metadata,
+                                root_dir,
+                                strategy,
+                                number_per_slice,
+                                downsample_level_factor):
+    """Downsamples given data by the defined levels and strategy.
+
+    Preprocesses the raw data with the given downsanpling startegy.
+    Raw data is downsampeld to a set of levels of different downsample rate,
+    data of each level broken down to small slices of constant size.
+    Number of levels is determined by if number of records in the highest level
+    reaches minimum_number_level.
+    Info regarding levels and slices is kept in a metadata json file.
+
+    Args:
+        metadata: A dict that has metadata for downsample levels in dict type.
+        root_dir: A string that represents the name of the directory containing
+            the preprocess files.
+        strategy: A string representing downsampling strategy.
+        number_per_slice: An int that represents number of records for one slice.
+        downsample_level_factor: An int that represents downsample factor between levels.
+    """
+    if len(metadata['levels']['names']) <= 1:
+        return
+    prev_level = metadata['levels']['names'][0]
+    for curr_level in metadata['levels']['names'][1:]:
+        level_dir = '/'.join([root_dir, strategy, curr_level])
+        utils.mkdir(level_dir)
+        level_metadata = _single_level_downsample(
+            metadata,
+            root_dir,
+            strategy,
+            prev_level,
+            curr_level,
+            number_per_slice,
+            downsample_level_factor)
+        with open('/'.join([level_dir, METADATA]), 'w') as filewriter:
+            dump(level_metadata, filewriter)
+        prev_level = curr_level
+
+
+def _single_level_downsample(metadata,
+                             parent_dir,
+                             strategy,
+                             prev_level,
+                             curr_level,
+                             number_per_slice,
+                             downsample_level_factor):
+    """Downsamples for one single level.
+
+    Args:
+        metadata: A dict that has metadata for downsample levels in dict type.
+        parent_dir: A string that represents the name of the parent_dir
+            containing the preprocess files.
+        strategy: A string representing downsampling strategy.
+        prev_level: A string of the name of the current level.
+        curr_level: A string of the name of the previous level.
+        number_per_slice: An int that represents number of records for one slice.
+        downsample_level_factor: An int that represents downsample factor between levels.
+
+    Returns:
+        A dict of metadata for this level.
+    """
+
+    curr_level_store = defaultdict(list)
+    prev_level_store = defaultdict(list)
+    slice_start_time = None
+    slice_index = 0
+
+    curr_slices = metadata['levels'][curr_level]['names']
+    level_metadata = dict()
+
+    for prev_level_slice in metadata['levels'][prev_level]['names']:
+        with open(utils.get_slice_path(parent_dir,
+                                       prev_level, prev_level_slice, strategy), 'r') as filereader:
+            for line in filereader:
+                record = utils.parse_csv_line(line)
+                prev_level_store[record[2]].append(record)
+                if slice_start_time is None:
+                    slice_start_time = record[0]
+        for channel in prev_level_store.keys():
+            curr_level_store[channel].extend(strategy_reducer(
+                prev_level_store[channel], strategy, downsample_level_factor))
+        prev_level_store = defaultdict(list)
+
+        # Write to slice if number of records in current store is above threshold.
+        if sum([len(channel) for channel in curr_level_store.values()]) >= number_per_slice:
+            _write_records_to_file(
+                utils.get_slice_path(parent_dir,
+                                     curr_level, slice_index, strategy), curr_level_store)
+            level_metadata[curr_slices[slice_index]] = slice_start_time
+            curr_level_store = defaultdict(list)
+            slice_start_time = None
+            slice_index += 1
+    if slice_index < len(curr_slices):
+        _write_records_to_file(
+            utils.get_slice_path(parent_dir, curr_level, slice_index, strategy), curr_level_store)
+        level_metadata[curr_slices[slice_index]] = slice_start_time
+    return level_metadata
+
+
+def _write_records_to_file(filename, records):
+    """Writes records to the given file.
+
+    Args:
+        filename: A string of the filename.
+        records: A list or dict of records in chronological order.
+    """
+    if not records:
+        return
+    records_list = records
+    if isinstance(records, defaultdict):
+        records_list = list()
+        for channel in records.keys():
+            records_list.extend(records[channel])
+        records_list = sorted(records_list, key=lambda record: record[0])
+    with open(filename, 'w') as filewriter:
+        data_csv = utils.convert_to_csv(records_list)
+        filewriter.write(data_csv)
+        filewriter.flush()
+
+
+def _get_raw_meta_info(filename):
+    """Gets line number, start, and end time from the file.
+
+    Args:
+        filename: A string for the name of the file.
+
+    Returns:
+        A tuple of integer, float, float, that represents number of lines,
+            start time, and end time, respctively.
+    """
+    start = end = -1
+    raw_number_records = 0
+    with open(filename, 'r') as filereader:
+        for line in filereader:
+            if start == -1:
+                start = float(line[:UNIX_TIMESTAMP_LENGTH])
+            raw_number_records += 1
+            end = line
+        end = float(end[:UNIX_TIMESTAMP_LENGTH])
+
+    return raw_number_records, start, end
+
+
+def _get_levels_metadata(raw_number_records,
+                         duration,
+                         number_per_slice,
+                         downsample_level_factor,
+                         minimum_number_level):
+    """Gets level meta infomation for each level.
+
+    Args:
+        raw_number_records: An int that represents number of raw records.
+        duration: An int that represents duration of the experiment.
+        number_per_slice: An int that represents number of records for one slice.
+        downsample_level_factor: An int that represents downsample factor between levels.
+        minimum_number_level: An int that represents the minimum number of records for a level.
+
+    Returns:
+        A tuple of length 2, that contains level meta info ojbject and level names.
+    """
+    assert number_per_slice > 0
+    assert downsample_level_factor > 1
+
+    levels = []
+    level_names = []
+    number_records = raw_number_records
+    index = 0
+    while index == 0 or number_records >= minimum_number_level:
+        frequency = number_records / duration
+        level_name = utils.get_level_name(index)
+        number_slices = ceil(
+            number_records / number_per_slice)
+        slice_names = [utils.get_slice_name(
+            level_name, index) for index in range(number_slices)]
+        level = {
+            "names": slice_names,
+            "frequency": frequency,
+            "number": number_records
+        }
+        levels.append(level)
+        level_names.append(level_name)
+
+        index += 1
+        number_records = number_records // downsample_level_factor
+    return levels, level_names
+
+
+def raw_preprocess(metadata,
+                   root_dir,
+                   number_per_slice):
+    """Splits raw data into slices. keep start time of each slice in a json file.
+
+    Args:
+        metadata: A dict that has metadata for downsample levels in dict type.
+        root_dir: A string that represents the directory of the raw data.
+        number_per_slice: An int of records to keep for each slice.
+    """
+    raw_store = list()
+    raw_slice_metadata = dict()
+    utils.mkdir('/'.join([root_dir, RAW_LEVEL_DIR]))
+    with open(metadata['raw_file']) as filereader:
+        slice_index = 0
+        for line in filereader:
+            record = utils.parse_csv_line(line)
+            raw_store.append(record)
+            if len(raw_store) >= number_per_slice:
+                output_filename = utils.get_slice_path(
+                    root_dir, 0, slice_index)
+                raw_slice_metadata[metadata['levels']
+                                   [RAW_LEVEL_DIR]['names'][slice_index]] = raw_store[0][0]
+                _write_records_to_file(output_filename, raw_store)
+                raw_store = list()
+                slice_index += 1
+        if raw_store and slice_index < len(metadata['levels'][RAW_LEVEL_DIR]['names']):
+            output_filename = utils.get_slice_path(
+                root_dir, 0, slice_index)
+            raw_slice_metadata[metadata['levels'][RAW_LEVEL_DIR]
+                               ['names'][slice_index]] = raw_store[0][0]
+            _write_records_to_file(output_filename, raw_store)
+    with open('/'.join([root_dir, RAW_LEVEL_DIR, METADATA]), 'w') as filewriter:
+        dump(raw_slice_metadata, filewriter)
+    return
 
 
 def read_records(target_slices, start, end):
@@ -430,7 +430,9 @@ def read_records(target_slices, start, end):
 
 
 def binary_search(data_list, value, reverse=False):
-    """Searches the left or right element closest to the given value from the list."""
+    """Searches the index of the left or right element closest to the given value from the list,
+    if reverse is true, the list is decreasing.
+    """
     if not data_list:
         return -1
 
@@ -451,15 +453,3 @@ def binary_search(data_list, value, reverse=False):
                 right = pivot - 1
         pivot = (left + right + 1) // 2
     return pivot
-
-
-if __name__ == '__main__':
-    import time
-    # Profiling
-    starttime = time.time()
-    multilevel_preprocess(TEST_FILENAME, PREPROCESS_DIR, NUMBER_OF_RECORDS_PER_SLICE,
-                          DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
-    # multilevel_inference(TEST_FILENAME, 'max', 600,
-    #                      1573149336265888-6000000, None)
-
-    print('time: ', (time.time() - starttime))

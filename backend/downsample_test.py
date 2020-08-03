@@ -21,7 +21,6 @@ import tempfile
 import pytest
 
 from downsample import _average_downsample
-from downsample import downsample
 from downsample import _max_min_downsample
 from downsample import strategy_reducer
 from utils import convert_to_csv
@@ -183,18 +182,6 @@ class TestDownsampleClass:
         ]
         assert test_result == expected_average
 
-    def assert_records_in_each_second(self, filename, max_records_per_second):
-        """Asserts that records are sampled on a per-second basis.
-
-        Args:
-            filename: A string representing name of the records file.
-            max_records_per_second: An interger representing number of records to save per second.
-        """
-        result = downsample(filename, 'min', max_records_per_second)
-        for index in range(len(result) - max_records_per_second * 2):
-            assert result[index + 2 * max_records_per_second][0] - \
-                result[index][0] >= 1E6
-
     def write_to_tmpfile(self, records_to_be_written):
         """Writes records in a temperary file.
 
@@ -240,17 +227,6 @@ class TestDownsampleClass:
             record_list.append([target[0], target[1]])
             result[target[2]] = record_list
         return result
-
-    def test_downsample(self, records_one_channel_complex):
-        """Tests on downsample method"""
-        tmpfile = self.write_to_tmpfile(records_one_channel_complex)
-
-        self.assert_records_in_each_second(tmpfile.name, 1)
-        self.assert_records_in_each_second(tmpfile.name, 10)
-        self.assert_records_in_each_second(tmpfile.name, 50)
-
-        tmpfile.close()
-        assert not os.path.exists(tmpfile.name)
 
     @pytest.mark.parametrize('downsample_factor', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
     def test_strategy_reducer(self, records, downsample_factor):
