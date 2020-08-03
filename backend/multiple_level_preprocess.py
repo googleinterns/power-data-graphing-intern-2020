@@ -139,7 +139,7 @@ def multilevel_inference(filename,
         end = metadata['end']
 
     if start > metadata['end'] or end < metadata['start']:
-        return [],
+        return []
 
     required_frequency = number_records / (end - start)
 
@@ -414,7 +414,6 @@ def raw_preprocess(metadata,
             _write_records_to_file(output_filename, raw_store)
     with open('/'.join([root_dir, RAW_LEVEL_DIR, METADATA]), 'w') as filewriter:
         dump(raw_slice_metadata, filewriter)
-    return
 
 
 def read_records(target_slices, start, end):

@@ -14,7 +14,6 @@
 
 """Test Module for multiple_level_preprocess.py"""
 
-from collections import defaultdict
 from math import ceil
 from math import log
 from tempfile import NamedTemporaryFile
@@ -22,7 +21,6 @@ import os
 import pytest
 
 from multiple_level_preprocess import binary_search
-from multiple_level_preprocess import _get_basic_meta_info
 from multiple_level_preprocess import _get_levels_metadata
 from utils import convert_to_csv
 

@@ -17,10 +17,7 @@
 Contains all of the downsample strategies. Use downsample(), and
 secondary_downsample() for downsampling records stored in files.
 """
-from collections import defaultdict
 from math import ceil
-
-from utils import parse_csv_line
 
 
 FLOAT_PRECISION = 4
