@@ -17,6 +17,7 @@
 Contains all of the downsample strategies. Use downsample(), and
 secondary_downsample() for downsampling records stored in files.
 """
+
 from math import ceil
 
 
@@ -84,6 +85,7 @@ def _average_downsample(records, downsample_factor):
         records_in_timespan = records[index *
                                       downsample_factor: (index+1)*downsample_factor]
         average = [0, 0, records_in_timespan[0][2]]
+
         for record in records_in_timespan:
             average[0] += record[0]
             average[1] += record[1]

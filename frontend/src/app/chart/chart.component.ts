@@ -20,8 +20,10 @@ import {
   RecordsResponse,
   ResponseData,
 } from '../services/http.service';
+
 import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
 import { selectAll } from 'd3';
+
 @Component({
   selector: 'main-chart',
   templateUrl: './chart.component.html',
@@ -41,12 +43,15 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   // Data related variable
   filename = 'DMM_result_multiple_channel.csv';
+
   precision: string;
+
   loading = false;
   number = 600;
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
   zoomIn = false;
+
   mouseDate = '';
   mouseTime = '';
 
@@ -103,6 +108,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.subscription = this.service
       .getRecords('/data', this.filename, this.strategy, timespan)
+
       .subscribe((response: RecordsResponse) => {
         if (this.records.length === 0) {
           this.records = response.data.map(
@@ -125,6 +131,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         } else {
           for (const recordsOneChannel of this.records) {
             let newDataArrived = false;
+
             for (const channel of response.data) {
               if (recordsOneChannel.name !== channel.name) continue;
               newDataArrived = true;
@@ -146,6 +153,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           }
         }
         this.precision = +(response.precision * 100).toPrecision(5) + '%';
+
         this.loading = false;
         this.updateChartDomain();
       });
@@ -321,10 +329,12 @@ export class ChartComponent implements OnInit, OnDestroy {
           this.chartHeight - this.chartMargin,
         ],
       ])
+
       .on('end', () => {
         this.interactChart.bind(this)();
         removeFocus();
       })
+
       .on('brush', mousemove);
 
     // Mouse over displaying text
@@ -496,8 +506,10 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('fill', 'none')
           .attr('stroke', recordsOneChannel.color)
           .attr('stroke-width', 2)
+
           .datum(recordsOneChannel.data as any)
           .attr('d', line)
+
           .attr('opacity', 0.6);
 
         this.svgLine

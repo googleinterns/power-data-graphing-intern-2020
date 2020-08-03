@@ -1,5 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+
 import { LegendTableEntryComponent } from './legend-table-entry.component';
+
 import { RecordsOneChannel, Record } from '../chart/record';
 import { By } from '@angular/platform-browser';
 
@@ -21,6 +23,7 @@ describe('LegendCardComponent', () => {
     color: 'red',
     show: true,
     name: 'sys',
+    focusPower: '',
   };
 
   beforeEach(async(() => {
@@ -31,6 +34,7 @@ describe('LegendCardComponent', () => {
 
   beforeEach(() => {
     fixture = TestBed.createComponent(LegendTableEntryComponent);
+
     component = fixture.componentInstance;
     component.recordsOneChannel = mockChannel;
     fixture.detectChanges();

@@ -151,8 +151,10 @@ class TestDownsampleClass:
         expected_average = [
             [
                 sum([record[0] for record in records]) / len(records),
+
                 sum([record[1] for record in records]) / len(records),
                 'PPX_ASYS'
+
             ]
         ]
         assert test_result == expected_average
@@ -169,15 +171,19 @@ class TestDownsampleClass:
                 sum([record[0] for record in records[:len(records) // 2]]
                     ) / (len(records) // 2),
                 sum([record[1] for record in records[:len(records) // 2]]
+
                     ) / (len(records) // 2),
                 'PPX_ASYS'
+
             ],
             [
                 sum([record[0] for record in records[len(records) // 2:]]
                     ) / (len(records) // 2),
                 sum([record[1] for record in records[len(records) // 2:]]
+
                     ) / (len(records) // 2),
                 'PPX_ASYS'
+
             ],
         ]
         assert test_result == expected_average
@@ -195,6 +201,7 @@ class TestDownsampleClass:
         assert os.path.exists(tmpfile.name)
         with open(tmpfile.name, 'w') as tmpfilewriter:
             data_csv = convert_to_csv(records_to_be_written)
+
             tmpfilewriter.write(data_csv)
         return tmpfile
 
@@ -203,6 +210,7 @@ class TestDownsampleClass:
         Args:
             targets: A list of records.
             name: A string of the channel name.
+
 
         Returns:
             A dict for the targets.
@@ -217,6 +225,7 @@ class TestDownsampleClass:
         """Formats the targets of multiple channel with given channel name to dict format.
         Args:
             targets: A list of records.
+
 
         Returns:
             A dict for the targets.
