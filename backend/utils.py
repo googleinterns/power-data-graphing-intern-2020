@@ -20,6 +20,7 @@ import os
 
 FLOAT_PRECISION = 4
 PREPROCESS_DIR = 'preprocess'
+METADATA = 'metadata.json'
 
 
 def parse_csv_line(line):
@@ -92,7 +93,6 @@ def get_experiment_name(path):
         '\n').strip('.csv')
     experiment_name = parent_path.split('/')[-1]
     return experiment_name
-    # return parent_path
 
 
 def warning(message, *args):
@@ -125,14 +125,34 @@ def get_level_name(index):
 
 def get_slice_name(level, index):
     filename = 's{}.csv'.format(index)
-    return '/'.join([level, filename])
+    return '/'.join([str(level), filename])
+
+
+def get_slice_path(root_dir, level, level_slice, strategy=None):
+    """Gets the path of the slice from level and strategy. If strategy is None for
+        level0.
+    Args:
+        root_dir: A string that represents the directory of preprocesse files.
+        level: A string or int of level name of number.
+        level_slice: A string or int of slice name of number.
+        strategy: A string of downsampling strategy.
+
+    Returns:
+        A string of the path of slice.
+    """
+    level_name = level
+    if isinstance(level, int):
+        level_name = get_level_name(level)
+
+    level_slice_name = level_slice
+    if isinstance(level_slice, int):
+        level_slice_name = get_slice_name(level_name, level_slice)
+
+    if level_name == 'level0':
+        return '/'.join([root_dir, level_slice_name])
+    return '/'.join([root_dir, strategy, level_slice_name])
 
 
 def mkdir(path):
     if not os.path.isdir(path):
         os.makedirs(path)
-
-
-# def write_records_to_file(records, filename):
-#     with open(filename, 'w') as filewriter:
-#         if type(records) is defaultdict:
