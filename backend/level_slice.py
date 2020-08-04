@@ -81,7 +81,7 @@ class LevelSlice:
         number = sum(len(channel) for channel in self._records.values())
         return number
 
-    def downsample(self, strategy, downsample_factor=None, max_records=None):
+    def downsample(self, strategy, downsample_factor=1, max_records=None):
         """Downsamples the records in this slice.
 
         Args:
