@@ -42,6 +42,18 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
+
+      <mat-form-field class="selector">
+        <mat-label>
+          Max number of records on chart.
+        </mat-label>
+        <input
+          matInput
+          type="number"
+          [formControl]="number"
+          (change)="strategySwitch()"
+        />
+      </mat-form-field>
     </mat-card>
   </div>
   <div class="chart-header-right">

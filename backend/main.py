@@ -34,7 +34,7 @@ FLOAT_PRECISION = 4
 DOWNSAMPLE_LEVEL_FACTOR = 100
 MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
 NUMBER_OF_RECORDS_PER_SLICE = 200000
-PREPROCESS_DIR = 'mld-prerpocess'
+PREPROCESS_DIR = 'mld-preprocess'
 
 
 app = Flask(__name__)
@@ -52,6 +52,9 @@ def get_data():
     strategy = request.args.get('strategy', default='avg', type=str)
     start = request.args.get('start', default=None, type=int)
     end = request.args.get('end', default=None, type=int)
+    number = request.args.get(
+        'number', default=NUMBER_OF_RECORDS_PER_REQUEST, type=int)
+
     if not strategy in STRATEGIES:
         error('Incorrect Strategy: %s', strategy)
         return 'Incorrect Strategy', 400
@@ -61,8 +64,9 @@ def get_data():
     if not preprocess.is_preprocessed():
         preprocess.multilevel_preprocess(
             NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
+    error(preprocess.is_preprocessed)
     data, precision = preprocess.multilevel_inference(
-        strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
+        strategy, number, start, end)
     response = {
         'data': data,
         'precision': precision

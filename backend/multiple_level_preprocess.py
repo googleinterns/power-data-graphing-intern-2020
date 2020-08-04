@@ -25,9 +25,10 @@ import utils
 
 DOWNSAMPLE_LEVEL_FACTOR = 100
 METADATA = 'metadata.json'
+PREPROCESS_DIR = 'mld-preprocess'
 MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
 NUMBER_OF_RECORDS_PER_SLICE = 200000
-PREPROCESS_DIR = 'mld-prerpocess'
+
 RAW_LEVEL_DIR = 'level0'
 STRATEGIES = ['max', 'min', 'avg']
 UNIX_TIMESTAMP_LENGTH = 16
@@ -87,8 +88,8 @@ class MultipleLevelPreprocess:
         downsampled_data = []
 
         experiment = utils.get_experiment_name(self._rawfile)
-        preprocess_folder = '/'.join([PREPROCESS_DIR, experiment])
-        metadata_path = '/'.join([preprocess_folder, METADATA])
+
+        metadata_path = '/'.join([self._preprocess_dir, METADATA])
 
         with open(metadata_path, 'r') as filereader:
             self._metadata = load(filereader)
@@ -112,10 +113,10 @@ class MultipleLevelPreprocess:
         target_level = self._metadata['levels'][self._metadata['levels']
                                                 ['names'][target_level_index]]
         if target_level_index == 0:
-            metadata_dir = '/'.join([preprocess_folder,
+            metadata_dir = '/'.join([self._preprocess_dir,
                                      RAW_LEVEL_DIR, METADATA])
         else:
-            metadata_dir = '/'.join([preprocess_folder, strategy,
+            metadata_dir = '/'.join([self._preprocess_dir, strategy,
                                      utils.get_level_name(target_level_index), METADATA])
         # Finds target slices.
         with open(metadata_dir, 'r') as filereader:
@@ -126,7 +127,7 @@ class MultipleLevelPreprocess:
                                           for single_slice in target_level['names']], end)
         target_slices_names = target_level['names'][first_slice:last_slice+1]
         target_slice_paths = [utils.get_slice_path(
-            preprocess_folder,
+            self._preprocess_dir,
             target_level_index, single_slice, strategy) for single_slice in target_slices_names]
 
         # Reads records and downsamples.
@@ -185,6 +186,7 @@ class MultipleLevelPreprocess:
             dump(self._metadata, filewriter)
         for strategy in STRATEGIES:
             self._preprocess_single_startegy(strategy)
+        self._preprocessed = True
 
     def _raw_preprocess(self, number_per_slice):
         """Splits raw data into slices. keep start time of each slice in a json file.

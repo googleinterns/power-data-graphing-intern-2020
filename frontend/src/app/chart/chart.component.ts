@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import * as d3 from 'd3';
 import {
@@ -22,7 +23,6 @@ import {
 } from '../services/http.service';
 
 import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
-import { selectAll } from 'd3';
 
 @Component({
   selector: 'main-chart',
@@ -35,19 +35,14 @@ export class ChartComponent implements OnInit, OnDestroy {
    * The major chart component that draw lines, axis, and all the interaction logics.
    */
 
-  // Bind strategy type
-  strategyType = STRATEGY;
-
-  // Bind Subscription
-  subscription: Subscription;
-
-  // Data related variable
+  // Component binding
   filename = 'DMM_result_multiple_channel.csv';
-
   precision: string;
+  strategyType = STRATEGY;
+  subscription: Subscription;
+  number = new FormControl(600);
 
   loading = false;
-  number = 600;
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
   zoomIn = false;
@@ -94,7 +89,6 @@ export class ChartComponent implements OnInit, OnDestroy {
   };
 
   constructor(private service: HttpService) {}
-
   ngOnInit(): void {
     this.initChart();
     this.loadRecords();
@@ -105,9 +99,16 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   loadRecords(timespan?: number[]) {
+    if (this.loading) this.subscription.unsubscribe();
     this.loading = true;
     this.subscription = this.service
-      .getRecords('/data', this.filename, this.strategy, timespan)
+      .getRecords(
+        '/data',
+        this.filename,
+        this.strategy,
+        this.number.value,
+        timespan
+      )
 
       .subscribe((response: RecordsResponse) => {
         if (this.records.length === 0) {

@@ -47,12 +47,14 @@ export class HttpService {
     path: string,
     filename: string,
     strategy: STRATEGY,
+    number: number,
     timespan: number[]
   ) {
     return this.http.get([this.url, this.port].join(':') + path, {
       params: new HttpParams()
         .set('name', filename)
         .set('strategy', strategy)
+        .set('number', number.toString())
         .set('start', timespan ? '' + Math.floor(timespan[0]) : null)
         .set('end', timespan ? '' + Math.floor(timespan[1]) : null),
     });

@@ -26,6 +26,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LegendTableEntryComponent } from './legend-table-entry/legend-table-entry.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [AppComponent, ChartComponent, LegendTableEntryComponent],
@@ -40,6 +42,8 @@ import { MatButtonModule } from '@angular/material/button';
     MatCheckboxModule,
     MatTooltipModule,
     MatButtonModule,
+    MatInputModule,
+    ReactiveFormsModule,
   ],
   exports: [],
   providers: [],
