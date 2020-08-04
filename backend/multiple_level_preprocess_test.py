@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
-
 """Test Module for multiple_level_preprocess.py"""
+# pylint: disable=W0212
 
 from math import ceil
 from math import log
@@ -20,8 +20,7 @@ from tempfile import NamedTemporaryFile
 import os
 import pytest
 
-from multiple_level_preprocess import binary_search
-from multiple_level_preprocess import _get_levels_metadata
+from multiple_level_preprocess import MultipleLevelPreprocess
 from utils import convert_to_csv
 
 
@@ -57,9 +56,10 @@ class TestMlpClass:
         ([0, 2, 4, 6, 8, 10, 12], 13, 6),
         ([0, 2, 4, 6, 8, 10, 12], 100, 6),
     ])
-    def test_binary_search_increasing(self, numbers, value, expected):
+    def test__binary_search_increasing(self, numbers, value, expected):
         """Tests binary search with list of numbers in increasing order."""
-        assert binary_search(numbers, value, False) == expected
+        preprocess = MultipleLevelPreprocess('dummy')
+        assert preprocess._binary_search(numbers, value, False) == expected
 
     @pytest.mark.parametrize('numbers,value,expected', [
         ([10, 8, 6, 4, 2, 0], 100, 0),
@@ -73,9 +73,10 @@ class TestMlpClass:
         ([10, 8, 6, 4, 2, 0], 0, 5),
         ([10, 8, 6, 4, 2, 0], -1, 5),
     ])
-    def test_binary_search_decreasing(self, numbers, value, expected):
+    def test__binary_search_decreasing(self, numbers, value, expected):
         """Tests binary search with list of numbers in decreasing order."""
-        assert binary_search(numbers, value, True) == expected
+        preprocess = MultipleLevelPreprocess('dummy')
+        assert preprocess._binary_search(numbers, value, True) == expected
 
     @pytest.mark.parametrize('raw_number,number_per_slice,downsample_factor,min_num_level',
                              [
@@ -91,13 +92,12 @@ class TestMlpClass:
                                                    downsample_factor,
                                                    min_num_level):
         """Tests _get_levels_metadata on number of levels and slices."""
-        levels, level_names = _get_levels_metadata(
-            raw_number,
-            1024,
-            number_per_slice,
-            downsample_factor,
-            min_num_level
-        )
+        preprocess = MultipleLevelPreprocess('dummy')
+        preprocess._number_per_slice = number_per_slice
+        preprocess._downsample_level_factor = downsample_factor
+        preprocess._minimum_number_level = min_num_level
+
+        levels, level_names = preprocess._get_levels_metadata(raw_number, 1024)
         expected_number_levels = int(log(raw_number, downsample_factor))
         if expected_number_levels == 0:
             expected_number_levels = 1

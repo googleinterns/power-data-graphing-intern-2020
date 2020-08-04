@@ -314,9 +314,21 @@ export class ChartComponent implements OnInit, OnDestroy {
         this.mouseDate = '';
         this.mouseTime = '';
       }
-      this.svg.select('.labels').selectAll('rect').remove();
-      this.svg.select('.labels').selectAll('text').remove();
-      this.svg.select('.labels-background').select('rect').attr('opacity', 0);
+      this.svg
+        .select('.labels')
+        .selectAll('rect')
+        .transition()
+        .attr('opacity', 0);
+      this.svg
+        .select('.labels')
+        .selectAll('text')
+        .transition()
+        .attr('opacity', 0);
+      this.svg
+        .select('.labels-background')
+        .select('rect')
+        .transition()
+        .attr('opacity', 0);
     };
 
     // Brush functionality
@@ -449,6 +461,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       )
       .attr('height', this.labelSize)
       .attr('width', this.labelSize)
+      .attr('opacity', 1)
       .style('fill', (d: string) => d);
 
     const labelNames: any = this.svgChart
@@ -469,6 +482,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           2
       )
       .attr('font-size', this.labelSize + 'px')
+      .attr('opacity', 1)
       .text((d: string) => d)
       .attr('text-anchor', this.isLeft ? 'end' : 'start');
   }
@@ -540,7 +554,6 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('d', this.lines[recordsOneChannel.name]);
       }
     }
-    this.setLegend();
   }
 
   /**

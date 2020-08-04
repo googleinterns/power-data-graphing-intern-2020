@@ -27,8 +27,14 @@
   flex-direction: row;
 }
 .chart-header-left .selector {
-  margin-right: 5px;
+  margin-right: 10px;
 }
+
+.chart-header-left .card-container {
+  display: flex;
+  flex-direction: row;
+}
+
 .chart-header-right {
   display: flex;
   flex-direction: row;
@@ -45,19 +51,6 @@
 
 .legends-container table {
   width: 100%;
-}
-
-.mouse-date {
-  height: auto;
-  margin: 5px;
-  width: 200px;
-}
-.mouse-date-container {
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  height: 50px;
-  justify-content: center;
 }
 
 .spinner {

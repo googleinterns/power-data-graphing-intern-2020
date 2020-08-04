@@ -16,7 +16,7 @@
 
 <div class="chart-header">
   <div class="chart-header-left">
-    <mat-card>
+    <mat-card class="card-container">
       <mat-form-field class="selector">
         <mat-label>Select a downsample strategy</mat-label>
         <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
@@ -53,23 +53,18 @@
     >
     </mat-spinner>
 
-    <mat-card> Precision: {{ precision }}</mat-card>
+    <button
+      mat-raised-button
+      matTooltip="Percentage of Raw Data Precision (100% = Raw)"
+    >
+      Precision: {{ precision }}
+    </button>
   </div>
 </div>
 
 <div id="chart-component"></div>
 
-<div class="mouse-date-container">
-  <div class="mouse-date">
-    <div>
-      {{ mouseTime }}
-    </div>
-    <div>
-      {{ mouseDate }}
-    </div>
-  </div>
-</div>
-<div class="legends-container">
+<mat-card class="legends-container">
   <table>
     <tr>
       <th>Channel</th>
@@ -85,4 +80,4 @@
       (showChange)="showLine($event)"
     ></tr>
   </table>
-</div>
+</mat-card>

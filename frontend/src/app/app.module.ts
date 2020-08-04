@@ -24,6 +24,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LegendTableEntryComponent } from './legend-table-entry/legend-table-entry.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonModule } from '@angular/material/button';
 
 @NgModule({
   declarations: [AppComponent, ChartComponent, LegendTableEntryComponent],
@@ -36,7 +38,10 @@ import { LegendTableEntryComponent } from './legend-table-entry/legend-table-ent
     MatProgressSpinnerModule,
     MatSelectModule,
     MatCheckboxModule,
+    MatTooltipModule,
+    MatButtonModule,
   ],
+  exports: [],
   providers: [],
   bootstrap: [AppComponent],
 })

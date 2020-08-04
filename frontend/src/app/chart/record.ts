@@ -29,9 +29,9 @@ export interface RecordsOneChannel {
 }
 
 export const COLORS = [
+  'orange',
   'red',
   'blue',
-  'orange',
   'cyan',
   'black',
   'green',

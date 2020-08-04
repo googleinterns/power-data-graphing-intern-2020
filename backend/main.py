@@ -16,18 +16,15 @@
 
 Expose HTTP endpoints for triggering preprocess and send downsampled data.
 """
-import os
-
 from flask import request
 from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
 
 from downsample import STRATEGIES
-from multiple_level_preprocess import multilevel_inference
-from multiple_level_preprocess import multilevel_preprocess
+from multiple_level_preprocess import MultipleLevelPreprocess
+
 from utils import error
-from utils import get_experiment_name
 
 
 NUMBER_OF_RECORDS_PER_REQUEST = 600
@@ -59,15 +56,13 @@ def get_data():
         error('Incorrect Strategy: %s', strategy)
         return 'Incorrect Strategy', 400
 
-    experiment = get_experiment_name(name)
-    preprocess_metadata = '/'.join([PREPROCESS_DIR,
-                                    experiment, 'metadata.json'])
-    if not os.path.isfile(preprocess_metadata):
-        multilevel_preprocess(name, PREPROCESS_DIR, NUMBER_OF_RECORDS_PER_SLICE,
-                              DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
+    preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR)
 
-    data, precision = multilevel_inference(
-        name, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
+    if not preprocess.is_preprocessed():
+        preprocess.multilevel_preprocess(
+            NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
+    data, precision = preprocess.multilevel_inference(
+        strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
     response = {
         'data': data,
         'precision': precision
