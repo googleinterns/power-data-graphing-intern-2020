@@ -85,12 +85,7 @@ class MultipleLevelPreprocess:
                     }
                 ]
         """
-        downsampled_data = []
-
-        experiment = utils.get_experiment_name(self._rawfile)
-
         metadata_path = '/'.join([self._preprocess_dir, METADATA])
-
         with open(metadata_path, 'r') as filereader:
             self._metadata = load(filereader)
 
