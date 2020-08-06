@@ -13,7 +13,7 @@
 # =============================================================================
 
 """Multiple-level preprocess module."""
-
+import time
 from math import ceil
 from json import dump
 from json import load
@@ -46,7 +46,6 @@ class MultipleLevelPreprocess:
         experiment_name = utils.get_experiment_name(filename)
         self._preprocess_dir = '/'.join([root_dir, experiment_name])
         metadata_path = '/'.join([self._preprocess_dir, METADATA])
-
         if os.path.exists(metadata_path):
             self._preprocessed = True
 
@@ -176,11 +175,15 @@ class MultipleLevelPreprocess:
             self._metadata["levels"][name] = level
 
         utils.mkdir(self._preprocess_dir)
+        start = time.time()
         self._raw_preprocess(number_per_slice)
+        utils.warning(('raw time is: ', time.time()-start))
         with open('/'.join([self._preprocess_dir, METADATA]), 'w') as filewriter:
             dump(self._metadata, filewriter)
         for strategy in STRATEGIES:
+            start = time.time()
             self._preprocess_single_startegy(strategy)
+            utils.warning((strategy, ' time is: ', time.time()-start))
         self._preprocessed = True
 
     def _raw_preprocess(self, number_per_slice):

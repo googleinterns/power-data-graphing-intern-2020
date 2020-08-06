@@ -12,9 +12,17 @@
 // limitations under the License.
 // =============================================================================
 
-import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewEncapsulation,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subscription, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import * as d3 from 'd3';
 import {
   HttpService,
@@ -23,6 +31,7 @@ import {
 } from '../services/http.service';
 
 import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'main-chart',
@@ -36,6 +45,7 @@ export class ChartComponent implements OnInit, OnDestroy {
    */
 
   // Component binding
+  @Output() message = new EventEmitter<string>();
   filename = 'DMM_result_multiple_channel.csv';
   precision: string;
   strategyType = STRATEGY;
@@ -109,7 +119,14 @@ export class ChartComponent implements OnInit, OnDestroy {
         this.number.value,
         timespan
       )
-
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          this.message.emit(error.message);
+          console.log(error);
+          this.loading = false;
+          return throwError(error);
+        })
+      )
       .subscribe((response: RecordsResponse) => {
         if (this.records.length === 0) {
           this.records = response.data.map(

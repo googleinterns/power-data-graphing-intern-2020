@@ -37,10 +37,8 @@ class RawData:
 
         counter = 0
         records = list()
-        while True:
+        while counter < self._number_per_slice:
             line = self._file.readline()
-            if counter == self._number_per_slice:
-                break
             if line == '':
                 self._file.close()
                 break

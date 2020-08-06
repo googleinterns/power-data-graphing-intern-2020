@@ -13,17 +13,14 @@
 # =============================================================================
 
 """Test Module for downsample.py"""
-import os
 from math import ceil
-import random
-import tempfile
+from random import randint
 
 import pytest
 
 from downsample import _average_downsample
 from downsample import _max_min_downsample
 from downsample import strategy_reducer
-from utils import convert_to_csv
 
 
 class TestDownsampleClass:
@@ -54,8 +51,8 @@ class TestDownsampleClass:
             records_one_channel_complex.append(
                 [
                     records_one_channel_complex[-1][0] +
-                    random.randint(1E4, 1E6),
-                    random.randint(0, 500),
+                    randint(1E4, 1E6),
+                    randint(0, 500),
                     'SYS'
                 ])
 
@@ -77,8 +74,8 @@ class TestDownsampleClass:
                 records_multi_channel_complex.append(
                     [
                         records_multi_channel_complex[-1][0] +
-                        random.randint(1E4, 1E6),
-                        random.randint(0, 500),
+                        randint(1E4, 1E6),
+                        randint(0, 500),
                         channel
                     ])
         assert 'SYS' in [record[2]
@@ -187,23 +184,6 @@ class TestDownsampleClass:
             ],
         ]
         assert test_result == expected_average
-
-    def write_to_tmpfile(self, records_to_be_written):
-        """Writes records in a temperary file.
-
-        Args:
-            records_to_be_written: A list of records.
-
-        Returns:
-            A fileIO object for that temp file.
-        """
-        tmpfile = tempfile.NamedTemporaryFile()
-        assert os.path.exists(tmpfile.name)
-        with open(tmpfile.name, 'w') as tmpfilewriter:
-            data_csv = convert_to_csv(records_to_be_written)
-
-            tmpfilewriter.write(data_csv)
-        return tmpfile
 
     def format_one_channel_downsample(self, targets, name):
         """Formats the targets of single channel with given channel name to dict format.

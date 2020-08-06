@@ -55,6 +55,8 @@ class LevelSlice:
                     if record and (start is None or start <=
                                    record[0]) and (end is None or record[0] <= end):
                         self._records[record[2]].append(record)
+                        if self._start == -1:
+                            self._start = record[0]
 
     def get_start(self):
         """Gets the earliest time of record in this slice."""

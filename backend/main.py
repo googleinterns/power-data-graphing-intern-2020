@@ -64,7 +64,6 @@ def get_data():
     if not preprocess.is_preprocessed():
         preprocess.multilevel_preprocess(
             NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
-    error(preprocess.is_preprocessed)
     data, precision = preprocess.multilevel_inference(
         strategy, number, start, end)
     response = {
