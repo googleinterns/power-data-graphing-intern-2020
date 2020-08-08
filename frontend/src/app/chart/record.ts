@@ -21,6 +21,7 @@ export interface Record {
 }
 
 export interface RecordsOneChannel {
+  id: number;
   color: string;
   show: boolean;
   data: Record[];

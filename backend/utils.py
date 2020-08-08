@@ -19,8 +19,6 @@ import logging
 import os
 
 FLOAT_PRECISION = 4
-PREPROCESS_DIR = 'preprocess'
-METADATA = 'metadata.json'
 
 
 def parse_csv_line(line):
@@ -67,31 +65,9 @@ def convert_to_csv(records):
     return '\n'.join(csv_lines)
 
 
-def generate_filename_on_strategy(original_filename, strategy):
-    """Generates filename of preprocessed result based on the strategy.
-
-    Args:
-        original_filename: A string filename of the experiment (e.g. tmp/DMM_single_channel.csv)
-        strategy: One of STRATEGIES in string.
-
-    Returns:
-        A string representing the filename for the preprocessed results.
-    """
-    original_path_no_postfix = original_filename.strip(' ').strip(
-        '\n').strip('.csv')
-    experiment_name = original_path_no_postfix.split('/')[-1]
-    target_parent_path = os.path.join(PREPROCESS_DIR, original_path_no_postfix)
-    if not os.path.isdir(target_parent_path):
-        os.makedirs(target_parent_path)
-    file_path = os.path.join(
-        target_parent_path, experiment_name + '_' + strategy + '.csv')
-    return file_path
-
-
 def get_experiment_name(path):
-    parent_path = path.strip(' ').strip(
+    experiment_name = path.strip(' ').strip(
         '\n').strip('.csv')
-    experiment_name = parent_path.split('/')[-1]
     return experiment_name
 
 
@@ -133,7 +109,7 @@ def get_slice_path(root_dir, level, level_slice, strategy=None):
         level0.
     Args:
         root_dir: A string that represents the directory of preprocesse files.
-        level: A string or int of level name of number.
+        level: A string or int of level name or number.
         level_slice: A string or int of slice name of number.
         strategy: A string of downsampling strategy.
 

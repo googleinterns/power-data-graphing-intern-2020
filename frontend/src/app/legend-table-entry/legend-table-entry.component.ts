@@ -9,7 +9,7 @@ import { RecordsOneChannel } from '../chart/record';
 })
 export class LegendTableEntryComponent {
   @Input() recordsOneChannel: RecordsOneChannel;
-  @Output() showChange = new EventEmitter<[string, boolean]>();
+  @Output() showChange = new EventEmitter<[number, boolean]>();
 
   checked = true;
 
@@ -45,6 +45,6 @@ export class LegendTableEntryComponent {
 
   toggled(event: MatSlideToggleChange) {
     this.recordsOneChannel.show = event.checked;
-    this.showChange.emit([this.recordsOneChannel.name, event.checked]);
+    this.showChange.emit([this.recordsOneChannel.id, event.checked]);
   }
 }

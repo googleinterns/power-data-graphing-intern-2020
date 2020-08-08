@@ -24,15 +24,17 @@ from utils import parse_csv_line
 class LevelSlice:
     """A class for processing slice and its records."""
 
-    def __init__(self, filename=None, filenames=None):
+    def __init__(self, filename=None, filenames=None, bucket=None):
         """Initialises slice object.
 
         Args:
             filename: A string of the path to the slice.
             filenames: A list of string that represent the path to slices.
+            bucket: An bucket object.
         """
         self._filename = filename
         self._filenames = filenames
+        self._bucket = bucket
         self._records = defaultdict(list)
         self._start = -1
 
@@ -40,23 +42,42 @@ class LevelSlice:
         """Reads records from slice file."""
         if self._filename is None:
             return
-        with open(self._filename, 'r') as filereader:
-            for line in filereader:
-                record = parse_csv_line(line)
-                if self._start == -1:
-                    self._start = record[0]
-                self._records[record[2]].append(record)
+        lines = []
+        if self._bucket is None:
+            with open(self._filename, 'r') as filereader:
+                lines = filereader.readlines()
+        else:
+            blob = self._bucket.blob(self._filename)
+            lines = blob.download_as_string().decode().split('\n')
+        for line in lines:
+            record = parse_csv_line(line)
+            if self._start == -1:
+                self._start = record[0]
+            self._records[record[2]].append(record)
 
     def read_slices(self, start, end):
+        """Reads and loads records from a set of slices, only records in the range
+        are included.
+
+        Args:
+            start: An int for start time.
+            end: An int for end time.
+        """
         for slice_path in self._filenames:
-            with open(slice_path, 'r') as filereader:
-                for line in filereader.readlines():
-                    record = parse_csv_line(line)
-                    if record and (start is None or start <=
-                                   record[0]) and (end is None or record[0] <= end):
-                        self._records[record[2]].append(record)
-                        if self._start == -1:
-                            self._start = record[0]
+            lines = []
+            if self._bucket is None:
+                with open(slice_path, 'r') as filereader:
+                    lines = filereader.readlines()
+            else:
+                blob = self._bucket.blob(slice_path)
+                lines = blob.download_as_string().decode().split('\n')
+            for line in lines:
+                record = parse_csv_line(line)
+                if record and (start is None or start <=
+                               record[0]) and (end is None or record[0] <= end):
+                    self._records[record[2]].append(record)
+                    if self._start == -1:
+                        self._start = record[0]
 
     def get_start(self):
         """Gets the earliest time of record in this slice."""
@@ -73,10 +94,15 @@ class LevelSlice:
             for channeled_records in self._records.values():
                 records_list.extend(channeled_records)
             records_list = sorted(records_list, key=lambda record: record[0])
-        with open(self._filename, 'w') as filewriter:
-            data_csv = convert_to_csv(records_list)
-            filewriter.write(data_csv)
-            filewriter.flush()
+
+        data_csv = convert_to_csv(records_list)
+        if self._bucket is None:
+            with open(self._filename, 'w') as filewriter:
+                filewriter.write(data_csv)
+                filewriter.flush()
+        else:
+            blob = self._bucket.blob(self._filename)
+            blob.upload_from_string(data_csv)
 
     def get_number_records(self):
         """Gets number of records in this slice."""
@@ -109,6 +135,11 @@ class LevelSlice:
         Args:
             records: A dict of records.
         """
+        if self._start == -1:
+            start = min([records[channel][0][0]
+                         for channel in records.keys() if records[channel]])
+
+            self._start = start
         for channel in records.keys():
             self._records[channel].extend(records[channel])
 

@@ -21,10 +21,11 @@ from utils import parse_csv_line
 class RawData:
     """Class for processing raw data."""
 
-    def __init__(self, rawfile, number_per_slice):
+    def __init__(self, rawfile, number_per_slice, bucket=None):
         self._rawfile = rawfile
         self._number_per_slice = number_per_slice
         self._file = open(rawfile, 'r')
+        self._bucket = bucket
 
     def read(self):
         """Reads raw data for a single slice.

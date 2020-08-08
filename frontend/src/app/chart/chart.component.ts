@@ -142,6 +142,7 @@ export class ChartComponent implements OnInit, OnDestroy {
                 name: channel.name,
                 show: true,
                 focusPower: 'N/A',
+                id: index,
               };
               return recordsOneChannel;
             }
@@ -292,13 +293,13 @@ export class ChartComponent implements OnInit, OnDestroy {
 
         // Sets focus point.
         this.svgLine
-          .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
+          .select('.' + this.getChannelCircleClassName(recordsOneChannel.id))
           .style('opacity', 1)
           .attr('cx', this.xScale(selectedData.time))
           .attr('cy', this.yScale(selectedData.value));
 
         this.svg
-          .select('.' + this.getFocusTextClassName(recordsOneChannel.name))
+          .select('.' + this.getFocusTextClassName(recordsOneChannel.id))
           .attr('opacity', 1)
           .attr('x', this.xScale(selectedData.time))
           .attr('y', this.yScale(selectedData.value) - this.chartPadding)
@@ -320,12 +321,12 @@ export class ChartComponent implements OnInit, OnDestroy {
     const removeFocus = () => {
       for (const recordsOneChannel of this.records) {
         this.svgLine
-          .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
+          .select('.' + this.getChannelCircleClassName(recordsOneChannel.id))
           .transition()
           .style('opacity', 0);
 
         this.svg
-          .select('.' + this.getFocusTextClassName(recordsOneChannel.name))
+          .select('.' + this.getFocusTextClassName(recordsOneChannel.id))
           .transition()
           .attr('opacity', 0);
 
@@ -534,7 +535,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 
         this.svgLine
           .append('path')
-          .classed(this.getChannelLineClassName(recordsOneChannel.name), true)
+          .classed(this.getChannelLineClassName(recordsOneChannel.id), true)
           .attr('fill', 'none')
           .attr('stroke', recordsOneChannel.color)
           .attr('stroke-width', 2)
@@ -547,7 +548,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         this.svgLine
           .append('g')
           .append('circle')
-          .classed(this.getChannelCircleClassName(recordsOneChannel.name), true)
+          .classed(this.getChannelCircleClassName(recordsOneChannel.id), true)
           .style('fill', recordsOneChannel.color)
           .attr('stroke', recordsOneChannel.color)
           .attr('r', 2)
@@ -556,7 +557,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         this.svg
           .append('g')
           .append('text')
-          .classed(this.getFocusTextClassName(recordsOneChannel.name), true)
+          .classed(this.getFocusTextClassName(recordsOneChannel.id), true)
           .attr('text-anchor', 'right')
           .attr('alignment-baseline', 'right')
           .attr('font-size', '10px')
@@ -565,7 +566,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       } else {
         // Bind the data to lines.
         this.svgLine
-          .select('.' + this.getChannelLineClassName(recordsOneChannel.name))
+          .select('.' + this.getChannelLineClassName(recordsOneChannel.id))
           .datum(recordsOneChannel.data as any)
           .transition()
           .duration(this.animationDuration)
@@ -597,24 +598,24 @@ export class ChartComponent implements OnInit, OnDestroy {
    * Get the class name for the lines.
    * @param channel The name of the channel.
    */
-  getChannelLineClassName(channel: string) {
-    return 'line' + '-' + channel;
+  getChannelLineClassName(id: number) {
+    return 'line' + '-' + id;
   }
 
   /**
    * Get the class name for the focus circle.
    * @param channel The name of the channel.
    */
-  getChannelCircleClassName(channel: string) {
-    return 'circle' + '-' + channel;
+  getChannelCircleClassName(id: number) {
+    return 'circle' + '-' + id;
   }
 
   /**
    * Get the class name for the focus text.
    * @param channel The name of the channel.
    */
-  getFocusTextClassName(channel: string) {
-    return 'focus-text' + '-' + channel;
+  getFocusTextClassName(id: number) {
+    return 'focus-text' + '-' + id;
   }
 
   /**
@@ -651,7 +652,7 @@ export class ChartComponent implements OnInit, OnDestroy {
    * Shows or hides the channel when toggle the checkbox.
    * @param event The channel name and to show or to hide.
    */
-  showLine(event: [string, boolean]) {
+  showLine(event: [number, boolean]) {
     if (event[1]) {
       this.svgLine
         .selectAll('.' + this.getChannelLineClassName(event[0]))

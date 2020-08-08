@@ -20,6 +20,7 @@ from flask import request
 from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
+from google.cloud import storage
 
 from downsample import STRATEGIES
 from multiple_level_preprocess import MultipleLevelPreprocess
@@ -59,7 +60,8 @@ def get_data():
         error('Incorrect Strategy: %s', strategy)
         return 'Incorrect Strategy', 400
 
-    preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR)
+    client = storage.Client()
+    preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR, client)
 
     if not preprocess.is_preprocessed():
         preprocess.multilevel_preprocess(
