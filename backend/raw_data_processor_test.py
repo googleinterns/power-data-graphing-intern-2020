@@ -11,19 +11,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
-"""Test Module for RawData class."""
+"""Test Module for RawDataProcessor class."""
 # pylint: disable=W0212
 
 import os
 from tempfile import NamedTemporaryFile
 
 import pytest
-from raw_data import RawData
+from raw_data_processor import RawDataProcessor
 from utils import convert_to_csv
 
 
-class TestRawData:
-    """Test class for RawData class."""
+class TestRawDataProcessor:
+    """Test class for RawDataProcessor class."""
     @pytest.fixture
     def test_records(self):
         return [
@@ -53,29 +53,29 @@ class TestRawData:
 
     def test_filename(self, testfile):
         """Tests if raw file is same as passed in."""
-        raw_data = RawData(testfile.name, 10)
+        raw_data = RawDataProcessor(testfile.name, 10)
         assert raw_data._rawfile == testfile.name
         testfile.close()
 
     def test_readable(self, testfile):
         """Tests if readable at start and end."""
-        raw_data = RawData(testfile.name, 1)
+        raw_data = RawDataProcessor(testfile.name, 1)
         for _ in range(11):
             assert raw_data.readable()
-            raw_data.read()
+            raw_data.read_next_slice()
         assert not raw_data.readable()
         testfile.close()
 
     def test_saved_records(self, testfile, test_records):
         """Tests if records saved is same as expected."""
-        raw_data = RawData(testfile.name, 10)
-        records = raw_data.read()
+        raw_data = RawDataProcessor(testfile.name, 10)
+        records = raw_data.read_next_slice()
         assert records == test_records
         testfile.close()
 
     def test_close(self, testfile):
         """Tests if the file io object is closed after close is called."""
-        raw_data = RawData(testfile.name, 10)
+        raw_data = RawDataProcessor(testfile.name, 10)
         assert not raw_data._file.closed
         raw_data.close()
         assert raw_data._file.closed

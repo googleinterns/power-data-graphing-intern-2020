@@ -48,6 +48,12 @@ def get_data():
 
     Retrives all power data from local file given a limit on number of
     records from request body.
+
+    HTTP Args:
+        name: A string representing the name of the file user wish to view.
+        strategy: A string representing the selected downsample strategy.
+        start: An int representing the start of time span user wish to view.
+        end: An int representing the end of time span user wish to view.
     """
     name = request.args.get('name', type=str)
     strategy = request.args.get('strategy', default='avg', type=str)

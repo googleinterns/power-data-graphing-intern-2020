@@ -54,7 +54,7 @@ def convert_to_csv(records):
         A string that contains all CSV records, None if the given list if empty.
     """
     if not records:
-        return None
+        return ''
 
     csv_lines = list()
     for record in records:
@@ -65,10 +65,18 @@ def convert_to_csv(records):
     return '\n'.join(csv_lines)
 
 
-def get_experiment_name(path):
-    experiment_name = path.strip(' ').strip(
+def get_file_name(path):
+    """Get the file name without .csv postfix.
+
+    Args:
+        path: A string for the absolute path to the file.
+
+    Returns:
+        A string for the path without .csv postfix
+    """
+    filename = path.strip(' ').strip(
         '\n').strip('.csv')
-    return experiment_name
+    return filename
 
 
 def warning(message, *args):
@@ -79,29 +87,25 @@ def error(message, *args):
     logging.error(message, *args)
 
 
-def get_line_number(filename):
-    """Reads the given file and returns the number of lines.
-
-    Args:
-        filename: A string for the file name.
-
-    Returns:
-        An integer for the number of lines.
-    """
-    number = 0
-    with open(filename, 'r') as filereader:
-        for _ in filereader:
-            number += 1
-    return number
+def info(message, *args):
+    logging.info(message, *args)
 
 
 def get_level_name(index):
     return 'level' + str(index)
 
 
-def get_slice_name(level, index):
+def get_slice_name(index):
+    """Gets the name of slice.
+
+    Args:
+        index: An int representing the index of the slice.
+
+    Returns:
+        A string representing the name of the slice.
+    """
     filename = 's{}.csv'.format(index)
-    return '/'.join([str(level), filename])
+    return filename
 
 
 def get_slice_path(root_dir, level, level_slice, strategy=None):
@@ -109,24 +113,20 @@ def get_slice_path(root_dir, level, level_slice, strategy=None):
         level0.
     Args:
         root_dir: A string that represents the directory of preprocesse files.
-        level: A string or int of level name or number.
-        level_slice: A string or int of slice name of number.
-        strategy: A string of downsampling strategy.
+        level: A string of level name.
+        level_slice: A string of slice name.
+        strategy: A string representing a downsampling strategy.
 
     Returns:
-        A string of the path of slice.
+        A string indicating the file path with given slice of data.
     """
-    level_name = level
-    if isinstance(level, int):
-        level_name = get_level_name(level)
+    slice_name = level_slice
+    if level not in slice_name:
+        slice_name = '/'.join([level, level_slice])
 
-    level_slice_name = level_slice
-    if isinstance(level_slice, int):
-        level_slice_name = get_slice_name(level_name, level_slice)
-
-    if level_name == 'level0':
-        return '/'.join([root_dir, level_slice_name])
-    return '/'.join([root_dir, strategy, level_slice_name])
+    if level == 'level0':
+        return '/'.join([root_dir, slice_name])
+    return '/'.join([root_dir, strategy, slice_name])
 
 
 def mkdir(path):

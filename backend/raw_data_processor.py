@@ -18,7 +18,7 @@
 from utils import parse_csv_line
 
 
-class RawData:
+class RawDataProcessor:
     """Class for processing raw data."""
 
     def __init__(self, rawfile, number_per_slice, bucket=None):
@@ -27,7 +27,7 @@ class RawData:
         self._file = open(rawfile, 'r')
         self._bucket = bucket
 
-    def read(self):
+    def read_next_slice(self):
         """Reads raw data for a single slice.
 
         Returns:
@@ -48,8 +48,14 @@ class RawData:
         return records
 
     def readable(self):
+        """Checks if the raw file is readable.
+
+        Returns:
+            A boolnean indicating if raw is readable.
+        """
         return not self._file.closed
 
     def close(self):
+        """Closes raw file."""
         if not self._file.closed:
             self._file.close()
