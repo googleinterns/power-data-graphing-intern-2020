@@ -14,7 +14,6 @@
 
 """Multiple-level preprocess module."""
 from math import ceil
-from os import path
 from time import time
 
 
@@ -50,10 +49,6 @@ class MultipleLevelPreprocess:
         experiment_name = utils.get_experiment_name(filename)
 
         self._preprocess_dir = '/'.join([root_dir, experiment_name])
-        metadata_path = '/'.join([self._preprocess_dir, METADATA])
-
-        if path.exists(metadata_path):
-            self._preprocessed = True
 
     def is_preprocessed(self):
         """Returns if the raw data is preprocessed."""
@@ -164,20 +159,8 @@ class MultipleLevelPreprocess:
         self._minimum_number_level = minimum_number_level
         self._metadata = Metadata(
             self._preprocess_dir, bucket=self._preprocess_bucket)
-
-        raw_number_records, start, end = self._get_raw_meta_info()
-        self._metadata['start'] = int(start)
-        self._metadata['end'] = int(end)
-        self._metadata['raw_number'] = raw_number_records
         self._metadata['raw_file'] = self._rawfile
-
-        levels, level_names = self._get_levels_metadata(
-            raw_number_records, end - start)
-
         self._metadata['levels'] = dict()
-        self._metadata['levels']['names'] = level_names
-        for name, level in zip(level_names, levels):
-            self._metadata["levels"][name] = level
 
         utils.mkdir(self._preprocess_dir)
         start = time()
@@ -203,6 +186,9 @@ class MultipleLevelPreprocess:
         utils.mkdir('/'.join([self._preprocess_dir, RAW_LEVEL_DIR]))
 
         slice_index = 0
+        raw_start_times = list()
+        record_count = 0
+        timespan_start = timespan_end = -1
         while raw_data.readable():
             slice_name = utils.get_slice_path(
                 self._preprocess_dir, 0, slice_index)
@@ -210,10 +196,27 @@ class MultipleLevelPreprocess:
                 slice_name, bucket=self._preprocess_bucket)
             raw_slice = raw_data.read()
             level_slice.save(raw_slice)
-            raw_slice_metadata[self._metadata['levels'][RAW_LEVEL_DIR]
-                               ['names'][slice_index]] = raw_slice[0][0]
+            raw_start_times.append(raw_slice[0][0])
+
             slice_index += 1
+            record_count += len(raw_slice)
+            if timespan_start == -1:
+                timespan_start = raw_slice[0][0]
+            timespan_end = raw_slice[-1][0]
         raw_data.close()
+
+        self._metadata['raw_number'] = record_count
+        self._metadata['start'] = timespan_start
+        self._metadata['end'] = timespan_end
+
+        levels, level_names = self._get_levels_metadata(
+            record_count, timespan_end-timespan_start)
+        self._metadata['levels']['names'] = level_names
+        for name, level in zip(level_names, levels):
+            self._metadata["levels"][name] = level
+        for index, raw_slice_start in enumerate(raw_start_times):
+            raw_slice_metadata[self._metadata['levels']
+                               [RAW_LEVEL_DIR]['names'][index]] = raw_slice_start
         raw_slice_metadata.save()
 
     def _preprocess_single_startegy(self, strategy):
@@ -241,25 +244,6 @@ class MultipleLevelPreprocess:
                 strategy, prev_level, curr_level, level_metadata)
             level_metadata.save()
             prev_level = curr_level
-
-    def _get_raw_meta_info(self):
-        """Gets line number, start, and end time from the file.
-
-        Returns:
-            A tuple of integer, float, float, that represents number of lines,
-                start time, and end time, respctively.
-        """
-        start = end = -1
-        raw_number_records = 0
-        with open(self._rawfile, 'r') as filereader:
-            for line in filereader:
-                if start == -1:
-                    start = float(line[:UNIX_TIMESTAMP_LENGTH])
-                raw_number_records += 1
-                end = line
-            end = float(end[:UNIX_TIMESTAMP_LENGTH])
-
-        return raw_number_records, start, end
 
     def _get_levels_metadata(self, raw_number_records, duration):
         """Gets level meta infomation for each level.
