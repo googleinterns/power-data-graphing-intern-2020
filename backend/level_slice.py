@@ -27,12 +27,21 @@ class LevelSlice:
     def __init__(self, filename=None, filenames=None):
         """Initialises slice object.
 
+        filname and filenames cannot be None at the same time.
+
         Args:
-            filename: A string of the path to the slice.
-            filenames: A list of string that represent the path to slices.
+            filename: (optional) A string of the path to the slice.
+            filenames: (optional) A list of string that represent the path to slices.
+
+        Raises:
+            TypeError: Both arguments are None.
         """
+        if filename is None and filenames is None:
+            raise TypeError
         self._filename = filename
         self._filenames = filenames
+
+        # key: channel name, value: list of records.
         self._records = defaultdict(list)
         self._start = -1
 
@@ -58,7 +67,7 @@ class LevelSlice:
                         if self._start == -1:
                             self._start = record[0]
 
-    def get_start(self):
+    def get_first_timestamp(self):
         """Gets the earliest time of record in this slice."""
         return self._start
 
@@ -78,7 +87,7 @@ class LevelSlice:
             filewriter.write(data_csv)
             filewriter.flush()
 
-    def get_number_records(self):
+    def get_records_count(self):
         """Gets number of records in this slice."""
         number = sum(len(channel) for channel in self._records.values())
         return number
@@ -113,6 +122,11 @@ class LevelSlice:
             self._records[channel].extend(records[channel])
 
     def format_response(self):
+        """Gets current data in dict type for http response.
+
+        Returns:
+            A dict of data indicating the name of channel and its data.
+        """
         response = list()
         for channel in self._records.keys():
             response.append({

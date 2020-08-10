@@ -71,7 +71,7 @@ def generate_filename_on_strategy(original_filename, strategy):
     """Generates filename of preprocessed result based on the strategy.
 
     Args:
-        original_filename: A string filename of the experiment (e.g. tmp/DMM_single_channel.csv)
+        original_filename: A string filename of the file (e.g. tmp/DMM_single_channel.csv)
         strategy: One of STRATEGIES in string.
 
     Returns:
@@ -79,20 +79,28 @@ def generate_filename_on_strategy(original_filename, strategy):
     """
     original_path_no_postfix = original_filename.strip(' ').strip(
         '\n').strip('.csv')
-    experiment_name = original_path_no_postfix.split('/')[-1]
+    file_name = original_path_no_postfix.split('/')[-1]
     target_parent_path = os.path.join(PREPROCESS_DIR, original_path_no_postfix)
     if not os.path.isdir(target_parent_path):
         os.makedirs(target_parent_path)
     file_path = os.path.join(
-        target_parent_path, experiment_name + '_' + strategy + '.csv')
+        target_parent_path, file_name + '_' + strategy + '.csv')
     return file_path
 
 
-def get_experiment_name(path):
+def get_file_name(path):
+    """Get the file name without .csv postfix.
+
+    Args:
+        path: A string for the absolute path to the file.
+
+    Returns:
+        A string for the path without .csv postfix
+    """
     parent_path = path.strip(' ').strip(
         '\n').strip('.csv')
-    experiment_name = parent_path.split('/')[-1]
-    return experiment_name
+    file_name = parent_path.split('/')[-1]
+    return file_name
 
 
 def warning(message, *args):
@@ -103,29 +111,25 @@ def error(message, *args):
     logging.error(message, *args)
 
 
-def get_line_number(filename):
-    """Reads the given file and returns the number of lines.
-
-    Args:
-        filename: A string for the file name.
-
-    Returns:
-        An integer for the number of lines.
-    """
-    number = 0
-    with open(filename, 'r') as filereader:
-        for _ in filereader:
-            number += 1
-    return number
+def info(message, *args):
+    logging.info(message, *args)
 
 
 def get_level_name(index):
     return 'level' + str(index)
 
 
-def get_slice_name(level, index):
+def get_slice_name(index):
+    """Gets the name of slice.
+
+    Args:
+        index: An int representing the index of the slice.
+
+    Returns:
+        A string representing the name of the slice.
+    """
     filename = 's{}.csv'.format(index)
-    return '/'.join([str(level), filename])
+    return filename
 
 
 def get_slice_path(root_dir, level, level_slice, strategy=None):
@@ -133,24 +137,20 @@ def get_slice_path(root_dir, level, level_slice, strategy=None):
         level0.
     Args:
         root_dir: A string that represents the directory of preprocesse files.
-        level: A string or int of level name of number.
-        level_slice: A string or int of slice name of number.
-        strategy: A string of downsampling strategy.
+        level: A string of level name.
+        level_slice: A string of slice name.
+        strategy: A string representing a downsampling strategy.
 
     Returns:
-        A string of the path of slice.
+        A string indicating the file path with given slice of data.
     """
-    level_name = level
-    if isinstance(level, int):
-        level_name = get_level_name(level)
+    slice_name = level_slice
+    if level not in slice_name:
+        slice_name = '/'.join([level, level_slice])
 
-    level_slice_name = level_slice
-    if isinstance(level_slice, int):
-        level_slice_name = get_slice_name(level_name, level_slice)
-
-    if level_name == 'level0':
-        return '/'.join([root_dir, level_slice_name])
-    return '/'.join([root_dir, strategy, level_slice_name])
+    if level == 'level0':
+        return '/'.join([root_dir, slice_name])
+    return '/'.join([root_dir, strategy, slice_name])
 
 
 def mkdir(path):

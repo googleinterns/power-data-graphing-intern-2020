@@ -115,6 +115,8 @@ def strategy_reducer(records, strategy, downsample_factor):
                 [time,power,channel1],
                 [time,power,channel1]
             ]
+    Raises:
+        TypeError: if strategy is undefined.
     """
     if strategy == 'max':
         res = _max_min_downsample(
@@ -126,5 +128,5 @@ def strategy_reducer(records, strategy, downsample_factor):
         res = _average_downsample(
             records, downsample_factor=downsample_factor)
     else:
-        res = list()
+        raise TypeError
     return res

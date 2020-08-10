@@ -20,11 +20,11 @@ from json import load
 import os
 
 from level_slice import LevelSlice
-from raw_data import RawData
+from raw_data_processor import RawDataProcessor
 import utils
 
 DOWNSAMPLE_LEVEL_FACTOR = 100
-METADATA = 'metadata.json'
+METADATA_FILE_NAME = 'metadata.json'
 PREPROCESS_DIR = 'mld-preprocess'
 MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
 NUMBER_OF_RECORDS_PER_SLICE = 200000
@@ -37,15 +37,41 @@ TEST_FILENAME = 'rand.csv'
 
 
 class MultipleLevelPreprocess:
-    """Class for multiple level preprocessing"""
+    """Class for multiple level preprocessing
 
-    def __init__(self, filename, root_dir=PREPROCESS_DIR):
-        self._rawfile = filename
+    To retrive data in varying time span, raw data is downsampled to a set of downsample
+    levels, with decreasing frequency (number of records per second).
+    Aside from downsample levels, downsampled data is split into slices of constant size,
+    in order to keep constant loading time.
+    To manage the knowledge of each level, a metadata.json file is genereted for the entire
+    file and each slice, including names, start time of slice, start, end, and frequency, etc.
+    Metadata is saved in json format, and one for raw data, one for each level.
+    Example metadata for raw:
+    {
+
+        "start": 1565201629231030,
+        "end": 1565201659080140,
+        "raw_number": 731,
+        "raw_file": "DMM_result_multiple_channel.csv",
+        "levels": {
+            "names": ["level0"],
+            "level0": {
+            "names": ["level0/s0.csv"],
+            "frequency": 2.4489842410711743e-5,
+            "number": 731
+            }
+        }
+    }
+
+    """
+
+    def __init__(self, file_path, root_dir=PREPROCESS_DIR):
+        self._rawfile = file_path
         self._preprocessed = False
 
-        experiment_name = utils.get_experiment_name(filename)
-        self._preprocess_dir = '/'.join([root_dir, experiment_name])
-        metadata_path = '/'.join([self._preprocess_dir, METADATA])
+        original_file_name = utils.get_file_name(file_path)
+        self._preprocess_dir = '/'.join([root_dir, original_file_name])
+        metadata_path = '/'.join([self._preprocess_dir, METADATA_FILE_NAME])
         if os.path.exists(metadata_path):
             self._preprocessed = True
 
@@ -53,18 +79,20 @@ class MultipleLevelPreprocess:
         """Returns if the raw data is preprocessed."""
         return self._preprocessed
 
-    def multilevel_inference(self, strategy, number_records, start, end):
-        """Reads the preprocessing file and downsample with the given strategy for HTTP request.
+    def multilevel_inference(self, strategy, number_records, timespan_start, timespan_end):
+        """Gets the records in given timespan, downsample the fetched data with
+            given strategy if needed.
 
-        Assume the records file is on local disk, read the records and downsample the records
-        to be within max records.
+        Read the records and downsample the records to be within number_records.
         Optional arguments start and end to specify a timespan in which records must be laid.
 
         Args:
-            strategy: A string representing downsampling strategy.
+            strategy: A string representing a downsampling strategy.
             number_records: An interger representing number of records to return.
-            start: An interger representing start of timespan.
-            end: An interger representing the end of timespan.
+            timespan_start: An integer representing the timestamp in microseconds
+                of the start of timespan.
+            timespan_end: An integer representing the timestamp in microseconds
+                of the end of timespan.
 
         Returns:
             A list of downsampled data in the given file, and precision for this result.
@@ -84,19 +112,19 @@ class MultipleLevelPreprocess:
                     }
                 ]
         """
-        metadata_path = '/'.join([self._preprocess_dir, METADATA])
+        metadata_path = '/'.join([self._preprocess_dir, METADATA_FILE_NAME])
         with open(metadata_path, 'r') as filereader:
             self._metadata = load(filereader)
 
-        if start is None:
-            start = self._metadata['start']
-        if end is None:
-            end = self._metadata['end']
+        if timespan_start is None:
+            timespan_start = self._metadata['start']
+        if timespan_end is None:
+            timespan_end = self._metadata['end']
 
-        if start > self._metadata['end'] or end < self._metadata['start']:
+        if timespan_start > self._metadata['end'] or timespan_end < self._metadata['start']:
             return []
 
-        required_frequency = number_records / (end - start)
+        required_frequency = number_records / (timespan_end - timespan_start)
 
         # Finds Downsample Level.
         target_level_index = self._binary_search(
@@ -108,30 +136,33 @@ class MultipleLevelPreprocess:
                                                 ['names'][target_level_index]]
         if target_level_index == 0:
             metadata_dir = '/'.join([self._preprocess_dir,
-                                     RAW_LEVEL_DIR, METADATA])
+                                     RAW_LEVEL_DIR, METADATA_FILE_NAME])
         else:
             metadata_dir = '/'.join([self._preprocess_dir, strategy,
-                                     utils.get_level_name(target_level_index), METADATA])
+                                     utils.get_level_name(target_level_index), METADATA_FILE_NAME])
         # Finds target slices.
         with open(metadata_dir, 'r') as filereader:
             level_metadata = load(filereader)
         first_slice = self._binary_search([level_metadata[single_slice]
-                                           for single_slice in target_level['names']], start)
+                                           for single_slice in target_level['names']],
+                                          timespan_start)
         last_slice = self._binary_search([level_metadata[single_slice]
-                                          for single_slice in target_level['names']], end)
+                                          for single_slice in target_level['names']],
+                                         timespan_end)
         target_slices_names = target_level['names'][first_slice:last_slice+1]
         target_slice_paths = [utils.get_slice_path(
             self._preprocess_dir,
-            target_level_index, single_slice, strategy) for single_slice in target_slices_names]
+            utils.get_level_name(target_level_index),
+            single_slice, strategy) for single_slice in target_slices_names]
 
         # Reads records and downsamples.
         target_slices = LevelSlice(filenames=target_slice_paths)
-        target_slices.read_slices(start, end)
-        number_target_records = target_slices.get_number_records()
+        target_slices.read_slices(timespan_start, timespan_end)
+        number_target_records = target_slices.get_records_count()
 
         target_slices.downsample(strategy, max_records=number_records)
         downsampled_data = target_slices.format_response()
-        number_result_records = target_slices.get_number_records()
+        number_result_records = target_slices.get_records_count()
 
         if number_target_records == 0:
             precision = 0
@@ -148,11 +179,15 @@ class MultipleLevelPreprocess:
         """Multiple level downsampling entry point.
 
         Downsamples the raw data from given filename with each of the strategy,
-        in a hierarchical fation.
+        in a hierarchical fashion.
+        Level0 is shared across all strategies, which contains slices of raw data.
+        Level1 and Level1+ is from downsampling on level0 and the level prior to this one,
+        and each strategy keeps its own levels.
 
         Args:
             number_per_slice: An int that represents number of records for one slice.
             downsample_level_factor: An int that represents downsample factor between levels.
+                (e.g. factor=100, level1 has 100x less data than level0)
             minimum_number_level: An int that represents the minimum number of records for a level.
         """
         self._number_per_slice = number_per_slice
@@ -177,13 +212,13 @@ class MultipleLevelPreprocess:
         utils.mkdir(self._preprocess_dir)
         start = time.time()
         self._raw_preprocess(number_per_slice)
-        utils.warning(('raw time is: ', time.time()-start))
-        with open('/'.join([self._preprocess_dir, METADATA]), 'w') as filewriter:
+        utils.info(('raw time is: ', time.time()-start))
+        with open('/'.join([self._preprocess_dir, METADATA_FILE_NAME]), 'w') as filewriter:
             dump(self._metadata, filewriter)
         for strategy in STRATEGIES:
             start = time.time()
             self._preprocess_single_startegy(strategy)
-            utils.warning((strategy, ' time is: ', time.time()-start))
+            utils.info((strategy, ' time is: ', time.time()-start))
         self._preprocessed = True
 
     def _raw_preprocess(self, number_per_slice):
@@ -193,22 +228,24 @@ class MultipleLevelPreprocess:
             number_per_slice: An int of records to keep for each slice.
         """
         raw_slice_metadata = dict()
-        raw_data = RawData(self._metadata['raw_file'], number_per_slice)
+        raw_data = RawDataProcessor(
+            self._metadata['raw_file'], number_per_slice)
         utils.mkdir('/'.join([self._preprocess_dir, RAW_LEVEL_DIR]))
 
         slice_index = 0
         while raw_data.readable():
             slice_name = utils.get_slice_path(
-                self._preprocess_dir, 0, slice_index)
+                self._preprocess_dir, RAW_LEVEL_DIR, utils.get_slice_name(slice_index))
             level_slice = LevelSlice(slice_name)
-            raw_slice = raw_data.read()
+            raw_slice = raw_data.read_next_slice()
             level_slice.save(raw_slice)
             raw_slice_metadata[self._metadata['levels'][RAW_LEVEL_DIR]
                                ['names'][slice_index]] = raw_slice[0][0]
             slice_index += 1
         raw_data.close()
 
-        with open('/'.join([self._preprocess_dir, RAW_LEVEL_DIR, METADATA]), 'w') as filewriter:
+        with open('/'.join([self._preprocess_dir, RAW_LEVEL_DIR,
+                            METADATA_FILE_NAME]), 'w') as filewriter:
             dump(raw_slice_metadata, filewriter)
 
     def _preprocess_single_startegy(self, strategy):
@@ -222,7 +259,7 @@ class MultipleLevelPreprocess:
         Info regarding levels and slices is kept in a metadata json file.
 
         Args:
-            strategy: A string representing downsampling strategy.
+            strategy: A string representing a downsampling strategy.
         """
         if len(self._metadata['levels']['names']) <= 1:
             return
@@ -232,7 +269,7 @@ class MultipleLevelPreprocess:
             utils.mkdir(level_dir)
             level_metadata = self._single_level_downsample(
                 strategy, prev_level, curr_level)
-            with open('/'.join([level_dir, METADATA]), 'w') as filewriter:
+            with open('/'.join([level_dir, METADATA_FILE_NAME]), 'w') as filewriter:
                 dump(level_metadata, filewriter)
             prev_level = curr_level
 
@@ -260,7 +297,8 @@ class MultipleLevelPreprocess:
 
         Args:
             raw_number_records: An int that represents the number of raw records.
-            duration: An int that represents duration of the experiment.
+            duration: An int that represents duration of the power test which produced
+                the DMM power data.
 
         Returns:
             A tuple of length 2, that contains level meta info ojbject and level names.
@@ -277,8 +315,8 @@ class MultipleLevelPreprocess:
             level_name = utils.get_level_name(index)
             number_slices = ceil(
                 number_records / self._number_per_slice)
-            slice_names = [utils.get_slice_name(
-                level_name, index) for index in range(number_slices)]
+            slice_names = ['/'.join([level_name, utils.get_slice_name(
+                index)]) for index in range(number_slices)]
             level = {
                 "names": slice_names,
                 "frequency": frequency,
@@ -295,7 +333,7 @@ class MultipleLevelPreprocess:
         """Downsamples for one single level.
 
         Args:
-            strategy: A string representing downsampling strategy.
+            strategy: A string representing a downsampling strategy.
             prev_level: A string of the name of the current level.
             curr_level: A string of the name of the previous level.
 
@@ -308,7 +346,8 @@ class MultipleLevelPreprocess:
 
         slice_index = 0
         curr_slice_path = utils.get_slice_path(self._preprocess_dir,
-                                               curr_level, slice_index, strategy)
+                                               curr_level, utils.get_slice_name(
+                                                   slice_index), strategy)
         curr_level_slice = LevelSlice(curr_slice_path)
 
         for prev_slice_name in prev_slice_names:
@@ -319,13 +358,14 @@ class MultipleLevelPreprocess:
             prev_level_downsample = prev_level_slice.downsample(
                 strategy, self._downsample_level_factor)
             curr_level_slice.add_records(prev_level_downsample)
-            if curr_level_slice.get_number_records() >= self._number_per_slice:
+            if curr_level_slice.get_records_count() >= self._number_per_slice:
                 curr_level_slice.save()
                 level_metadata[curr_slice_names
-                               [slice_index]] = curr_level_slice.get_start()
+                               [slice_index]] = curr_level_slice.get_first_timestamp()
                 slice_index += 1
                 curr_slice_path = utils.get_slice_path(self._preprocess_dir,
-                                                       curr_level, slice_index, strategy)
+                                                       curr_level, utils.get_slice_name(
+                                                           slice_index), strategy)
                 curr_level_slice = LevelSlice(curr_slice_path)
 
         curr_level_slice.save()
