@@ -85,7 +85,8 @@ class TestLevelClass:
 
     def test_empty_read(self):
         """Tests read behavior when none filename is supplied."""
-        test_slice = LevelSlice()
+        tmpfile = self.write_to_tmpfile([])
+        test_slice = LevelSlice(tmpfile.name)
         assert test_slice._records == {}
 
         test_slice.read()
@@ -140,10 +141,10 @@ class TestLevelClass:
         """Tests start time is earliest in all records."""
         tmpfile = self.write_to_tmpfile(test_records1)
         test_slice = LevelSlice(tmpfile.name)
-        assert test_slice.get_start() == -1
+        assert test_slice.get_first_timestamp() == -1
 
         test_slice.read()
-        assert test_slice.get_start() == test_records1[0][0]
+        assert test_slice.get_first_timestamp() == test_records1[0][0]
 
         tmpfile.close()
 

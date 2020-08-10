@@ -227,5 +227,9 @@ class TestDownsampleClass:
         assert strategy_reducer(records, 'avg', downsample_factor) == _average_downsample(
             records, downsample_factor)
 
-        assert strategy_reducer(
-            records, 'not_exist', downsample_factor) == []
+        try:
+            strategy_reducer(
+                records, 'not_exist', downsample_factor)
+            assert False
+        except TypeError as err:
+            assert isinstance(err, TypeError)

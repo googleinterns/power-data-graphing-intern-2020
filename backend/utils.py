@@ -56,7 +56,7 @@ def convert_to_csv(records):
         A string that contains all CSV records, None if the given list if empty.
     """
     if not records:
-        return None
+        return ''
 
     csv_lines = list()
     for record in records:
