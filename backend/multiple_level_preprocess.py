@@ -62,7 +62,8 @@ class MultipleLevelPreprocess:
             }
         }
     }
-
+    Example metadata for one level:
+    {"level1/s0.csv": 1596831217804342, "level1/s1.csv": 1596831304045319}
     """
 
     def __init__(self, file_path, root_dir=PREPROCESS_DIR):

@@ -28,6 +28,8 @@ class LevelSlice:
         """Initialises slice object.
 
         filname and filenames cannot be None at the same time.
+        filename is used to load and save for single slice, and filenames is used to
+        read multiple slices at the same time.
 
         Args:
             filename: (optional) A string of the path to the slice.
