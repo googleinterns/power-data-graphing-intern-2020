@@ -22,14 +22,8 @@ from metadata import Metadata
 from raw_data_processor import RawDataProcessor
 import utils
 
-DOWNSAMPLE_LEVEL_FACTOR = 100
-MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
-NUMBER_OF_RECORDS_PER_SLICE = 200000
-PREPROCESS_DIR = 'mld-preprocess'
 RAW_LEVEL_DIR = 'level0'
 UNIX_TIMESTAMP_LENGTH = 16
-
-TEST_FILENAME = 'DMM_result_J4007_J1630_J4004_J3905_.csv'
 
 
 class MultipleLevelPreprocess:
@@ -406,6 +400,11 @@ class MultipleLevelPreprocess:
 
 if __name__ == '__main__':
     from google.cloud import storage
+    TEST_FILENAME = 'DMM_result_J4007_J1630_J4004_J3905_.csv'
+    DOWNSAMPLE_LEVEL_FACTOR = 100
+    MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
+    NUMBER_OF_RECORDS_PER_SLICE = 200000
+    PREPROCESS_DIR = 'mld-preprocess'
     client = storage.Client()
     b1 = client.bucket('power-data-preprocess')
     b2 = client.bucket('power-data-raw')
