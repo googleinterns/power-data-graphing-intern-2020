@@ -1,0 +1,22 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+  - url: /
+    static_files: frontend/index.html
+    upload: frontend/index.html
+  - url: /
+    static_dir: frontend
+
+skip_files:
+# Default patterns skipped by App Engine
+  - ^(.*/)?app\.yaml
+  - ^(.*/)?app\.yml
+  - ^(.*/)?index\.yaml
+  - ^(.*/)?index\.yml
+  - ^(.*/)?#.*#
+  - ^(.*/)?.*~
+  - ^(.*/)?.*\.pyo
+  - ^(.*/)?.*/RCS/.*
+  - ^(.*/)?\..*

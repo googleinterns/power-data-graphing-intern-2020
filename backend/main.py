@@ -59,7 +59,9 @@ def get_data():
     data = downsample.secondary_downsample(
         preprocess_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
 
-    return jsonify(data)
+    response = app.make_response(jsonify(data))
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
 
 
 if __name__ == '__main__':

@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 
 export enum STRATEGY {
@@ -30,8 +31,6 @@ export interface RecordsResponse {
   providedIn: 'root',
 })
 export class HttpService {
-  private readonly url = 'http://127.0.0.1';
-  private readonly port = '5000';
 
   loading = false;
 
@@ -50,12 +49,13 @@ export class HttpService {
     strategy: STRATEGY,
     timespan: number[]
   ) {
-    return this.http.get([this.url, this.port].join(':') + path, {
+    return this.http.get(environment.apiUrl + path, {
       params: new HttpParams()
         .set('name', filename)
         .set('strategy', strategy)
         .set('start', timespan ? '' + Math.floor(timespan[0]) : null)
         .set('end', timespan ? '' + Math.floor(timespan[1]) : null),
+      withCredentials: true,
     });
   }
   /**
@@ -65,10 +65,11 @@ export class HttpService {
    * @param rate The frequency for downsampling.
    */
   preprocess(path: string, filename: string, rate: number) {
-    return this.http.get([this.url, this.port].join(':') + path, {
+    return this.http.get(environment.apiUrl + path, {
       params: new HttpParams()
         .set('name', filename)
         .set('rate', rate.toString()),
+      withCredentials: true,
     });
   }
 }
