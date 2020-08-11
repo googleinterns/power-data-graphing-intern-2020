@@ -29,7 +29,7 @@ PREPROCESS_DIR = 'mld-preprocess'
 RAW_LEVEL_DIR = 'level0'
 UNIX_TIMESTAMP_LENGTH = 16
 
-TEST_FILENAME = 'DMM_result_multiple_channel.csv'
+TEST_FILENAME = 'DMM_result_J4007_J1630_J4004_J3905_.csv'
 
 
 class MultipleLevelPreprocess:
@@ -342,7 +342,8 @@ class MultipleLevelPreprocess:
         curr_slice_path = utils.get_slice_path(self._preprocess_dir,
                                                curr_level, utils.get_slice_name(
                                                    slice_index), strategy)
-        curr_level_slice = LevelSlice(curr_slice_path)
+        curr_level_slice = LevelSlice(
+            curr_slice_path, bucket=self._preprocess_bucket)
 
         for prev_slice_name in prev_slice_names:
             prev_slice_path = utils.get_slice_path(self._preprocess_dir,
@@ -361,7 +362,8 @@ class MultipleLevelPreprocess:
                 curr_slice_path = utils.get_slice_path(self._preprocess_dir,
                                                        curr_level, utils.get_slice_name(
                                                            slice_index), strategy)
-                curr_level_slice = LevelSlice(curr_slice_path)
+                curr_level_slice = LevelSlice(
+                    curr_slice_path, bucket=self._preprocess_bucket)
 
         curr_level_slice.save()
         level_metadata[curr_slice_names

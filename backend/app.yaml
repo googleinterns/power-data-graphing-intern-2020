@@ -1,0 +1,20 @@
+# Google App Engine config file
+# -----------------------------
+# See https://cloud.google.com/appengine/docs/standard/python3/config/appref
+
+service: api
+
+# Recommended to set to Python 3.7 runtime or later
+runtime: python37
+env: standard
+
+manual_scaling:
+  instances: 1
+
+# Set App Engine instance class (defaults to F1)
+# See https://cloud.google.com/appengine/docs/standard/#instance_classes
+instance_class: B4
+
+handlers:
+  - url: .*
+    script: auto

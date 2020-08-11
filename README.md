@@ -146,5 +146,8 @@ After finishing set up the frontend and backend, open the browser(recommend chro
 
 
 ## TBD: Deploy the project to Google Cloud Platform
-
-
+1. Download gcloud SDK by following this [link](https://cloud.google.com/sdk/install)
+2. Initialze gcloud project by running `gcloud init`, auenticate with your google acount, and select the option of setting up a new project by entering a new project id, for tank-big-data-plotting, the project id is: google.com:tank-big-data-plotting-285623
+3. Go to the /frontend folder, build the prod version of the frontend by entering `ng build --prod`. Then go to the generated /dist folder, run `gcloud app deploy`. Make sure if your gcloud project setup is correctly, and the target service is set as default
+4. Go to the /backend folder, run `gcloud app deploy`, and make sure the target service is set as api.
+5. Go to the gcp console and make sure the latest frontend and backend have been uploaded.

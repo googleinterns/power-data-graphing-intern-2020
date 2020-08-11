@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { STRATEGY } from '../chart/record';
 
@@ -29,9 +30,6 @@ export interface ResponseData {
   providedIn: 'root',
 })
 export class HttpService {
-  private readonly url = 'http://127.0.0.1';
-  private readonly port = '5000';
-
   loading = false;
 
   constructor(private readonly http: HttpClient) {}
@@ -50,13 +48,14 @@ export class HttpService {
     number: number,
     timespan: number[]
   ) {
-    return this.http.get([this.url, this.port].join(':') + path, {
+    return this.http.get(environment.apiUrl + path, {
       params: new HttpParams()
         .set('name', filename)
         .set('strategy', strategy)
         .set('number', number.toString())
         .set('start', timespan ? '' + Math.floor(timespan[0]) : null)
         .set('end', timespan ? '' + Math.floor(timespan[1]) : null),
+      withCredentials: true,
     });
   }
   /**
@@ -64,8 +63,10 @@ export class HttpService {
    * @param path The http endpoint.
    */
   getFilenames(path: string) {
-    return this.http.get([this.url, this.port].join(':') + path, {
+    console.log(environment);
+    return this.http.get(environment.apiUrl + path, {
       params: new HttpParams(),
+      withCredentials: true,
     });
   }
 }

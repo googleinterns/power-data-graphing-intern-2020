@@ -47,7 +47,6 @@ export class ChartComponent implements OnInit, OnDestroy {
   // Component binding
   @Output() message = new EventEmitter<string>();
   filename: string;
-  // filename = 'DMM_result_multiple_channel.csv';
   precision: string;
   strategyType = STRATEGY;
   subscription: Subscription;

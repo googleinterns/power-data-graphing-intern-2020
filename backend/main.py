@@ -74,11 +74,13 @@ def get_data():
         return 'Preprocessing incomplete.', 400
     data, precision = preprocess.multilevel_inference(
         strategy, number, start, end)
-    response = {
+    response_data = {
         'data': data,
         'precision': precision
     }
-    return jsonify(response)
+    response = app.make_response(jsonify(response_data))
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
 
 
 @app.route('/data', methods=['POST'])
@@ -102,7 +104,9 @@ def mlp_preprocess():
     preprocess.multilevel_preprocess(
         number_per_slice, downsample_factor, minimum_number_level)
 
-    return 'preprocess complete!', 200
+    response = app.make_response('preprocess complete!')
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
 
 
 @app.route('/filenames')
@@ -112,8 +116,10 @@ def get_filenames():
     client = storage.Client()
     blobs = client.list_blobs(RAW_BUCKET)
     names = [blob.name for blob in blobs]
-    response = {'names': names}
-    return jsonify(response)
+    response_data = {'names': names}
+    response = app.make_response(jsonify(response_data))
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
 
 
 if __name__ == '__main__':
