@@ -62,9 +62,10 @@ class LevelSlice:
             lines = blob.download_as_string().decode().split('\n')
         for line in lines:
             record = parse_csv_line(line)
-            if self._start == -1:
-                self._start = record[0]
-            self._records[record[2]].append(record)
+            if record:
+                if self._start == -1:
+                    self._start = record[0]
+                self._records[record[2]].append(record)
 
     def read_slices(self, start, end):
         """Reads and loads records from a set of slices, only records in the range

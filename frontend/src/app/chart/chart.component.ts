@@ -46,7 +46,8 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   // Component binding
   @Output() message = new EventEmitter<string>();
-  filename = 'DMM_result_multiple_channel.csv';
+  filename: string;
+  // filename = 'DMM_result_multiple_channel.csv';
   precision: string;
   strategyType = STRATEGY;
   subscription: Subscription;
@@ -56,6 +57,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
   zoomIn = false;
+  names: string[];
 
   mouseDate = '';
   mouseTime = '';
@@ -101,11 +103,30 @@ export class ChartComponent implements OnInit, OnDestroy {
   constructor(private service: HttpService) {}
   ngOnInit(): void {
     this.initChart();
-    this.loadRecords();
+    this.loadFilenames();
+    // this.loadRecords();
   }
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+  }
+
+  loadFilenames() {
+    if (this.loading) this.subscription.unsubscribe();
+    this.loading = true;
+    this.subscription = this.service
+      .getFilenames('/filenames')
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          this.message.emit(error.error);
+          this.loading = false;
+          return throwError(error);
+        })
+      )
+      .subscribe((response: { names: string[] }) => {
+        this.names = response.names;
+        this.loading = false;
+      });
   }
 
   loadRecords(timespan?: number[]) {
@@ -121,9 +142,11 @@ export class ChartComponent implements OnInit, OnDestroy {
       )
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.message.emit(error.message);
-          console.log(error);
+          this.message.emit(error.error);
           this.loading = false;
+          this.svg.select('*').remove();
+          this.svg.select('*').remove();
+          console.log('removed');
           return throwError(error);
         })
       )

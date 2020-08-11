@@ -60,16 +60,12 @@ export class HttpService {
     });
   }
   /**
-   * Requests the server to do first-level downsampling.
+   * Gets all test file names.
    * @param path The http endpoint.
-   * @param filename The file name for the experiment.
-   * @param rate The frequency for downsampling.
    */
-  preprocess(path: string, filename: string, rate: number) {
+  getFilenames(path: string) {
     return this.http.get([this.url, this.port].join(':') + path, {
-      params: new HttpParams()
-        .set('name', filename)
-        .set('rate', rate.toString()),
+      params: new HttpParams(),
     });
   }
 }

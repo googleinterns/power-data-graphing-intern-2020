@@ -18,6 +18,9 @@ from json import dumps
 from json import load
 from json import loads
 
+from google.api_core.exceptions import NotFound
+from utils import mkdir
+
 METADATA = 'metadata.json'
 
 
@@ -58,6 +61,7 @@ class Metadata:
         """Saves metadata to bucket or disk."""
         if self._bucket is None:
             with open(self._path, 'w') as filewriter:
+                mkdir(self._path)
                 dump(self.data, filewriter)
                 return
         blob = self._bucket.blob(self._path)
@@ -65,11 +69,21 @@ class Metadata:
         blob.upload_from_string(metadata_string)
 
     def load(self):
-        """Loads metadata from bucket or disk."""
+        """Loads metadata from bucket or disk.
+
+        Returns:
+            Returns None if metadata is in bucket, else return
+            a string indicating file not found.
+        """
         if self._bucket is None:
             with open(self._path, 'r') as filereader:
                 self.data = load(filereader)
-                return
-        blob = self._bucket.blob(self._path)
-        metadata_string = blob.download_as_string()
-        self.data = loads(metadata_string)
+                return None
+        try:
+            blob = self._bucket.blob(self._path)
+            metadata_string = blob.download_as_string()
+            self.data = loads(metadata_string)
+            return None
+        except NotFound:
+            error = "File not found."
+            return error

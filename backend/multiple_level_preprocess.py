@@ -23,16 +23,14 @@ from raw_data_processor import RawDataProcessor
 import utils
 
 DOWNSAMPLE_LEVEL_FACTOR = 100
-METADATA_FILE_NAME = 'metadata.json'
-PREPROCESS_DIR = 'mld-preprocess'
 MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
 NUMBER_OF_RECORDS_PER_SLICE = 200000
-
+PREPROCESS_DIR = 'mld-preprocess'
 RAW_LEVEL_DIR = 'level0'
 STRATEGIES = ['max', 'min', 'avg']
 UNIX_TIMESTAMP_LENGTH = 16
 
-TEST_FILENAME = 'DMM_result_J4007_J1630_J4004_J3905_.csv'
+TEST_FILENAME = 'DMM_result_multiple_channel.csv'
 
 
 class MultipleLevelPreprocess:
@@ -65,20 +63,34 @@ class MultipleLevelPreprocess:
     {"level1/s0.csv": 1596831217804342, "level1/s1.csv": 1596831304045319}
     """
 
-    def __init__(self, file_path, root_dir=PREPROCESS_DIR, client=None):
+    def __init__(self, file_path, root_dir=PREPROCESS_DIR, preprocess_bucket=None, raw_bucket=None):
+        """Initializes preprocess object.
+
+        Args:
+            root_dir: A string that represents the folder containing all preprocess files.
+            file_path: A string that represents the path to raw data.
+            preprocess_bucket: A GCP bucket object for preprocess files.
+            raw_bucket: A GCP bucket object for raw files.
+        """
         self._rawfile = file_path
-        self._preprocessed = False
-        self._client = client
-        if self._client is not None:
-            self._preprocess_bucket = self._client.bucket(
-                'power-data-preprocess')
+        self._preprocess_bucket = preprocess_bucket
+        self._raw_bucket = raw_bucket
 
         original_file_name = utils.get_file_name(file_path)
         self._preprocess_dir = '/'.join([root_dir, original_file_name])
 
     def is_preprocessed(self):
-        """Returns if the raw data is preprocessed."""
-        return self._preprocessed
+        """Returns if the raw data is preprocessed.
+
+        Returns:
+            A boolean indicating if the raw file is preprocessed.
+        """
+        metadata = Metadata(self._preprocess_dir,
+                            bucket=self._preprocess_bucket)
+        error = metadata.load()
+        if error is None:
+            return True
+        return False
 
     def multilevel_inference(self, strategy, number_records, timespan_start, timespan_end):
         """Gets the records in given timespan, downsample the fetched data with
@@ -196,17 +208,15 @@ class MultipleLevelPreprocess:
         self._metadata['raw_file'] = self._rawfile
         self._metadata['levels'] = dict()
 
-        utils.mkdir(self._preprocess_dir)
         start = time()
         self._raw_preprocess(number_per_slice)
-        utils.info(('raw time is: ', time()-start))
-        self._metadata.save()
+        utils.warning(('raw time is: ', time()-start))
 
         for strategy in STRATEGIES:
             start = time()
             self._preprocess_single_startegy(strategy)
-            utils.info((strategy, ' time is: ', time()-start))
-        self._preprocessed = True
+            utils.warning((strategy, ' time is: ', time()-start))
+        self._metadata.save()
 
     def _raw_preprocess(self, number_per_slice):
         """Splits raw data into slices. keep start time of each slice in a json file.
@@ -218,9 +228,7 @@ class MultipleLevelPreprocess:
             self._preprocess_dir, strategy=None, level=RAW_LEVEL_DIR,
             bucket=self._preprocess_bucket)
         raw_data = RawDataProcessor(
-            self._metadata['raw_file'], number_per_slice)
-
-        utils.mkdir('/'.join([self._preprocess_dir, RAW_LEVEL_DIR]))
+            self._metadata['raw_file'], number_per_slice, self._raw_bucket)
 
         slice_index = 0
         raw_start_times = list()
@@ -240,7 +248,6 @@ class MultipleLevelPreprocess:
             if timespan_start == -1:
                 timespan_start = raw_slice[0][0]
             timespan_end = raw_slice[-1][0]
-        raw_data.close()
 
         self._metadata['raw_number'] = record_count
         self._metadata['start'] = timespan_start
@@ -273,8 +280,6 @@ class MultipleLevelPreprocess:
             return
         prev_level = self._metadata['levels']['names'][0]
         for curr_level in self._metadata['levels']['names'][1:]:
-            level_dir = '/'.join([self._preprocess_dir, strategy, curr_level])
-            utils.mkdir(level_dir)
             level_metadata = Metadata(
                 self._preprocess_dir, strategy, curr_level, bucket=self._preprocess_bucket)
             self._single_level_downsample(
@@ -361,7 +366,7 @@ class MultipleLevelPreprocess:
 
         curr_level_slice.save()
         level_metadata[curr_slice_names
-                       [slice_index]] = curr_level_slice.get_start()
+                       [slice_index]] = curr_level_slice.get_first_timestamp()
         return level_metadata
 
     def _binary_search(self, data_list, value, reverse=False):
@@ -399,6 +404,10 @@ class MultipleLevelPreprocess:
 
 
 if __name__ == '__main__':
-    a = MultipleLevelPreprocess(TEST_FILENAME, PREPROCESS_DIR)
+    from google.cloud import storage
+    client = storage.Client()
+    b1 = client.bucket('power-data-preprocess')
+    b2 = client.bucket('power-data-raw')
+    a = MultipleLevelPreprocess(TEST_FILENAME, PREPROCESS_DIR, b1, b2)
     a.multilevel_preprocess(
         NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)

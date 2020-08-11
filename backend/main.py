@@ -36,13 +36,14 @@ DOWNSAMPLE_LEVEL_FACTOR = 100
 MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
 NUMBER_OF_RECORDS_PER_SLICE = 200000
 PREPROCESS_DIR = 'mld-preprocess'
-
+PREPROCESS_BUCKET = 'power-data-preprocess'
+RAW_BUCKET = 'power-data-raw'
 
 app = Flask(__name__)
 CORS(app)
 
 
-@app.route('/data')
+@app.route('/data', methods=['GET'])
 def get_data():
     """HTTP endpoint to get data.
 
@@ -67,17 +68,52 @@ def get_data():
         return 'Incorrect Strategy', 400
 
     client = storage.Client()
-    preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR, client)
+    preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR, client.bucket(
+        PREPROCESS_BUCKET), client.bucket(RAW_BUCKET))
 
     if not preprocess.is_preprocessed():
-        preprocess.multilevel_preprocess(
-            NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
+        return 'Preprocessing incomplete.', 400
     data, precision = preprocess.multilevel_inference(
         strategy, number, start, end)
     response = {
         'data': data,
         'precision': precision
     }
+    return jsonify(response)
+
+
+@app.route('/data', methods=['POST'])
+def mlp_preprocess():
+    """HTTP endpoint to preprocess.
+
+    HTTP Args:
+        name: A string representing the name of the file to preprocess.
+        slice_size: An int that represents number of records for one slice.
+        downsanple_factor: An int that represents downsample factor between levels.
+        min_number: An int that represents the minimum number of records for a level.
+    """
+    name = request.args.get('name', type=str)
+    number_per_slice = request.args.get('slice_size', type=int)
+    downsample_factor = request.args.get('downsample_factor', type=int)
+    minimum_number_level = request.args.get('min_number', type=int)
+
+    client = storage.Client()
+    preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR, client.bucket(
+        PREPROCESS_BUCKET), client.bucket(RAW_BUCKET))
+    preprocess.multilevel_preprocess(
+        number_per_slice, downsample_factor, minimum_number_level)
+
+    return 'preprocess complete!', 200
+
+
+@app.route('/filenames')
+def get_filenames():
+    """HTTP endpoint to get all file names stored in bucket."""
+
+    client = storage.Client()
+    blobs = client.list_blobs(RAW_BUCKET)
+    names = [blob.name for blob in blobs]
+    response = {'names': names}
     return jsonify(response)
 
 
