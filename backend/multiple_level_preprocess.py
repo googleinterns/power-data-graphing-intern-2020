@@ -16,7 +16,7 @@
 from math import ceil
 from time import time
 
-
+from downsample import STRATEGIES
 from level_slice import LevelSlice
 from metadata import Metadata
 from raw_data_processor import RawDataProcessor
@@ -27,7 +27,6 @@ MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
 NUMBER_OF_RECORDS_PER_SLICE = 200000
 PREPROCESS_DIR = 'mld-preprocess'
 RAW_LEVEL_DIR = 'level0'
-STRATEGIES = ['max', 'min', 'avg']
 UNIX_TIMESTAMP_LENGTH = 16
 
 TEST_FILENAME = 'DMM_result_multiple_channel.csv'

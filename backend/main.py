@@ -47,8 +47,7 @@ CORS(app)
 def get_data():
     """HTTP endpoint to get data.
 
-    Retrives all power data from local file given a limit on number of
-    records from request body.
+    Retrieves downsampled data, that are within the given time range, from preprocessed raw files.
 
     HTTP Args:
         name: A string representing the name of the file user wish to view.

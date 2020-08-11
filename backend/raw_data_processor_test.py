@@ -72,11 +72,3 @@ class TestRawDataProcessor:
         records = raw_data.read_next_slice()
         assert records == test_records
         testfile.close()
-
-    def test_close(self, testfile):
-        """Tests if the file io object is closed after close is called."""
-        raw_data = RawDataProcessor(testfile.name, 10)
-        assert not raw_data._file.closed
-        raw_data.close()
-        assert raw_data._file.closed
-        testfile.close()

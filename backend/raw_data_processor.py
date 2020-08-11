@@ -36,24 +36,6 @@ class RawDataProcessor:
         else:
             self._blob = self._bucket.blob(self._rawfile)
 
-    # def read_next_slice(self):
-    #     """Reads raw data for a single slice.
-
-    #     Returns:
-    #         A list of records.
-    #     """
-
-        # counter = 0
-        # records = list()
-        # while counter < self._number_per_slice:
-        #     line = self._file.readline()
-        #     if line == '':
-        #         self._file.close()
-        #         break
-        #     records.append(parse_csv_line(line))
-        #     counter += 1
-        # return records
-
     def read_next_slice(self):
         """Reads raw data for a single slice.
 
@@ -69,6 +51,7 @@ class RawDataProcessor:
                 line = self._file.readline()
                 if line == '':
                     self._file.close()
+                    self._eof = True
                     break
                 records.append(parse_csv_line(line))
                 counter += 1
