@@ -72,11 +72,13 @@ def get_data():
             NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
     data, precision = preprocess.multilevel_inference(
         strategy, number, start, end)
-    response = {
+    response_data = {
         'data': data,
         'precision': precision
     }
-    return jsonify(response)
+    response = app.make_response(jsonify(response_data))
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
 
 
 if __name__ == '__main__':

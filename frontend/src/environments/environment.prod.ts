@@ -14,4 +14,5 @@
 
 export const environment = {
   production: true,
+  apiUrl: 'https://api-dot-tank-big-data-plotting-285623.googleplex.com',
 };
