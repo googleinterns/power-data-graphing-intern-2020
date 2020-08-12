@@ -2,3 +2,6 @@ dispatch:
   # Default service serves for get data requests.
   - url: "*/data"
     service: api
+
+  - url: "*/filenames"
+    service: api

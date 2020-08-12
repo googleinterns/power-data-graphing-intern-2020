@@ -145,7 +145,6 @@ export class ChartComponent implements OnInit, OnDestroy {
           this.loading = false;
           this.svg.select('*').remove();
           this.svg.select('*').remove();
-          console.log('removed');
           return throwError(error);
         })
       )

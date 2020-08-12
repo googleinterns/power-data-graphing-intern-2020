@@ -22,6 +22,7 @@ from metadata import Metadata
 from raw_data_processor import RawDataProcessor
 import utils
 
+PREPROCESS_DIR = 'mld-preprocess'
 RAW_LEVEL_DIR = 'level0'
 UNIX_TIMESTAMP_LENGTH = 16
 

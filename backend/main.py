@@ -28,15 +28,12 @@ from multiple_level_preprocess import MultipleLevelPreprocess
 from utils import error
 
 
-NUMBER_OF_RECORDS_PER_REQUEST = 600
-NUMBER_OF_RECORDS_PER_SECOND = 10000
-FLOAT_PRECISION = 4
-
 DOWNSAMPLE_LEVEL_FACTOR = 100
 MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
+NUMBER_OF_RECORDS_PER_REQUEST = 600
 NUMBER_OF_RECORDS_PER_SLICE = 200000
-PREPROCESS_DIR = 'mld-preprocess'
 PREPROCESS_BUCKET = 'power-data-preprocess'
+PREPROCESS_DIR = 'mld-preprocess'
 RAW_BUCKET = 'power-data-raw'
 
 app = Flask(__name__)
@@ -71,6 +68,8 @@ def get_data():
         PREPROCESS_BUCKET), client.bucket(RAW_BUCKET))
 
     if not preprocess.is_preprocessed():
+        preprocess.multilevel_preprocess(
+            NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
         return 'Preprocessing incomplete.', 400
     data, precision = preprocess.multilevel_inference(
         strategy, number, start, end)
@@ -94,9 +93,12 @@ def mlp_preprocess():
         min_number: An int that represents the minimum number of records for a level.
     """
     name = request.args.get('name', type=str)
-    number_per_slice = request.args.get('slice_size', type=int)
-    downsample_factor = request.args.get('downsample_factor', type=int)
-    minimum_number_level = request.args.get('min_number', type=int)
+    number_per_slice = request.args.get(
+        'slice_size', type=int, default=NUMBER_OF_RECORDS_PER_SLICE)
+    downsample_factor = request.args.get(
+        'downsample_factor', type=int, default=DOWNSAMPLE_LEVEL_FACTOR)
+    minimum_number_level = request.args.get(
+        'min_number', type=int, default=MINIMUM_NUMBER_OF_RECORDS_LEVEL)
 
     client = storage.Client()
     preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR, client.bucket(
