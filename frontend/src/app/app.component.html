@@ -19,5 +19,11 @@
 </div>
 
 <mat-card class="container">
+  <h2 class="header">Viewer</h2>
   <main-chart (message)="openMsgBar($event)"></main-chart>
+</mat-card>
+
+<mat-card class="container">
+  <h2 class="header">Preprocess</h2>
+  <raw-preprocess-table (message)="openMsgBar($event)"></raw-preprocess-table>
 </mat-card>

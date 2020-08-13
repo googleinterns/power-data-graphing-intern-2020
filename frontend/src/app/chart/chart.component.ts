@@ -103,7 +103,6 @@ export class ChartComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initChart();
     this.loadFilenames();
-    // this.loadRecords();
   }
 
   ngOnDestroy(): void {
@@ -531,6 +530,10 @@ export class ChartComponent implements OnInit, OnDestroy {
    * Scales or rescales the chart wrt lines to be shown.
    */
   updateChartDomain() {
+    if (this.filename === undefined) {
+      this.message.emit('Please select a file.');
+      return;
+    }
     const xExtent = this.getTimeRange();
     const yExtent = this.getValueRange();
 

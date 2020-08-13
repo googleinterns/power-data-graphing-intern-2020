@@ -1,0 +1,12 @@
+<table>
+  <tr>
+    <th>Filename</th>
+    <th>Preprocessed</th>
+    <th>Action</th>
+  </tr>
+  <tr *ngFor="let name of names">
+    <td>{{ name }}</td>
+    <td class="fixed">Yes</td>
+    <td class="fixed"><button mat-raised-button>Re-preprocess</button></td>
+  </tr>
+</table>

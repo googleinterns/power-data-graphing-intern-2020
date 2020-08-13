@@ -18,6 +18,15 @@
   <div class="chart-header-left">
     <mat-card class="card-container">
       <mat-form-field class="selector">
+        <mat-label>Select a file to view</mat-label>
+        <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
+          <mat-option *ngFor="let name of names" [value]="name">{{
+            name
+          }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="selector">
         <mat-label>Select a downsample strategy</mat-label>
         <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
           <mat-option
@@ -25,15 +34,6 @@
             [value]="s.value"
             >{{ s.key }}
           </mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field class="selector">
-        <mat-label>Select a file to view</mat-label>
-        <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
-          <mat-option *ngFor="let name of names" [value]="name">{{
-            name
-          }}</mat-option>
         </mat-select>
       </mat-form-field>
 
