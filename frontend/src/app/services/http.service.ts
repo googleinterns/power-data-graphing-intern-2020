@@ -63,7 +63,6 @@ export class HttpService {
    * @param path The http endpoint.
    */
   getFilenames(path: string) {
-    console.log(environment);
     return this.http.get(environment.apiUrl + path, {
       params: new HttpParams(),
       withCredentials: true,

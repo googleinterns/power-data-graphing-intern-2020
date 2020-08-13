@@ -28,7 +28,7 @@
 
       <mat-form-field class="selector">
         <mat-label>Select a downsample strategy</mat-label>
-        <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
+        <mat-select [(value)]="strategy" (selectionChange)="configSwitch()">
           <mat-option
             *ngFor="let s of strategyType | keyvalue"
             [value]="s.value"
@@ -45,11 +45,11 @@
           matInput
           type="number"
           [formControl]="number"
-          (change)="strategySwitch()"
+          (change)="configSwitch()"
         />
       </mat-form-field>
     </mat-card>
-    <button mat-raised-button color="primary" (click)="updateChartDomain()">
+    <button mat-raised-button color="primary" (click)="configSwitch()">
       Reload
     </button>
   </div>

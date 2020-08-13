@@ -530,10 +530,6 @@ export class ChartComponent implements OnInit, OnDestroy {
    * Scales or rescales the chart wrt lines to be shown.
    */
   updateChartDomain() {
-    if (this.filename === undefined) {
-      this.message.emit('Please select a file.');
-      return;
-    }
     const xExtent = this.getTimeRange();
     const yExtent = this.getValueRange();
 
@@ -602,7 +598,11 @@ export class ChartComponent implements OnInit, OnDestroy {
   /**
    * Reloads data when downsample strategy is switched, keeping original zoom-in level.
    */
-  strategySwitch() {
+  configSwitch() {
+    if (this.filename === undefined) {
+      this.message.emit('Please select a file.');
+      return;
+    }
     this.loadRecords(this.zoomIn ? this.getTimeRange() : null);
   }
 
