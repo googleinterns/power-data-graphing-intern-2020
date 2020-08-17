@@ -24,25 +24,20 @@ from utils import parse_csv_line
 class LevelSlice:
     """A class for processing slice and its records."""
 
-    def __init__(self, filename=None, filenames=None, bucket=None):
+    def __init__(self, filename, bucket=None):
         """Initialises slice object.
 
-        filname and filenames cannot be None at the same time.
         filename is used to load and save for single slice, and filenames is used to
         read multiple slices at the same time.
 
         Args:
+            filename: A string of the path to the slice.
             bucket: An bucket object.
-            filename: (optional) A string of the path to the slice.
-            filenames: (optional) A list of string that represent the path to slices.
 
         Raises:
             TypeError: Both arguments are None.
         """
-        if filename is None and filenames is None:
-            raise TypeError
         self._filename = filename
-        self._filenames = filenames
         self._bucket = bucket
 
         # key: channel name, value: list of records.
@@ -67,32 +62,9 @@ class LevelSlice:
                     self._start = record[0]
                 self._records[record[2]].append(record)
 
-    def read_slices(self, start, end):
-        """Reads and loads records from a set of slices, only records in the range
-        are included.
-
-        Args:
-            start: An int for start time.
-            end: An int for end time.
-        """
-        for slice_path in self._filenames:
-            lines = []
-            if self._bucket is None:
-                with open(slice_path, 'r') as filereader:
-                    lines = filereader.readlines()
-            else:
-                blob = self._bucket.blob(slice_path)
-                lines = blob.download_as_string().decode().split('\n')
-            for line in lines:
-                record = parse_csv_line(line)
-                if record and (start is None or start <=
-                               record[0]) and (end is None or record[0] <= end):
-                    self._records[record[2]].append(record)
-                    if self._start == -1:
-                        self._start = record[0]
-
     def get_first_timestamp(self):
-        """Gets the earliest time of record in this slice."""
+        """Gets the earliest time of record in this slice, or all slices from _filenames."""
+        assert self._start != -1
         return self._start
 
     def save(self, records=None):
@@ -154,17 +126,3 @@ class LevelSlice:
             self._start = start
         for channel in records.keys():
             self._records[channel].extend(records[channel])
-
-    def format_response(self):
-        """Gets current data in dict type for http response.
-
-        Returns:
-            A dict of data indicating the name of channel and its data.
-        """
-        response = list()
-        for channel in self._records.keys():
-            response.append({
-                'name': channel,
-                'data': [[record[0], record[1]] for record in self._records[channel]]
-            })
-        return response

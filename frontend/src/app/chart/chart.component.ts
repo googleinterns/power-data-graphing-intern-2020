@@ -48,7 +48,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   // Component binding
   @Output() message = new EventEmitter<string>();
   filename: string;
-  precision: string;
+  frequency_ratio: string;
   strategyType = STRATEGY;
   subscription: Subscription;
   number = new FormControl(600);
@@ -192,7 +192,8 @@ export class ChartComponent implements OnInit, OnDestroy {
             }
           }
         }
-        this.precision = +(response.precision * 100).toPrecision(5) + '%';
+        this.frequency_ratio =
+          +(response.frequency_ratio * 100).toPrecision(5) + '%';
 
         this.loading = false;
         this.updateChartDomain();
