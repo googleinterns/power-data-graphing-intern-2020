@@ -141,7 +141,7 @@ class TestLevelClass:
         """Tests start time is earliest in all records."""
         tmpfile = self.write_to_tmpfile(test_records1)
         test_slice = LevelSlice(tmpfile.name)
-        assert test_slice.get_first_timestamp() == -1
+        assert test_slice._start == -1
 
         test_slice.read()
         assert test_slice.get_first_timestamp() == test_records1[0][0]
