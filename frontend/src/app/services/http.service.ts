@@ -16,7 +16,6 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { STRATEGY } from '../chart/record';
-import { env } from 'process';
 
 export interface RecordsResponse {
   frequency_ratio: number;
