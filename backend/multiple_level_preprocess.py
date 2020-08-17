@@ -33,8 +33,6 @@ RAW_LEVEL_DIR = 'level0'
 STRATEGIES = ['max', 'min', 'avg']
 UNIX_TIMESTAMP_LENGTH = 16
 
-TEST_FILENAME = 'rand.csv'
-
 
 class MultipleLevelPreprocess:
     """Class for multiple level preprocessing
@@ -96,7 +94,7 @@ class MultipleLevelPreprocess:
                 of the end of timespan.
 
         Returns:
-            A list of downsampled data in the given file, and precision for this result.
+            A list of downsampled data in the given file, and frequency ratio for this result.
             Example:
                 [
                     {
@@ -166,12 +164,12 @@ class MultipleLevelPreprocess:
         number_result_records = target_slices.get_records_count()
 
         if number_target_records == 0:
-            precision = 0
+            frequency_ratio = 0
         else:
-            precision = number_result_records / \
+            frequency_ratio = number_result_records / \
                 number_target_records * \
                 (target_level['number']/self._metadata['raw_number'])
-        return downsampled_data, precision
+        return downsampled_data, frequency_ratio
 
     def multilevel_preprocess(self,
                               number_per_slice,
@@ -371,7 +369,7 @@ class MultipleLevelPreprocess:
 
         curr_level_slice.save()
         level_metadata[curr_slice_names
-                       [slice_index]] = curr_level_slice.get_start()
+                       [slice_index]] = curr_level_slice.get_first_timestamp()
         return level_metadata
 
     def _binary_search(self, data_list, value, reverse=False):

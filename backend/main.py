@@ -70,11 +70,11 @@ def get_data():
     if not preprocess.is_preprocessed():
         preprocess.multilevel_preprocess(
             NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
-    data, precision = preprocess.multilevel_inference(
+    data, frequency_ratio = preprocess.multilevel_inference(
         strategy, number, start, end)
     response_data = {
         'data': data,
-        'precision': precision
+        'frequency_ratio': frequency_ratio
     }
     response = app.make_response(jsonify(response_data))
     response.headers['Access-Control-Allow-Credentials'] = 'true'

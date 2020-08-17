@@ -18,7 +18,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { STRATEGY } from '../chart/record';
 
 export interface RecordsResponse {
-  precision: number;
+  frequency_ratio: number;
   data: ResponseData[];
 }
 
@@ -30,7 +30,6 @@ export interface ResponseData {
   providedIn: 'root',
 })
 export class HttpService {
-
   loading = false;
 
   constructor(private readonly http: HttpClient) {}
