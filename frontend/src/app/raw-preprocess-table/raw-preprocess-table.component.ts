@@ -1,5 +1,5 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
-import { HttpService } from '../services/http.service';
+import { HttpService, ResponseFileInfo } from '../services/http.service';
 import { Subscription, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,7 +13,7 @@ export class RawPreprocessTableComponent implements OnInit {
   @Output() message = new EventEmitter<string>();
   subscription: Subscription;
   loading = false;
-  names: string[];
+  fileinfo: ResponseFileInfo[];
 
   constructor(private service: HttpService) {}
 
@@ -23,7 +23,7 @@ export class RawPreprocessTableComponent implements OnInit {
 
   loadFilenames() {
     this.subscription = this.service
-      .getFilenames('/filenames')
+      .getFileInfo('/fileinfo')
       .pipe(
         catchError((error: HttpErrorResponse) => {
           this.message.emit(error.error);
@@ -31,8 +31,8 @@ export class RawPreprocessTableComponent implements OnInit {
           return throwError(error);
         })
       )
-      .subscribe((response: { names: string[] }) => {
-        this.names = response.names;
+      .subscribe((response: ResponseFileInfo[]) => {
+        this.fileinfo = response;
         this.loading = false;
       });
   }

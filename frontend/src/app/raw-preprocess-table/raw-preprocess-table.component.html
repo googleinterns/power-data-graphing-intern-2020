@@ -4,9 +4,9 @@
     <th>Preprocessed</th>
     <th>Action</th>
   </tr>
-  <tr *ngFor="let name of names">
-    <td>{{ name }}</td>
-    <td class="fixed">Yes</td>
+  <tr *ngFor="let file of fileinfo">
+    <td>{{ file.name }}</td>
+    <td class="fixed">{{ file.preprocessed }}</td>
     <td class="fixed"><button mat-raised-button>Re-preprocess</button></td>
   </tr>
 </table>

@@ -20,8 +20,8 @@
       <mat-form-field class="selector">
         <mat-label>Select a file to view</mat-label>
         <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
-          <mat-option *ngFor="let name of names" [value]="name">{{
-            name
+          <mat-option *ngFor="let file of fileinfo" [value]="file.name">{{
+            file.name
           }}</mat-option>
         </mat-select>
       </mat-form-field>

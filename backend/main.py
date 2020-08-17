@@ -111,14 +111,26 @@ def mlp_preprocess():
     return response
 
 
-@app.route('/filenames')
-def get_filenames():
+@app.route('/fileinfo')
+def get_file_info():
     """HTTP endpoint to get all file names stored in bucket."""
 
     client = storage.Client()
+    raw_bucket = client.bucket(RAW_BUCKET)
+    preprocess_bucket = client.bucket(PREPROCESS_BUCKET)
     blobs = client.list_blobs(RAW_BUCKET)
+
     names = [blob.name for blob in blobs]
-    response_data = {'names': names}
+    files_preprocess = [MultipleLevelPreprocess(
+        name, PREPROCESS_DIR, preprocess_bucket, raw_bucket) for name in names]
+
+    response_data = list()
+    for preprocess, name in zip(files_preprocess, names):
+        response_data.append({
+            'name': name,
+            'preprocessed': preprocess.is_preprocessed()
+        })
+
     response = app.make_response(jsonify(response_data))
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response

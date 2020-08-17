@@ -26,6 +26,11 @@ export interface ResponseData {
   data: [number, number][];
   name: string;
 }
+
+export interface ResponseFileInfo {
+  name: string;
+  preprocessed: boolean;
+}
 @Injectable({
   providedIn: 'root',
 })
@@ -62,7 +67,7 @@ export class HttpService {
    * Gets all test file names.
    * @param path The http endpoint.
    */
-  getFilenames(path: string) {
+  getFileInfo(path: string) {
     return this.http.get(environment.apiUrl + path, {
       params: new HttpParams(),
       withCredentials: true,

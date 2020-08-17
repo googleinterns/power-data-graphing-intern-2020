@@ -28,6 +28,7 @@ import {
   HttpService,
   RecordsResponse,
   ResponseData,
+  ResponseFileInfo,
 } from '../services/http.service';
 
 import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
@@ -56,7 +57,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
   zoomIn = false;
-  names: string[];
+  fileinfo: ResponseFileInfo[];
 
   mouseDate = '';
   mouseTime = '';
@@ -113,7 +114,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     if (this.loading) this.subscription.unsubscribe();
     this.loading = true;
     this.subscription = this.service
-      .getFilenames('/filenames')
+      .getFileInfo('/fileinfo')
       .pipe(
         catchError((error: HttpErrorResponse) => {
           this.message.emit(error.error);
@@ -121,8 +122,8 @@ export class ChartComponent implements OnInit, OnDestroy {
           return throwError(error);
         })
       )
-      .subscribe((response: { names: string[] }) => {
-        this.names = response.names;
+      .subscribe((response: ResponseFileInfo[]) => {
+        this.fileinfo = response;
         this.loading = false;
       });
   }
