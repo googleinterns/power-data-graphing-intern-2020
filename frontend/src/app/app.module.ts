@@ -32,7 +32,12 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { RawPreprocessTableComponent } from './raw-preprocess-table/raw-preprocess-table.component';
 
 @NgModule({
-  declarations: [AppComponent, ChartComponent, LegendTableEntryComponent, RawPreprocessTableComponent],
+  declarations: [
+    AppComponent,
+    ChartComponent,
+    LegendTableEntryComponent,
+    RawPreprocessTableComponent,
+  ],
   imports: [
     BrowserModule,
     AppRoutingModule,
