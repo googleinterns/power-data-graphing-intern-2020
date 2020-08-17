@@ -22,10 +22,9 @@ from flask import Flask
 from flask_cors import CORS
 from google.cloud import storage
 
+from data_fetcher import DataFetcher
 from downsample import STRATEGIES
 from multiple_level_preprocess import MultipleLevelPreprocess
-from data_fetcher import DataFetcher
-
 from utils import error
 
 
@@ -70,11 +69,11 @@ def get_data():
 
     if not fetcher.is_preprocessed():
         return 'Preprocessing incomplete.', 400
-    data, precision = fetcher.fetch(
+    data, frequency_ratio = fetcher.fetch(
         strategy, number, start, end)
     response_data = {
         'data': data,
-        'precision': precision
+        'frequency_ratio': frequency_ratio
     }
     response = app.make_response(jsonify(response_data))
     response.headers['Access-Control-Allow-Credentials'] = 'true'

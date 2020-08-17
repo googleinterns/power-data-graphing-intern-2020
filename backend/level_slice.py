@@ -63,7 +63,8 @@ class LevelSlice:
                 self._records[record[2]].append(record)
 
     def get_first_timestamp(self):
-        """Gets the earliest time of record in this slice."""
+        """Gets the earliest time of record in this slice, or all slices from _filenames."""
+        assert self._start != -1
         return self._start
 
     def save(self, records=None):

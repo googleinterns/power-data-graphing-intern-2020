@@ -49,7 +49,9 @@ class DataFetcher:
             given strategy if needed.
 
         Read the records and downsample the records to be within number_records.
-        Optional arguments start and end to specify a timespan in which records must be laid.
+        First we search the level that has frequency the least higher than the required frequency,
+        then find slices that are within the given timespan, using binary search. Get all
+        the records in timespan, then downsample to satisfy the required number of records.
 
         Args:
             strategy: A string representing a downsampling strategy.

@@ -12,7 +12,7 @@
 # limitations under the License.
 # =============================================================================
 
-"""A Test for LevelSlice Class."""
+"""A Test module for LevelSlice Class."""
 # pylint: disable=W0212
 import os
 from math import ceil
@@ -92,23 +92,6 @@ class TestLevelClass:
         test_slice.read()
         assert test_slice._records == {}
 
-    def test_format_response(self, test_records1):
-        """Tests if format is right on calling format_response."""
-        tmpfile = self.write_to_tmpfile(test_records1)
-        test_slice = LevelSlice(tmpfile.name)
-
-        formatted = test_slice.format_response()
-        expected = []
-        assert formatted == expected
-
-        test_slice.read()
-        formatted = test_slice.format_response()
-        expected = [{'name': test_records1[0][2], 'data':[
-            [record[0], record[1]] for record in test_records1]}]
-        assert formatted == expected
-
-        tmpfile.close()
-
     def test_add_records_single_channel(self, test_records1):
         """Tests if right records added on calling add_records, add single channel."""
         formatted_test_records = {test_records1[0][2]: test_records1}
@@ -141,41 +124,12 @@ class TestLevelClass:
         """Tests start time is earliest in all records."""
         tmpfile = self.write_to_tmpfile(test_records1)
         test_slice = LevelSlice(tmpfile.name)
-        assert test_slice.get_first_timestamp() == -1
+        assert test_slice._start == -1
 
         test_slice.read()
         assert test_slice.get_first_timestamp() == test_records1[0][0]
 
         tmpfile.close()
-
-    def test_read_slices_dummy_time(self, test_records1, test_records2):
-        """Tests multiple slice reading with dummy start and end."""
-        tmpfile1 = self.write_to_tmpfile(test_records1)
-        tmpfile2 = self.write_to_tmpfile(test_records2)
-
-        test_slice = LevelSlice(filenames=[tmpfile1.name, tmpfile2.name])
-        test_slice.read_slices(-1, float('inf'))
-        assert test_slice._records['PPX_ASYS'] == test_records1
-        assert test_slice._records['SYS'] == test_records2
-
-        tmpfile1.close()
-        tmpfile2.close()
-
-    def test_read_slices_with_time(self, test_records1, test_records2):
-        """Tests multiple slice reading with specified start and end."""
-        tmpfile1 = self.write_to_tmpfile(test_records1)
-        tmpfile2 = self.write_to_tmpfile(test_records2)
-
-        test_slice = LevelSlice(filenames=[tmpfile1.name, tmpfile2.name])
-
-        start = test_records1[-1][0]
-        end = test_records2[0][0]
-        test_slice.read_slices(start, end)
-        assert test_slice._records['PPX_ASYS'] == [test_records1[-1]]
-        assert test_slice._records['SYS'] == [test_records2[0]]
-
-        tmpfile1.close()
-        tmpfile2.close()
 
     def test_save_member(self, test_records1):
         """Tests if object member records saved."""
