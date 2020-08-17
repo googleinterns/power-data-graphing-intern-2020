@@ -24,6 +24,7 @@ from google.cloud import storage
 
 from downsample import STRATEGIES
 from multiple_level_preprocess import MultipleLevelPreprocess
+from data_fetcher import DataFetcher
 
 from utils import error
 
@@ -64,14 +65,12 @@ def get_data():
         return 'Incorrect Strategy', 400
 
     client = storage.Client()
-    preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR, client.bucket(
-        PREPROCESS_BUCKET), client.bucket(RAW_BUCKET))
+    fetcher = DataFetcher(name, PREPROCESS_DIR,
+                          client.bucket(PREPROCESS_BUCKET))
 
-    if not preprocess.is_preprocessed():
-        preprocess.multilevel_preprocess(
-            NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
+    if not fetcher.is_preprocessed():
         return 'Preprocessing incomplete.', 400
-    data, precision = preprocess.multilevel_inference(
+    data, precision = fetcher.fetch(
         strategy, number, start, end)
     response_data = {
         'data': data,
@@ -103,7 +102,7 @@ def mlp_preprocess():
     client = storage.Client()
     preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR, client.bucket(
         PREPROCESS_BUCKET), client.bucket(RAW_BUCKET))
-    preprocess.multilevel_preprocess(
+    preprocess.preprocess(
         number_per_slice, downsample_factor, minimum_number_level)
 
     response = app.make_response('preprocess complete!')
