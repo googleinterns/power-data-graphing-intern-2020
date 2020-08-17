@@ -13,7 +13,7 @@ export class RawPreprocessTableComponent implements OnInit {
   @Output() message = new EventEmitter<string>();
   subscription: Subscription;
   loading = false;
-  fileinfo: ResponseFileInfo[];
+  fileinfo: { name: string; preprocessed: boolean; loading: boolean }[];
 
   constructor(private service: HttpService) {}
 
@@ -26,14 +26,42 @@ export class RawPreprocessTableComponent implements OnInit {
       .getFileInfo('/fileinfo')
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.message.emit(error.error);
+          this.message.emit(error.message);
           this.loading = false;
           return throwError(error);
         })
       )
       .subscribe((response: ResponseFileInfo[]) => {
-        this.fileinfo = response;
-        this.loading = false;
+        this.fileinfo = response.map((singleFileInfo: ResponseFileInfo) => ({
+          name: singleFileInfo.name,
+          preprocessed: singleFileInfo.preprocessed,
+          loading: false,
+        }));
       });
+  }
+
+  preprocess(file: { name: string; preprocessed: boolean; loading: boolean }) {
+    file.loading = true;
+    this.service
+      .preprocess('/data', file.name)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          this.loading = false;
+          this.message.emit(error.message);
+          return throwError(error);
+        })
+      )
+      .subscribe(() => {
+        file.loading = false;
+        file.preprocessed = true;
+      });
+  }
+
+  showSpinner(loading: boolean) {
+    return loading ? 1 : 0;
+  }
+
+  showPreprocess(preprocessed: boolean) {
+    return preprocessed ? 'yes' : 'no';
   }
 }

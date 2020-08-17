@@ -143,8 +143,6 @@ export class ChartComponent implements OnInit, OnDestroy {
         catchError((error: HttpErrorResponse) => {
           this.message.emit(error.error);
           this.loading = false;
-          this.svg.select('*').remove();
-          this.svg.select('*').remove();
           return throwError(error);
         })
       )

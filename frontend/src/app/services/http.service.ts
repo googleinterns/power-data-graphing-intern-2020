@@ -16,6 +16,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { STRATEGY } from '../chart/record';
+import { env } from 'process';
 
 export interface RecordsResponse {
   frequency_ratio: number;
@@ -72,5 +73,22 @@ export class HttpService {
       params: new HttpParams(),
       withCredentials: true,
     });
+  }
+
+  /**
+   * Triggers preprocess.
+   * @param path The http endpoint.
+   * @param filename The filename to be preprocessed.
+   */
+  preprocess(path: string, filename: string) {
+    return this.http.post(
+      environment.apiUrl + path,
+      // { name: filename },
+      JSON.stringify({ name: filename }),
+      {
+        withCredentials: true,
+        responseType: 'text',
+      }
+    );
   }
 }

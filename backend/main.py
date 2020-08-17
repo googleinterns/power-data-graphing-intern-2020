@@ -16,6 +16,7 @@
 
 Expose HTTP endpoints for triggering preprocess and send downsampled data.
 """
+from json import loads
 from flask import request
 from flask import jsonify
 from flask import Flask
@@ -25,7 +26,7 @@ from google.cloud import storage
 from data_fetcher import DataFetcher
 from downsample import STRATEGIES
 from multiple_level_preprocess import MultipleLevelPreprocess
-from utils import error
+from utils import warning
 
 
 DOWNSAMPLE_LEVEL_FACTOR = 100
@@ -60,15 +61,17 @@ def get_data():
         'number', default=NUMBER_OF_RECORDS_PER_REQUEST, type=int)
 
     if not strategy in STRATEGIES:
-        error('Incorrect Strategy: %s', strategy)
-        return 'Incorrect Strategy', 400
+        warning('Incorrect Strategy: %s', strategy)
+        response = make_response('Incorrect Strategy: {}'.format(strategy))
+        return response, 400
 
     client = storage.Client()
     fetcher = DataFetcher(name, PREPROCESS_DIR,
                           client.bucket(PREPROCESS_BUCKET))
 
     if not fetcher.is_preprocessed():
-        return 'Preprocessing incomplete.', 400
+        response = make_response('Preprocessing incomplete.')
+        return response, 400
     data, frequency_ratio = fetcher.fetch(
         strategy, number, start, end)
     response_data = {
@@ -90,22 +93,29 @@ def mlp_preprocess():
         downsanple_factor: An int that represents downsample factor between levels.
         min_number: An int that represents the minimum number of records for a level.
     """
-    name = request.args.get('name', type=str)
-    number_per_slice = request.args.get(
-        'slice_size', type=int, default=NUMBER_OF_RECORDS_PER_SLICE)
-    downsample_factor = request.args.get(
-        'downsample_factor', type=int, default=DOWNSAMPLE_LEVEL_FACTOR)
-    minimum_number_level = request.args.get(
-        'min_number', type=int, default=MINIMUM_NUMBER_OF_RECORDS_LEVEL)
+    form = loads(request.data.decode())
+    name = form.get('name', None)
+    number_per_slice = form.get('slice_size', NUMBER_OF_RECORDS_PER_SLICE)
+    downsample_factor = form.get('downsample_factor', DOWNSAMPLE_LEVEL_FACTOR)
+    minimum_number_level = form.get(
+        'min_number', MINIMUM_NUMBER_OF_RECORDS_LEVEL)
+
+    if name is None:
+        warning('No file name!')
+        response = make_response('No file name!')
+        return response, 400
 
     client = storage.Client()
     preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR, client.bucket(
         PREPROCESS_BUCKET), client.bucket(RAW_BUCKET))
-    preprocess.preprocess(
+    error = preprocess.preprocess(
         number_per_slice, downsample_factor, minimum_number_level)
 
-    response = app.make_response('preprocess complete!')
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    if error is not None:
+        response = make_response(error)
+        return response
+
+    response = make_response('preprocess complete!')
     return response
 
 
@@ -129,7 +139,12 @@ def get_file_info():
             'preprocessed': preprocess.is_preprocessed()
         })
 
-    response = app.make_response(jsonify(response_data))
+    response = make_response(jsonify(response_data))
+    return response
+
+
+def make_response(response_body):
+    response = app.make_response(response_body)
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 

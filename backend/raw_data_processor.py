@@ -14,6 +14,7 @@
 
 """A Module for processing raw data."""
 from google.api_core.exceptions import RequestRangeNotSatisfiable
+from google.api_core.exceptions import NotFound
 from utils import parse_csv_line
 SIZE_ONE_LINE = 50
 
@@ -72,6 +73,8 @@ class RawDataProcessor:
             except RequestRangeNotSatisfiable:
                 self._eof = True
                 break
+            except NotFound:
+                return 'File not found!'
         if raw_records and self._loaded_records:
             raw_records[0] = self._loaded_records[-1] + raw_records[0]
             self._loaded_records[-1] = ''

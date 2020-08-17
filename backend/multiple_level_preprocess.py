@@ -103,6 +103,9 @@ class MultipleLevelPreprocess:
             downsample_level_factor: An int that represents downsample factor between levels.
                 (e.g. factor=100, level1 has 100x less data than level0)
             minimum_number_level: An int that represents the minimum number of records for a level.
+
+        Returns:
+            Error string if an error occurs, None if complete.
         """
         self._number_per_slice = number_per_slice
         self._downsample_level_factor = downsample_level_factor
@@ -113,7 +116,9 @@ class MultipleLevelPreprocess:
         self._metadata['levels'] = dict()
 
         start = time()
-        self._raw_preprocess(number_per_slice)
+        error = self._raw_preprocess(number_per_slice)
+        if error is not None:
+            return error
         utils.warning(('raw time is: ', time()-start))
 
         for strategy in STRATEGIES:
@@ -121,12 +126,16 @@ class MultipleLevelPreprocess:
             self._preprocess_single_startegy(strategy)
             utils.warning((strategy, ' time is: ', time()-start))
         self._metadata.save()
+        return None
 
     def _raw_preprocess(self, number_per_slice):
         """Splits raw data into slices. keep start time of each slice in a json file.
 
         Args:
             number_per_slice: An int of records to keep for each slice.
+
+        Returns:
+            Error string if an error occurs, None if complete.
         """
         raw_slice_metadata = Metadata(
             self._preprocess_dir, strategy=None, level=RAW_LEVEL_DIR,
@@ -144,6 +153,8 @@ class MultipleLevelPreprocess:
             level_slice = LevelSlice(
                 slice_name, bucket=self._preprocess_bucket)
             raw_slice = raw_data.read_next_slice()
+            if isinstance(raw_slice, str):
+                return raw_slice
             level_slice.save(raw_slice)
             raw_start_times.append(raw_slice[0][0])
 
@@ -166,6 +177,7 @@ class MultipleLevelPreprocess:
             raw_slice_metadata[self._metadata['levels']
                                [RAW_LEVEL_DIR]['names'][index]] = raw_slice_start
         raw_slice_metadata.save()
+        return None
 
     def _preprocess_single_startegy(self, strategy):
         """Downsamples given data by the defined levels and strategy.

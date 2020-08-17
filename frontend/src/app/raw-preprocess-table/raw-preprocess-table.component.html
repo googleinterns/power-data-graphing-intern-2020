@@ -6,7 +6,21 @@
   </tr>
   <tr *ngFor="let file of fileinfo">
     <td>{{ file.name }}</td>
-    <td class="fixed">{{ file.preprocessed }}</td>
-    <td class="fixed"><button mat-raised-button>Re-preprocess</button></td>
+    <td class="fixed">{{ showPreprocess(file.preprocessed) }}</td>
+    <td class="fixed">
+      <button
+        mat-raised-button
+        disabled="{{ file.loading || file.preprocessed }}"
+        (click)="preprocess(file)"
+      >
+        Re-preprocess
+      </button>
+      <mat-spinner
+        [style.opacity]="showSpinner(file.loading)"
+        diameter="15"
+        mode="indeterminate"
+        class="spinner"
+      ></mat-spinner>
+    </td>
   </tr>
 </table>
