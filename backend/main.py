@@ -16,19 +16,25 @@
 
 Expose HTTP endpoints for triggering preprocess and send downsampled data.
 """
-import logging
-import os
-
 from flask import request
 from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
-import utils
-import downsample
+
+from downsample import STRATEGIES
+from multiple_level_preprocess import MultipleLevelPreprocess
+
+from utils import error
+
 
 NUMBER_OF_RECORDS_PER_REQUEST = 600
-NUMBER_OF_RECORDS_PER_SECOND = 2000
+NUMBER_OF_RECORDS_PER_SECOND = 10000
 FLOAT_PRECISION = 4
+
+DOWNSAMPLE_LEVEL_FACTOR = 100
+MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
+NUMBER_OF_RECORDS_PER_SLICE = 200000
+PREPROCESS_DIR = 'mld-preprocess'
 
 
 app = Flask(__name__)
@@ -41,25 +47,36 @@ def get_data():
 
     Retrives all power data from local file given a limit on number of
     records from request body.
+
+    HTTP Args:
+        name: A string representing the name of the file user wish to view.
+        strategy: A string representing the selected downsample strategy.
+        start: An int representing the start of time span user wish to view.
+        end: An int representing the end of time span user wish to view.
     """
     name = request.args.get('name', type=str)
     strategy = request.args.get('strategy', default='avg', type=str)
     start = request.args.get('start', default=None, type=int)
     end = request.args.get('end', default=None, type=int)
-    if not strategy in downsample.STRATEGIES:
-        logging.error('Incorrect Strategy: %s', strategy)
+    number = request.args.get(
+        'number', default=NUMBER_OF_RECORDS_PER_REQUEST, type=int)
+
+    if not strategy in STRATEGIES:
+        error('Incorrect Strategy: %s', strategy)
         return 'Incorrect Strategy', 400
 
-    preprocess_filename = utils.generate_filename_on_strategy(
-        name, strategy)
+    preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR)
 
-    if not os.path.isfile(preprocess_filename):
-        downsample.preprocess(name, NUMBER_OF_RECORDS_PER_SECOND)
-
-    data = downsample.secondary_downsample(
-        preprocess_filename, strategy, NUMBER_OF_RECORDS_PER_REQUEST, start, end)
-
-    response = app.make_response(jsonify(data))
+    if not preprocess.is_preprocessed():
+        preprocess.multilevel_preprocess(
+            NUMBER_OF_RECORDS_PER_SLICE, DOWNSAMPLE_LEVEL_FACTOR, MINIMUM_NUMBER_OF_RECORDS_LEVEL)
+    data, frequency_ratio = preprocess.multilevel_inference(
+        strategy, number, start, end)
+    response_data = {
+        'data': data,
+        'frequency_ratio': frequency_ratio
+    }
+    response = app.make_response(jsonify(response_data))
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 

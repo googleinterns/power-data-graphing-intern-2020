@@ -25,12 +25,13 @@ export interface RecordsOneChannel {
   show: boolean;
   data: Record[];
   name: string;
+  focusPower: string;
 }
 
 export const COLORS = [
+  'orange',
   'red',
   'blue',
-  'orange',
   'cyan',
   'black',
   'green',
@@ -41,3 +42,9 @@ export const COLORS = [
   'Chartreuse',
   'DarkSalmon',
 ];
+
+export enum STRATEGY {
+  AVG = 'avg',
+  MAX = 'max',
+  MIN = 'min',
+}

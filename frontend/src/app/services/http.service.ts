@@ -15,15 +15,14 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
-
-export enum STRATEGY {
-  AVG = 'avg',
-  LTTB = 'lttb',
-  MAX = 'max',
-  MIN = 'min',
-}
+import { STRATEGY } from '../chart/record';
 
 export interface RecordsResponse {
+  frequency_ratio: number;
+  data: ResponseData[];
+}
+
+export interface ResponseData {
   data: [number, number][];
   name: string;
 }
@@ -31,7 +30,6 @@ export interface RecordsResponse {
   providedIn: 'root',
 })
 export class HttpService {
-
   loading = false;
 
   constructor(private readonly http: HttpClient) {}
@@ -47,12 +45,14 @@ export class HttpService {
     path: string,
     filename: string,
     strategy: STRATEGY,
+    number: number,
     timespan: number[]
   ) {
     return this.http.get(environment.apiUrl + path, {
       params: new HttpParams()
         .set('name', filename)
         .set('strategy', strategy)
+        .set('number', number.toString())
         .set('start', timespan ? '' + Math.floor(timespan[0]) : null)
         .set('end', timespan ? '' + Math.floor(timespan[1]) : null),
       withCredentials: true,

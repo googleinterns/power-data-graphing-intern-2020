@@ -12,15 +12,27 @@
 // limitations under the License.
 // =============================================================================
 
-import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
-import { Subscription } from 'rxjs';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewEncapsulation,
+  Output,
+  EventEmitter,
+} from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { Subscription, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import * as d3 from 'd3';
 import {
   HttpService,
-  STRATEGY,
   RecordsResponse,
+  ResponseData,
 } from '../services/http.service';
-import { Record, COLORS, RecordsOneChannel } from './record';
+
+import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
+import { HttpErrorResponse } from '@angular/common/http';
+
 @Component({
   selector: 'main-chart',
   templateUrl: './chart.component.html',
@@ -32,21 +44,21 @@ export class ChartComponent implements OnInit, OnDestroy {
    * The major chart component that draw lines, axis, and all the interaction logics.
    */
 
-  // Bind strategy type
-  strategyType = STRATEGY;
-
-  // Bind Subscription
-  subscription: Subscription;
-
-  // Data related variable
+  // Component binding
+  @Output() message = new EventEmitter<string>();
   filename = 'DMM_result_multiple_channel.csv';
+  frequency_ratio: string;
+  strategyType = STRATEGY;
+  subscription: Subscription;
+  number = new FormControl(600);
+
   loading = false;
-  number = 600;
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
   zoomIn = false;
-  mouseDate: string;
-  mouseTime: string;
+
+  mouseDate = '';
+  mouseTime = '';
 
   // Chart d3 SVG Elements
   private brush: d3.BrushBehavior<unknown>;
@@ -60,23 +72,33 @@ export class ChartComponent implements OnInit, OnDestroy {
   private yScale: d3.ScaleLinear<number, number>;
 
   // Chart size constants
+  isLeft = true;
   animationDuration = 500;
   chartHeight = 500;
   chartMargin = 70;
   chartPadding = 10;
   chartWidth = 1100;
+  labelSize = 10;
+  labelPadding = 5;
   svgPadding = 10;
   timeFormat = (time: number) => {
     const timeParse = d3.timeParse('%Q');
     const timeFormat = d3.timeFormat('%M:%S.%L');
+    const fineTimeFormat = d3.timeFormat(':%S.%L');
 
     const upperDate = timeParse(Math.floor(time / 1000).toString());
-    const formattedTime = timeFormat(upperDate);
-    return formattedTime;
+    const xExtent = this.getTimeRange();
+
+    if (xExtent[1] - xExtent[0] >= 1e6) {
+      this.svgChart.select('.x-axis-legend').text('Time (m:s.ms)');
+      return timeFormat(upperDate);
+    }
+
+    this.svgChart.select('.x-axis-legend').text('Time (:s.ms.µs)');
+    return fineTimeFormat(upperDate) + '.' + Math.floor(time % 1000);
   };
 
   constructor(private service: HttpService) {}
-
   ngOnInit(): void {
     this.initChart();
     this.loadRecords();
@@ -87,13 +109,28 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   loadRecords(timespan?: number[]) {
+    if (this.loading) this.subscription.unsubscribe();
     this.loading = true;
     this.subscription = this.service
-      .getRecords('/data', this.filename, this.strategy, timespan)
-      .subscribe((response: RecordsResponse[]) => {
+      .getRecords(
+        '/data',
+        this.filename,
+        this.strategy,
+        this.number.value,
+        timespan
+      )
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          this.message.emit(error.message);
+          console.log(error);
+          this.loading = false;
+          return throwError(error);
+        })
+      )
+      .subscribe((response: RecordsResponse) => {
         if (this.records.length === 0) {
-          this.records = response.map(
-            (channel: RecordsResponse, index: number) => {
+          this.records = response.data.map(
+            (channel: ResponseData, index: number) => {
               const recordsOneChannel = {
                 color: COLORS[index],
                 data: channel.data.map((d: [number, number]) => {
@@ -104,6 +141,7 @@ export class ChartComponent implements OnInit, OnDestroy {
                 }),
                 name: channel.name,
                 show: true,
+                focusPower: 'N/A',
               };
               return recordsOneChannel;
             }
@@ -111,7 +149,8 @@ export class ChartComponent implements OnInit, OnDestroy {
         } else {
           for (const recordsOneChannel of this.records) {
             let newDataArrived = false;
-            for (const channel of response) {
+
+            for (const channel of response.data) {
               if (recordsOneChannel.name !== channel.name) continue;
               newDataArrived = true;
               recordsOneChannel.data = channel.data.map(
@@ -125,9 +164,15 @@ export class ChartComponent implements OnInit, OnDestroy {
             }
             if (!newDataArrived) {
               recordsOneChannel.data = [];
+              recordsOneChannel.focusPower = 'N/A';
+              this.mouseDate = '';
+              this.mouseTime = '';
             }
           }
         }
+        this.frequency_ratio =
+          +(response.frequency_ratio * 100).toPrecision(5) + '%';
+
         this.loading = false;
         this.updateChartDomain();
       });
@@ -194,7 +239,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('alignment-baseline', 'middle')
       .attr('font-size', '10px')
       .attr('opacity', 0.5)
-      .attr('x', this.chartWidth / 2)
+      .attr('x', (this.chartWidth - this.chartMargin) / 2)
       .attr('y', this.chartHeight - this.chartMargin / 2)
       .text('Time (m:s.ms)');
 
@@ -213,6 +258,8 @@ export class ChartComponent implements OnInit, OnDestroy {
       .text('Power (mW)');
 
     this.svgLine = this.svgChart.append('g');
+    this.svgChart.append('g').classed('labels-background', true).append('rect');
+    this.svgChart.append('g').classed('labels', true);
 
     /**
      * Sets time legend and value overlays as mouse hover on the chart.
@@ -258,10 +305,17 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('y', this.yScale(selectedData.value) - this.chartPadding)
           .text(selectedData.value.toString());
 
+        recordsOneChannel.focusPower = selectedData.value.toString();
         this.mouseDate = dateFormat(upperDate);
         this.mouseTime =
           timeFormat(upperDate) + '.' + Math.floor(mouseFocus % 1000);
       }
+      const duration = this.xScale.domain()[1] - this.xScale.domain()[0];
+      if (mouseFocus < this.xScale.domain()[0] + duration / 4)
+        this.isLeft = true;
+      if (mouseFocus > this.xScale.domain()[0] + (duration * 3) / 4)
+        this.isLeft = false;
+      this.setLegend();
     };
 
     const removeFocus = () => {
@@ -279,6 +333,21 @@ export class ChartComponent implements OnInit, OnDestroy {
         this.mouseDate = '';
         this.mouseTime = '';
       }
+      this.svg
+        .select('.labels')
+        .selectAll('rect')
+        .transition()
+        .attr('opacity', 0);
+      this.svg
+        .select('.labels')
+        .selectAll('text')
+        .transition()
+        .attr('opacity', 0);
+      this.svg
+        .select('.labels-background')
+        .select('rect')
+        .transition()
+        .attr('opacity', 0);
     };
 
     // Brush functionality
@@ -291,7 +360,12 @@ export class ChartComponent implements OnInit, OnDestroy {
           this.chartHeight - this.chartMargin,
         ],
       ])
-      .on('end', this.interactChart.bind(this))
+
+      .on('end', () => {
+        this.interactChart.bind(this)();
+        removeFocus();
+      })
+
       .on('brush', mousemove);
 
     // Mouse over displaying text
@@ -312,6 +386,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   interactChart() {
     const extent = d3.event.selection;
     if (!extent) return;
+
     const selectedTimeSpan = [
       this.xScale.invert(extent[0]),
       this.xScale.invert(extent[1]),
@@ -321,6 +396,9 @@ export class ChartComponent implements OnInit, OnDestroy {
 
     // Update axis, line and area position, and load new data with the range
     this.zoomIn = true;
+
+    if (selectedTimeSpan[0] >= selectedTimeSpan[1]) return;
+
     this.loadRecords(selectedTimeSpan);
 
     this.svgChart.on('dblclick', () => {
@@ -328,6 +406,104 @@ export class ChartComponent implements OnInit, OnDestroy {
       this.zoomIn = false;
       this.loadRecords();
     });
+  }
+
+  /**
+   * Sets text and labels of side legend
+   */
+  setLegend() {
+    const legendText: string[] = [];
+    const legendLabels: string[] = [];
+    for (const recordsOnechannel of this.records) {
+      if (recordsOnechannel.show) {
+        legendText.push(
+          `${recordsOnechannel.name}: ${recordsOnechannel.focusPower}`
+        );
+        legendLabels.push(recordsOnechannel.color);
+      }
+    }
+    legendText.push(this.mouseDate);
+    legendText.push(this.mouseTime);
+
+    let backgroundWidth = -1;
+    for (const text of legendText)
+      backgroundWidth =
+        backgroundWidth > text.length ? backgroundWidth : text.length;
+    backgroundWidth = backgroundWidth * 7;
+    const backgroundHeight =
+      legendText.length * (this.labelSize + this.labelPadding) +
+      this.labelPadding * 2;
+
+    const backgroundX = this.isLeft
+      ? this.chartWidth - this.chartMargin - backgroundWidth
+      : this.chartMargin + this.chartPadding;
+    const backgroundY = 100;
+
+    const labelX = this.isLeft
+      ? this.chartWidth -
+        this.chartMargin -
+        this.chartPadding -
+        this.labelPadding
+      : this.chartMargin + this.chartPadding + this.labelPadding * 2;
+    const labelTextX = this.isLeft
+      ? this.chartWidth -
+        this.chartMargin -
+        this.chartPadding -
+        this.labelPadding * 2
+      : this.chartMargin +
+        this.chartPadding * 2 +
+        this.labelSize +
+        this.labelPadding * 2;
+    this.svgChart
+      .select('.labels-background')
+      .select('rect')
+      .attr('x', backgroundX)
+      .attr('y', backgroundY - this.labelPadding)
+      .attr('height', backgroundHeight)
+      .attr('width', backgroundWidth)
+      .attr('fill', 'white')
+      .attr('opacity', 1)
+      .attr('rx', 15);
+
+    const labels: any = this.svgChart
+      .select('.labels')
+      .selectAll('rect')
+      .data(legendLabels);
+    labels
+      .enter()
+      .append('rect')
+      .merge(labels)
+      .attr('x', labelX)
+      .attr(
+        'y',
+        (_, i) => backgroundY + (this.labelSize + this.labelPadding) * i
+      )
+      .attr('height', this.labelSize)
+      .attr('width', this.labelSize)
+      .attr('opacity', 1)
+      .style('fill', (d: string) => d);
+
+    const labelNames: any = this.svgChart
+      .select('.labels')
+      .selectAll('text')
+      .data(legendText);
+    labelNames
+      .enter()
+      .append('text')
+      .merge(labelNames)
+      .attr('x', labelTextX)
+      .attr(
+        'y',
+        (_, i) =>
+          backgroundY +
+          (this.labelSize + this.labelPadding) * i +
+          this.labelSize -
+          2
+      )
+      .attr('font-size', this.labelSize + 'px')
+      .attr('opacity', 1)
+      .text((d: string) => d)
+      .attr('text-anchor', this.isLeft ? 'end' : 'start');
   }
 
   /**
@@ -349,7 +525,6 @@ export class ChartComponent implements OnInit, OnDestroy {
       .call(d3.axisLeft(this.yScale).tickFormat(d3.format('.3')));
 
     for (const recordsOneChannel of this.records) {
-      if (!recordsOneChannel.show) continue;
       if (!this.lines[recordsOneChannel.name]) {
         // Initialize focus line.
         const line = d3
@@ -364,7 +539,10 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('fill', 'none')
           .attr('stroke', recordsOneChannel.color)
           .attr('stroke-width', 2)
-          .attr('d', line(recordsOneChannel.data as any))
+
+          .datum(recordsOneChannel.data as any)
+          .attr('d', line)
+
           .attr('opacity', 0.6);
 
         this.svgLine
@@ -389,12 +567,10 @@ export class ChartComponent implements OnInit, OnDestroy {
         // Bind the data to lines.
         this.svgLine
           .select('.' + this.getChannelLineClassName(recordsOneChannel.name))
+          .datum(recordsOneChannel.data as any)
           .transition()
           .duration(this.animationDuration)
-          .attr(
-            'd',
-            this.lines[recordsOneChannel.name](recordsOneChannel.data as any)
-          );
+          .attr('d', this.lines[recordsOneChannel.name]);
       }
     }
   }

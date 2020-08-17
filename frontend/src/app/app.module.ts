@@ -23,10 +23,15 @@ import { ChartComponent } from './chart/chart.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { LegendCardComponent } from './legend-card/legend-card.component';
+import { LegendTableEntryComponent } from './legend-table-entry/legend-table-entry.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 @NgModule({
-  declarations: [AppComponent, ChartComponent, LegendCardComponent],
+  declarations: [AppComponent, ChartComponent, LegendTableEntryComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -36,7 +41,13 @@ import { LegendCardComponent } from './legend-card/legend-card.component';
     MatProgressSpinnerModule,
     MatSelectModule,
     MatCheckboxModule,
+    MatTooltipModule,
+    MatButtonModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    MatSnackBarModule,
   ],
+  exports: [],
   providers: [],
   bootstrap: [AppComponent],
 })

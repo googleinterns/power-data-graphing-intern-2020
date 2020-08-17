@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { Component, OnInit } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +21,11 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
-  constructor() {}
+  constructor(private msgBar: MatSnackBar) {}
 
   ngOnInit() {}
+
+  openMsgBar(message: string) {
+    this.msgBar.open(message, 'close', { duration: 2000 });
+  }
 }
