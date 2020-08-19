@@ -117,8 +117,12 @@ export class ChartComponent implements OnInit, OnDestroy {
       .getFileInfo('/fileinfo')
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.message.emit(error.error);
           this.loading = false;
+          if (error.error instanceof ProgressEvent) {
+            this.message.emit(error.message);
+          } else {
+            this.message.emit(error.error);
+          }
           return throwError(error);
         })
       )
@@ -141,7 +145,11 @@ export class ChartComponent implements OnInit, OnDestroy {
       )
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.message.emit(error.error);
+          if (error.error instanceof ProgressEvent) {
+            this.message.emit(error.message);
+          } else {
+            this.message.emit(error.error);
+          }
           this.loading = false;
           return throwError(error);
         })

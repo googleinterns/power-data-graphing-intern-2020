@@ -26,7 +26,11 @@ export class RawPreprocessTableComponent implements OnInit {
       .getFileInfo('/fileinfo')
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.message.emit(error.message);
+          if (error.error instanceof ProgressEvent) {
+            this.message.emit(error.message);
+          } else {
+            this.message.emit(error.error);
+          }
           this.loading = false;
           return throwError(error);
         })
@@ -47,7 +51,11 @@ export class RawPreprocessTableComponent implements OnInit {
       .pipe(
         catchError((error: HttpErrorResponse) => {
           this.loading = false;
-          this.message.emit(error.message);
+          if (error.error instanceof ProgressEvent) {
+            this.message.emit(error.message);
+          } else {
+            this.message.emit(error.error);
+          }
           return throwError(error);
         })
       )
