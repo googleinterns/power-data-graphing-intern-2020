@@ -36,7 +36,7 @@ class MultipleLevelPreprocess:
     in order to keep constant loading time.
     To manage the knowledge of each level, a metadata.json file is genereted for the entire
     file and each slice, including names, start time of slice, start, end, and frequency, etc.
-    Metadata is saved in json format, and one for raw data, one for each level.
+    Metadata is saved in json format, and one for raw data, one for each level in each strategy.
     Example metadata for raw:
     {
 
@@ -81,10 +81,7 @@ class MultipleLevelPreprocess:
         """
         metadata = Metadata(self._preprocess_dir,
                             bucket=self._preprocess_bucket)
-        error = metadata.load()
-        if error is None:
-            return True
-        return False
+        return metadata.load()
 
     def preprocess(self,
                    number_per_slice,

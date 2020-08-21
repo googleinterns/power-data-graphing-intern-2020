@@ -32,7 +32,7 @@ from utils import warning
 DOWNSAMPLE_LEVEL_FACTOR = 100
 MINIMUM_NUMBER_OF_RECORDS_LEVEL = 600
 NUMBER_OF_RECORDS_PER_REQUEST = 600
-NUMBER_OF_RECORDS_PER_SLICE = 20000
+NUMBER_OF_RECORDS_PER_SLICE = 100000
 PREPROCESS_BUCKET = 'power-data-preprocess'
 PREPROCESS_DIR = 'mld-preprocess'
 RAW_BUCKET = 'power-data-raw'
@@ -48,7 +48,8 @@ def get_data():
     Retrieves downsampled data, that are within the given time range, from preprocessed raw files.
 
     HTTP Args:
-        name: A string representing the name of the file user wish to view.
+        name: A string representing the fill name of the file user wish to
+            view. (example: DMM_res.csv)
         strategy: A string representing the selected downsample strategy.
         start: An int representing the start of time span user wish to view.
         end: An int representing the end of time span user wish to view.

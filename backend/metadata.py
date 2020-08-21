@@ -32,9 +32,11 @@ class Metadata:
 
         Args:
             root_dir: A string that represents the directory of preprocesse files.
-            strategy: A string of downsampling strategy.
-            level: A string of level name.
-            bucket: bucket: An gcp bucket object.
+            strategy (optional): A string of downsampling strategy. None if it is a file metadata
+                or level0 metadata.
+            level (optional): A string of level name. None if it is a file metadata..
+            bucket (optional): The gcp bucket object for preprocessed files. None if files
+                are stored locally on disk.
         """
         path = ''
         if root_dir is not None:
@@ -72,8 +74,7 @@ class Metadata:
         """Loads metadata from bucket or disk.
 
         Returns:
-            Returns None if metadata is in bucket, else return
-            a string indicating file not found.
+            Returns a boolean indicating if load is successful.
         """
         if self._bucket is None:
             with open(self._path, 'r') as filereader:
@@ -83,7 +84,6 @@ class Metadata:
             blob = self._bucket.blob(self._path)
             metadata_string = blob.download_as_string()
             self.data = loads(metadata_string)
-            return None
+            return True
         except NotFound:
-            error = "File not found."
-            return error
+            return False

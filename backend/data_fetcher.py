@@ -21,7 +21,7 @@ from metadata import Metadata
 
 
 class DataFetcher:
-    """Class for for fetching from multiple-level preprocessing."""
+    """Class for for fetching data from multiple-level preprocessing."""
 
     def __init__(self, file_path, root_dir, preprocess_bucket=None):
 
@@ -39,19 +39,17 @@ class DataFetcher:
         """
         metadata = Metadata(self._preprocess_dir,
                             bucket=self._preprocess_bucket)
-        error = metadata.load()
-        if error is None:
-            return True
-        return False
+        return metadata.load()
 
     def fetch(self, strategy, number_records, timespan_start, timespan_end):
         """Gets the records in given timespan, downsample the fetched data with
             given strategy if needed.
 
         Read the records and downsample the records to be within number_records.
-        First we search the level that has frequency the least higher than the required frequency,
-        then find slices that are within the given timespan, using binary search. Get all
-        the records in timespan, then downsample to satisfy the required number of records.
+        First we search the level that has frequency the least higher than the required frequency.
+        Then find the first and last slice for the given time span. Since records are sorted, first
+        and last slices are found by binary search, then all slices in between are selected and
+        downsampled to return.
 
         Args:
             strategy: A string representing a downsampling strategy.
