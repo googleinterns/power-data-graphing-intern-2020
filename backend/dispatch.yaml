@@ -3,5 +3,5 @@ dispatch:
   - url: "*/data"
     service: api
 
-  - url: "*/filenames"
+  - url: "*/fileinfo"
     service: api
