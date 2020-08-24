@@ -17,6 +17,7 @@
 Expose HTTP endpoints for triggering preprocess and send downsampled data.
 """
 from json import loads
+from flask import redirect
 from flask import request
 from flask import jsonify
 from flask import Flask
@@ -145,6 +146,12 @@ def get_file_info():
 
     response = make_response(jsonify(response_data))
     return response
+
+
+@app.route('/authenticate')
+def authenticate():
+    """HTTP endpoint to authenticate and load cookies for client access."""
+    return redirect('https://tank-big-data-plotting-285623.googleplex.com/')
 
 
 def make_response(response_body):
