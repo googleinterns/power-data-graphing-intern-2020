@@ -350,40 +350,6 @@ export class ChartComponent implements OnInit, OnDestroy {
       this.setLegend();
     };
 
-    const removeFocus = () => {
-      if (this.isLockLegend) return;
-      for (const recordsOneChannel of this.records) {
-        this.svgLine
-          .select('.' + this.getChannelCircleClassName(recordsOneChannel.id))
-          .transition()
-          .style('opacity', 0);
-
-        this.svg
-          .select('.' + this.getFocusTextClassName(recordsOneChannel.id))
-          .transition()
-          .attr('opacity', 0);
-
-        this.mouseDate = '';
-        this.mouseTime = '';
-      }
-
-      this.svg
-        .select('.labels')
-        .selectAll('rect')
-        .transition()
-        .attr('opacity', 0);
-      this.svg
-        .select('.labels')
-        .selectAll('text')
-        .transition()
-        .attr('opacity', 0);
-      this.svg
-        .select('.labels-background')
-        .select('rect')
-        .transition()
-        .attr('opacity', 0);
-    };
-
     // Brush functionality
     this.brush = d3
       .brushX()
@@ -397,7 +363,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 
       .on('end', () => {
         this.interactChart.bind(this)();
-        removeFocus();
+        this.removeFocus();
       })
 
       .on('brush', mousemove);
@@ -408,12 +374,49 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('class', 'brush')
       .call(this.brush)
       .on('mousemove', mousemove)
-      .on('mouseout', removeFocus);
+      .on('mouseout', () => {
+        if (this.isLockLegend) return;
+        this.removeFocus();
+      });
 
     function mousemove() {
       setFocus(this);
     }
   }
+
+  removeFocus = () => {
+    for (const recordsOneChannel of this.records) {
+      this.svgLine
+        .select('.' + this.getChannelCircleClassName(recordsOneChannel.id))
+        .transition()
+        .style('opacity', 0);
+
+      this.svg
+        .select('.' + this.getFocusTextClassName(recordsOneChannel.id))
+        .transition()
+        .attr('opacity', 0);
+
+      this.mouseDate = '';
+      this.mouseTime = '';
+    }
+
+    this.svg
+      .select('.labels')
+      .selectAll('rect')
+      .transition()
+      .attr('opacity', 0);
+    this.svg
+      .select('.labels')
+      .selectAll('text')
+      .transition()
+      .attr('opacity', 0);
+    this.svg
+      .select('.labels-background')
+      .select('rect')
+      .transition()
+      .attr('opacity', 0);
+  };
+
   lockLegend() {
     this.isLockLegend = !this.isLockLegend;
   }
@@ -551,6 +554,8 @@ export class ChartComponent implements OnInit, OnDestroy {
    * Scales or rescales the chart wrt lines to be shown.
    */
   updateChartDomain() {
+    this.removeFocus();
+
     const xExtent = this.getTimeRange();
     const yExtent = this.getValueRange();
 
