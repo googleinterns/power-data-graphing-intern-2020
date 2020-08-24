@@ -41,8 +41,20 @@
       </td>
     </ng-container>
 
+    <ng-container matColumnDef="disclaimer">
+      <td mat-footer-cell *matFooterCellDef colspan="2" class="disclaimer">
+        If no file shown, please go to go/wear-bdp or there's no file in storage
+        now.
+      </td>
+    </ng-container>
+
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr
+      mat-footer-row
+      *matFooterRowDef="['disclaimer']"
+      class="example-second-footer-row"
+    ></tr>
 
     <tr class="mat-row" *matNoDataRow>
       <td class="mat-cell" colspan="4">
