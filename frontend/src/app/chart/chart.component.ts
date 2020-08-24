@@ -75,6 +75,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   // Chart size constants
   isLeft = true;
+  isLockLegend = false;
   animationDuration = 500;
   chartHeight = 500;
   chartMargin = 70;
@@ -339,14 +340,18 @@ export class ChartComponent implements OnInit, OnDestroy {
           timeFormat(upperDate) + '.' + Math.floor(mouseFocus % 1000);
       }
       const duration = this.xScale.domain()[1] - this.xScale.domain()[0];
-      if (mouseFocus < this.xScale.domain()[0] + duration / 4)
-        this.isLeft = true;
-      if (mouseFocus > this.xScale.domain()[0] + (duration * 3) / 4)
-        this.isLeft = false;
+
+      if (!this.isLockLegend) {
+        if (mouseFocus < this.xScale.domain()[0] + duration / 4)
+          this.isLeft = true;
+        if (mouseFocus > this.xScale.domain()[0] + (duration * 3) / 4)
+          this.isLeft = false;
+      }
       this.setLegend();
     };
 
     const removeFocus = () => {
+      if (this.isLockLegend) return;
       for (const recordsOneChannel of this.records) {
         this.svgLine
           .select('.' + this.getChannelCircleClassName(recordsOneChannel.id))
@@ -361,6 +366,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         this.mouseDate = '';
         this.mouseTime = '';
       }
+
       this.svg
         .select('.labels')
         .selectAll('rect')
@@ -408,6 +414,10 @@ export class ChartComponent implements OnInit, OnDestroy {
       setFocus(this);
     }
   }
+  lockLegend() {
+    this.isLockLegend = !this.isLockLegend;
+  }
+
   /**
    * Loads data and rescale chart when zoom-in/out
    */
@@ -426,7 +436,10 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.zoomIn = true;
 
     if (selectedTimeSpan[0] >= selectedTimeSpan[1]) return;
-
+    if (this.filename === undefined) {
+      this.message.emit('Please select a file.');
+      return;
+    }
     this.loadRecords(selectedTimeSpan);
 
     this.svgChart.on('dblclick', () => {

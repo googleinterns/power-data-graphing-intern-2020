@@ -1,17 +1,7 @@
-$small-font: 14px;
 table {
   width: 100%;
 }
 
-td {
-  font-size: $small-font;
-  padding-left: 5px;
-}
-
-.fixed {
-  text-align: center;
-}
-
-.fixed .spinner {
+.spinner {
   display: inline-block;
 }

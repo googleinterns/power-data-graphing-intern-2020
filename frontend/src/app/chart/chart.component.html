@@ -49,8 +49,13 @@
         />
       </mat-form-field>
     </mat-card>
-    <button mat-raised-button color="primary" (click)="configSwitch()">
-      Reload
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="lockLegend()"
+      matTooltip="Lock in-chart legend and values"
+    >
+      {{ isLockLegend ? "Lock" : "Unlock" }}
     </button>
   </div>
   <div class="chart-header-right">
@@ -72,21 +77,4 @@
 </div>
 
 <div id="chart-component"></div>
-
-<mat-card class="legends-container">
-  <table>
-    <tr>
-      <th>Channel</th>
-      <th>Maximum</th>
-      <th>Minimum</th>
-      <th>Average</th>
-    </tr>
-    <tr
-      legend-table-entry
-      class="legend-card"
-      *ngFor="let recordsOneChannel of records"
-      [recordsOneChannel]="recordsOneChannel"
-      (showChange)="showLine($event)"
-    ></tr>
-  </table>
-</mat-card>
+<legend-table [records]="records"></legend-table>

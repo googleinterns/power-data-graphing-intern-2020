@@ -60,7 +60,10 @@ def get_data():
     end = request.args.get('end', default=None, type=int)
     number = request.args.get(
         'number', default=NUMBER_OF_RECORDS_PER_REQUEST, type=int)
-
+    if name is None:
+        warning('Empty file name.')
+        response = make_response('Empty file name')
+        return response, 400
     if not strategy in STRATEGIES:
         warning('Incorrect Strategy: %s', strategy)
         response = make_response('Incorrect Strategy: {}'.format(strategy))
@@ -72,7 +75,7 @@ def get_data():
 
     if not fetcher.is_preprocessed():
         response = make_response('Preprocessing incomplete.')
-        return response, 400
+        return response, 404
     data, frequency_ratio = fetcher.fetch(
         strategy, number, start, end)
     response_data = {
