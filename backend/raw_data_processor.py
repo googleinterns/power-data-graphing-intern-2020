@@ -20,22 +20,24 @@ SIZE_ONE_LINE = 50
 
 
 class RawDataProcessor:
-    """Class for processing raw data."""
+    """Class for reading raw data.
 
-    def __init__(self, rawfile, number_per_slice, bucket=None):
+    Given that the raw data could be very large, reading raw data must
+    be in multiple times, each in a constant, reasonable size.
+    Each time the object calls read_next_slice, it would read raw data slice
+    that has size (SIZE_ONE_LINE * number_per_slice) bytes, and update the pointer
+    to the start of the next slice.
+    """
+
+    def __init__(self, rawfile, number_per_slice, bucket):
         self._blob = None
         self._bucket = bucket
         self._eof = False
-        self._file = None
         self._file_pointer = 0
         self._loaded_records = []
         self._number_per_slice = number_per_slice
         self._rawfile = rawfile
-
-        if bucket is None:
-            self._file = open(rawfile, 'r')
-        else:
-            self._blob = self._bucket.blob(self._rawfile)
+        self._blob = self._bucket.blob(self._rawfile)
 
     def read_next_slice(self):
         """Reads raw data for a single slice.
@@ -45,18 +47,6 @@ class RawDataProcessor:
         """
         raw_records = []
         records = []
-
-        if self._bucket is None:
-            counter = 0
-            while counter < self._number_per_slice:
-                line = self._file.readline()
-                if line == '':
-                    self._file.close()
-                    self._eof = True
-                    break
-                records.append(parse_csv_line(line))
-                counter += 1
-            return records
 
         if len(self._loaded_records) - 1 >= self._number_per_slice:
             records = [parse_csv_line(
@@ -74,7 +64,7 @@ class RawDataProcessor:
                 self._eof = True
                 break
             except NotFound:
-                return 'File not found!'
+                return None
         if raw_records and self._loaded_records:
             raw_records[0] = self._loaded_records[-1] + raw_records[0]
             self._loaded_records[-1] = ''

@@ -102,7 +102,7 @@ class MultipleLevelPreprocess:
             minimum_number_level: An int that represents the minimum number of records for a level.
 
         Returns:
-            Error string if an error occurs, None if complete.
+            A boolean indicating if no error occurs.
         """
         self._number_per_slice = number_per_slice
         self._downsample_level_factor = downsample_level_factor
@@ -113,9 +113,9 @@ class MultipleLevelPreprocess:
         self._metadata['levels'] = dict()
 
         start = time()
-        error = self._raw_preprocess(number_per_slice)
-        if error is not None:
-            return error
+        success = self._raw_preprocess(number_per_slice)
+        if not success:
+            return False
         utils.warning(('raw time is: ', time()-start))
 
         for strategy in STRATEGIES:
@@ -123,7 +123,7 @@ class MultipleLevelPreprocess:
             self._preprocess_single_startegy(strategy)
             utils.warning((strategy, ' time is: ', time()-start))
         self._metadata.save()
-        return None
+        return True
 
     def _raw_preprocess(self, number_per_slice):
         """Splits raw data into slices. keep start time of each slice in a json file.
@@ -132,11 +132,11 @@ class MultipleLevelPreprocess:
             number_per_slice: An int of records to keep for each slice.
 
         Returns:
-            Error string if an error occurs, None if complete.
+            A boolean indicating if no error occurs.
         """
         raw_slice_metadata = Metadata(
-            self._preprocess_dir, strategy=None, level=RAW_LEVEL_DIR,
-            bucket=self._preprocess_bucket)
+            self._preprocess_dir, bucket=self._preprocess_bucket, strategy=None,
+            level=RAW_LEVEL_DIR)
         raw_data = RawDataProcessor(
             self._metadata['raw_file'], number_per_slice, self._raw_bucket)
 
@@ -150,8 +150,8 @@ class MultipleLevelPreprocess:
             level_slice = LevelSlice(
                 slice_name, bucket=self._preprocess_bucket)
             raw_slice = raw_data.read_next_slice()
-            if isinstance(raw_slice, str):
-                return raw_slice
+            if raw_slice is None:
+                return False
             level_slice.save(raw_slice)
             raw_start_times.append(raw_slice[0][0])
 
@@ -174,7 +174,7 @@ class MultipleLevelPreprocess:
             raw_slice_metadata[self._metadata['levels']
                                [RAW_LEVEL_DIR]['names'][index]] = raw_slice_start
         raw_slice_metadata.save()
-        return None
+        return True
 
     def _preprocess_single_startegy(self, strategy):
         """Downsamples given data by the defined levels and strategy.
@@ -193,8 +193,8 @@ class MultipleLevelPreprocess:
             return
         prev_level = self._metadata['levels']['names'][0]
         for curr_level in self._metadata['levels']['names'][1:]:
-            level_metadata = Metadata(
-                self._preprocess_dir, strategy, curr_level, bucket=self._preprocess_bucket)
+            level_metadata = Metadata(self._preprocess_dir,
+                                      self._preprocess_bucket, strategy, curr_level)
             self._single_level_downsample(
                 strategy, prev_level, curr_level, level_metadata)
             level_metadata.save()

@@ -13,13 +13,10 @@
 # =============================================================================
 
 """Metadata module."""
-from json import dump
 from json import dumps
-from json import load
 from json import loads
 
 from google.api_core.exceptions import NotFound
-from utils import mkdir
 
 METADATA = 'metadata.json'
 
@@ -27,7 +24,7 @@ METADATA = 'metadata.json'
 class Metadata:
     """Class for managing metadata."""
 
-    def __init__(self, root_dir, strategy=None, level=None, bucket=None):
+    def __init__(self, root_dir, bucket, strategy=None, level=None):
         """Initilizes metadata object.
 
         Args:
@@ -61,11 +58,6 @@ class Metadata:
 
     def save(self):
         """Saves metadata to bucket or disk."""
-        if self._bucket is None:
-            with open(self._path, 'w') as filewriter:
-                mkdir(self._path)
-                dump(self.data, filewriter)
-                return
         blob = self._bucket.blob(self._path)
         metadata_string = dumps(self.data)
         blob.upload_from_string(metadata_string)
@@ -76,10 +68,6 @@ class Metadata:
         Returns:
             Returns a boolean indicating if load is successful.
         """
-        if self._bucket is None:
-            with open(self._path, 'r') as filereader:
-                self.data = load(filereader)
-                return None
         try:
             blob = self._bucket.blob(self._path)
             metadata_string = blob.download_as_string()

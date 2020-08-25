@@ -16,12 +16,12 @@
 
 import utils
 
-from level_slices_reader import LevelSlices
+from level_slices_reader import LevelSlicesReader
 from metadata import Metadata
 
 
 class DataFetcher:
-    """Class for for fetching data from multiple-level preprocessing."""
+    """Class for fetching data from multiple-level preprocessing."""
 
     def __init__(self, file_path, root_dir, preprocess_bucket=None):
 
@@ -101,8 +101,8 @@ class DataFetcher:
                                                 ['names'][target_level_index]]
 
         level_metadata = Metadata(
-            self._preprocess_dir, strategy, utils.get_level_name(
-                target_level_index), bucket=self._preprocess_bucket)
+            self._preprocess_dir, self._preprocess_bucket, strategy, utils.get_level_name(
+                target_level_index))
         level_metadata.load()
         first_slice = self._binary_search([level_metadata[single_slice]
                                            for single_slice in target_level['names']],
@@ -117,7 +117,7 @@ class DataFetcher:
             single_slice, strategy) for single_slice in target_slices_names]
 
         # Reads records and downsamples.
-        target_slices = LevelSlices(
+        target_slices = LevelSlicesReader(
             target_slice_paths, self._preprocess_bucket)
         target_slices.read(timespan_start, timespan_end)
         number_target_records = target_slices.get_records_count()

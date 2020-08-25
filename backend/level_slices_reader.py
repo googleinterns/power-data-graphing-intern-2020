@@ -20,12 +20,14 @@ from downsample import strategy_reducer
 from utils import parse_csv_line
 
 
-class LevelSlices:
+class LevelSlicesReader:
     """A class for reading reacords from multiple slices."""
 
-    def __init__(self, filenames, bucket=None):
+    def __init__(self, filenames, bucket):
         self._filenames = filenames
         self._bucket = bucket
+
+        # key: (string) Channel name, value: (list)list of records
         self._records = defaultdict(list)
 
     def read(self, start, end):
@@ -38,12 +40,8 @@ class LevelSlices:
         """
         for slice_path in self._filenames:
             lines = []
-            if self._bucket is None:
-                with open(slice_path, 'r') as filereader:
-                    lines = filereader.readlines()
-            else:
-                blob = self._bucket.blob(slice_path)
-                lines = blob.download_as_string().decode().split('\n')
+            blob = self._bucket.blob(slice_path)
+            lines = blob.download_as_string().decode().split('\n')
             for line in lines:
                 record = parse_csv_line(line)
                 if record and (start is None or start <=

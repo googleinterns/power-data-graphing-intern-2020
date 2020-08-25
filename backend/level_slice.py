@@ -24,11 +24,8 @@ from utils import parse_csv_line
 class LevelSlice:
     """A class for processing slice and its records."""
 
-    def __init__(self, filename, bucket=None):
+    def __init__(self, filename, bucket):
         """Initialises slice object.
-
-        filename is used to load and save for single slice, and filenames is used to
-        read multiple slices at the same time.
 
         Args:
             filename: A string of the path to the slice.
@@ -49,12 +46,9 @@ class LevelSlice:
         if self._filename is None:
             return
         lines = []
-        if self._bucket is None:
-            with open(self._filename, 'r') as filereader:
-                lines = filereader.readlines()
-        else:
-            blob = self._bucket.blob(self._filename)
-            lines = blob.download_as_string().decode().split('\n')
+
+        blob = self._bucket.blob(self._filename)
+        lines = blob.download_as_string().decode().split('\n')
         for line in lines:
             record = parse_csv_line(line)
             if record:
@@ -63,7 +57,7 @@ class LevelSlice:
                 self._records[record[2]].append(record)
 
     def get_first_timestamp(self):
-        """Gets the earliest time of record in this slice, or all slices from _filenames."""
+        """Gets the earliest time of record in this slice."""
         assert self._start != -1
         return self._start
 
@@ -80,13 +74,8 @@ class LevelSlice:
             records_list = sorted(records_list, key=lambda record: record[0])
 
         data_csv = convert_to_csv(records_list)
-        if self._bucket is None:
-            with open(self._filename, 'w') as filewriter:
-                filewriter.write(data_csv)
-                filewriter.flush()
-        else:
-            blob = self._bucket.blob(self._filename)
-            blob.upload_from_string(data_csv)
+        blob = self._bucket.blob(self._filename)
+        blob.upload_from_string(data_csv)
 
     def get_records_count(self):
         """Gets number of records in this slice."""

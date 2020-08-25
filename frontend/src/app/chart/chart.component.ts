@@ -384,7 +384,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     }
   }
 
-  removeFocus = () => {
+  removeFocus() {
     for (const recordsOneChannel of this.records) {
       this.svgLine
         .select('.' + this.getChannelCircleClassName(recordsOneChannel.id))
@@ -415,7 +415,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .select('rect')
       .transition()
       .attr('opacity', 0);
-  };
+  }
 
   lockLegend() {
     this.isLockLegend = !this.isLockLegend;

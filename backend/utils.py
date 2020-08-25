@@ -74,8 +74,7 @@ def get_file_name(path):
     Returns:
         A string for the path without .csv postfix
     """
-    filename = path.strip(' ').strip(
-        '\n').strip('.csv')
+    filename = path.strip('\n').strip('.csv')
     return filename
 
 

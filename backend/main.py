@@ -52,8 +52,8 @@ def get_data():
         name: A string representing the fill name of the file user wish to
             view. (example: DMM_res.csv)
         strategy: A string representing the selected downsample strategy.
-        start: An int representing the start of time span user wish to view.
-        end: An int representing the end of time span user wish to view.
+        start (optional): An int representing the start of time span user wish to view.
+        end (optional): An int representing the end of time span user wish to view.
     """
     name = request.args.get('name', type=str)
     strategy = request.args.get('strategy', default='avg', type=str)
@@ -94,9 +94,9 @@ def mlp_preprocess():
 
     HTTP Args:
         name: A string representing the name of the file to preprocess.
-        slice_size: An int that represents number of records for one slice.
-        downsanple_factor: An int that represents downsample factor between levels.
-        min_number: An int that represents the minimum number of records for a level.
+        slice_size (optional): An int that represents number of records for one slice.
+        downsanple_factor (optional): An int that represents downsample factor between levels.
+        min_number (optional): An int that represents the minimum number of records for a level.
     """
     form = loads(request.data.decode())
     name = form.get('name', None)
@@ -113,20 +113,20 @@ def mlp_preprocess():
     client = storage.Client()
     preprocess = MultipleLevelPreprocess(name, PREPROCESS_DIR, client.bucket(
         PREPROCESS_BUCKET), client.bucket(RAW_BUCKET))
-    error = preprocess.preprocess(
+    success = preprocess.preprocess(
         number_per_slice, downsample_factor, minimum_number_level)
 
-    if error is not None:
-        response = make_response(error)
-        return response
+    if not success:
+        response = make_response('Preprocess failed.')
+        return 500, response
 
     response = make_response('preprocess complete!')
-    return response
+    return 200, response
 
 
 @app.route('/fileinfo')
 def get_file_info():
-    """HTTP endpoint to get all file names stored in bucket."""
+    """HTTP endpoint to get all of the raw file names and the preprocess status."""
 
     client = storage.Client()
     raw_bucket = client.bucket(RAW_BUCKET)
