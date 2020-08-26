@@ -21,7 +21,7 @@
         <mat-label>Select a file to view</mat-label>
         <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
           <ng-container *ngFor="let file of fileinfo">
-            <mat-option [value]="file.name">{{ file.name }} </mat-option>
+            <mat-option [value]="file.name">{{file.name}}</mat-option>
           </ng-container>
         </mat-select>
       </mat-form-field>
@@ -55,7 +55,7 @@
       (click)="lockLegend()"
       matTooltip="Lock in-chart legend and values"
     >
-      {{ isLockLegend ? "Lock" : "Unlock" }}
+      {{isLockLegend ? "Lock" : "Unlock"}}
     </button>
   </div>
   <div class="chart-header-right">
@@ -71,7 +71,7 @@
       mat-raised-button
       matTooltip="Percentage of Raw Data Frequency (100% = Raw)"
     >
-      Sample Rate: {{ frequency_ratio }}
+      Sample Rate: {{frequency_ratio}}
     </button>
   </div>
 </div>

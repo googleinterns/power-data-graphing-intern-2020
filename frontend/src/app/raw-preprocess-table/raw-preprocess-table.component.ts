@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   Output,
   EventEmitter,
   ViewChild,
@@ -29,7 +30,7 @@ export interface FileInfo {
   templateUrl: './raw-preprocess-table.component.html',
   styleUrls: ['./raw-preprocess-table.component.scss'],
 })
-export class RawPreprocessTableComponent implements OnInit {
+export class RawPreprocessTableComponent implements OnInit, OnDestroy {
   @Output() message = new EventEmitter<string>();
   subscription: Subscription;
   fileinfo: FileInfo[];
@@ -43,6 +44,10 @@ export class RawPreprocessTableComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFilenames();
+  }
+
+  ngOnDestroy(): void {
+    if (!this.subscription.closed) this.subscription.unsubscribe();
   }
 
   loadFilenames() {
@@ -77,7 +82,7 @@ export class RawPreprocessTableComponent implements OnInit {
     }
 
     file.loading = true;
-    this.service
+    this.subscription = this.service
       .preprocess('/data', file.name)
       .pipe(
         catchError((error: HttpErrorResponse) => {

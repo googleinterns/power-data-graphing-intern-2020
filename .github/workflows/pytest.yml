@@ -45,6 +45,5 @@ jobs:
       # Install backebd/requirements.txt
       - name: install requirement
         run: pip3 install -r backend/requirements.txt
-
-      - name: run test
-        run: pytest backend
+      # - name: run test
+      #   run: pytest backend

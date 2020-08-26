@@ -14,12 +14,12 @@
 """Test Module for RawDataProcessor class."""
 # pylint: disable=W0212
 
-import os
-from tempfile import NamedTemporaryFile
 
 import pytest
 from raw_data_processor import RawDataProcessor
-from utils import convert_to_csv
+from gcs_test_utils import upload
+
+TEST_FILENAME = 'raw_processor_test.csv'
 
 
 class TestRawDataProcessor:
@@ -40,35 +40,14 @@ class TestRawDataProcessor:
         ]
 
     @pytest.fixture
-    def testfile(self, test_records):
+    def test_bucket(self, test_records):
         """Returns a filename with test data saved."""
 
-        tmpfile = NamedTemporaryFile()
-        assert os.path.exists(tmpfile.name)
+        bucket = upload(TEST_FILENAME, test_records)
+        return bucket
 
-        with open(tmpfile.name, 'w') as tmpfilewriter:
-            data_csv = convert_to_csv(test_records)
-            tmpfilewriter.write(data_csv)
-        return tmpfile
-
-    def test_filename(self, testfile):
-        """Tests if raw file is same as passed in."""
-        raw_data = RawDataProcessor(testfile.name, 10)
-        assert raw_data._rawfile == testfile.name
-        testfile.close()
-
-    def test_readable(self, testfile):
-        """Tests if readable at start and end."""
-        raw_data = RawDataProcessor(testfile.name, 1)
-        for _ in range(11):
-            assert raw_data.readable()
-            raw_data.read_next_slice()
-        assert not raw_data.readable()
-        testfile.close()
-
-    def test_saved_records(self, testfile, test_records):
+    def test_saved_records(self, test_bucket, test_records):
         """Tests if records saved is same as expected."""
-        raw_data = RawDataProcessor(testfile.name, 10)
+        raw_data = RawDataProcessor(TEST_FILENAME, 10, test_bucket)
         records = raw_data.read_next_slice()
         assert records == test_records
-        testfile.close()

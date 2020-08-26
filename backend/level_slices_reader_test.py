@@ -12,19 +12,19 @@
 # limitations under the License.
 # =============================================================================
 
-"""A Test module for LevelSlices Class."""
+"""A Test module for LevelSlicesReader Class."""
 # pylint: disable=W0212
 
-import os
-from tempfile import NamedTemporaryFile
-
 import pytest
-from level_slices_reader import LevelSlices
-from utils import convert_to_csv
+from level_slices_reader import LevelSlicesReader
+from gcs_test_utils import upload
+
+TEST_FILENAME = 'slice_reader_test.csv'
+TEST_FILENAME2 = 'slice_reader_test2.csv'
 
 
-class TestLevelSlices:
-    """A Test Class for LevelSlices Class."""
+class TestLevelSlicesReader:
+    """A Test Class for LevelSlicesReader Class."""
     @pytest.fixture
     def test_records1(self):
         return [
@@ -58,26 +58,10 @@ class TestLevelSlices:
             [1573149236269888, 100, 'SYS'],
         ]
 
-    def write_to_tmpfile(self, records):
-        """Writes records to tmp file.
-
-        Args:
-            records: A list of records.
-
-        Returns:
-            An IO object.
-        """
-        tmpfile = NamedTemporaryFile()
-        with open(tmpfile.name, 'w') as filewriter:
-            data_csv = convert_to_csv(records)
-            filewriter.write(data_csv)
-        assert os.path.exists(tmpfile.name)
-        return tmpfile
-
     def test_format_response(self, test_records1):
         """Tests if format is right on calling format_response."""
-        tmpfile = self.write_to_tmpfile(test_records1)
-        test_slice = LevelSlices([tmpfile.name])
+        bucket = upload(TEST_FILENAME, test_records1)
+        test_slice = LevelSlicesReader([TEST_FILENAME], bucket)
 
         formatted = test_slice.format_response()
         expected = []
@@ -89,33 +73,27 @@ class TestLevelSlices:
             [record[0], record[1]] for record in test_records1]}]
         assert formatted == expected
 
-        tmpfile.close()
-
     def test_read_slices_dummy_time(self, test_records1, test_records2):
         """Tests multiple slice reading with dummy start and end."""
-        tmpfile1 = self.write_to_tmpfile(test_records1)
-        tmpfile2 = self.write_to_tmpfile(test_records2)
+        bucket = upload(TEST_FILENAME, test_records1)
+        bucket = upload(TEST_FILENAME2, test_records2)
 
-        test_slice = LevelSlices(filenames=[tmpfile1.name, tmpfile2.name])
+        test_slice = LevelSlicesReader(
+            filenames=[TEST_FILENAME, TEST_FILENAME2], bucket=bucket)
         test_slice.read(-1, float('inf'))
         assert test_slice._records['PPX_ASYS'] == test_records1
         assert test_slice._records['SYS'] == test_records2
 
-        tmpfile1.close()
-        tmpfile2.close()
-
     def test_read_slices_with_time(self, test_records1, test_records2):
         """Tests multiple slice reading with specified start and end."""
-        tmpfile1 = self.write_to_tmpfile(test_records1)
-        tmpfile2 = self.write_to_tmpfile(test_records2)
+        bucket = upload(TEST_FILENAME, test_records1)
+        bucket = upload(TEST_FILENAME2, test_records2)
 
-        test_slice = LevelSlices(filenames=[tmpfile1.name, tmpfile2.name])
+        test_slice = LevelSlicesReader(
+            filenames=[TEST_FILENAME, TEST_FILENAME2], bucket=bucket)
 
         start = test_records1[-1][0]
         end = test_records2[0][0]
         test_slice.read(start, end)
         assert test_slice._records['PPX_ASYS'] == [test_records1[-1]]
         assert test_slice._records['SYS'] == [test_records2[0]]
-
-        tmpfile1.close()
-        tmpfile2.close()

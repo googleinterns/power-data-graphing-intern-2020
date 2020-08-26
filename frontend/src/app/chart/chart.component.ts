@@ -47,12 +47,13 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   // Component binding
   @Output() message = new EventEmitter<string>();
-  filename: string;
-  frequency_ratio: string;
-  strategyType = STRATEGY;
-  subscription: Subscription;
-  number = new FormControl(600);
 
+  filename!: string;
+  frequency_ratio!: string;
+  subscription!: Subscription;
+
+  strategyType = STRATEGY;
+  number = new FormControl(600);
   loading = false;
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
@@ -63,15 +64,16 @@ export class ChartComponent implements OnInit, OnDestroy {
   mouseTime = '';
 
   // Chart d3 SVG Elements
-  private brush: d3.BrushBehavior<unknown>;
   private lines: object = {};
-  private svg: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private svgChart: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private svgLine: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private xAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private xScale: d3.ScaleLinear<number, number>;
-  private yAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private yScale: d3.ScaleLinear<number, number>;
+
+  private brush!: d3.BrushBehavior<unknown>;
+  private svg!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private svgChart!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private svgLine!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private xAxis!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private xScale!: d3.ScaleLinear<number, number>;
+  private yAxis!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private yScale!: d3.ScaleLinear<number, number>;
 
   // Chart size constants
   isLeft = true;
@@ -84,22 +86,6 @@ export class ChartComponent implements OnInit, OnDestroy {
   labelSize = 10;
   labelPadding = 5;
   svgPadding = 10;
-  timeFormat = (time: number) => {
-    const timeParse = d3.timeParse('%Q');
-    const timeFormat = d3.timeFormat('%M:%S.%L');
-    const fineTimeFormat = d3.timeFormat(':%S.%L');
-
-    const upperDate = timeParse(Math.floor(time / 1000).toString());
-    const xExtent = this.getTimeRange();
-
-    if (xExtent[1] - xExtent[0] >= 1e6) {
-      this.svgChart.select('.x-axis-legend').text('Time (m:s.ms)');
-      return timeFormat(upperDate);
-    }
-
-    this.svgChart.select('.x-axis-legend').text('Time (:s.ms.µs)');
-    return fineTimeFormat(upperDate) + '.' + Math.floor(time % 1000);
-  };
 
   constructor(private service: HttpService) {}
   ngOnInit(): void {
@@ -108,7 +94,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    if (!this.subscription.closed) this.subscription.unsubscribe();
   }
 
   loadFilenames() {
@@ -341,6 +327,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       }
       const duration = this.xScale.domain()[1] - this.xScale.domain()[0];
 
+      // Set this.isLeft to true if the mouse is at left 1/4 portion of the chart, false otherwise.
       if (!this.isLockLegend) {
         if (mouseFocus < this.xScale.domain()[0] + duration / 4)
           this.isLeft = true;
@@ -619,6 +606,23 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('d', this.lines[recordsOneChannel.name]);
       }
     }
+  }
+
+  timeFormat(time: number) {
+    const timeParse = d3.timeParse('%Q');
+    const timeFormat = d3.timeFormat('%M:%S.%L');
+    const fineTimeFormat = d3.timeFormat(':%S.%L');
+
+    const upperDate = timeParse(Math.floor(time / 1000).toString());
+    const xExtent = this.getTimeRange();
+
+    if (xExtent[1] - xExtent[0] >= 1e6) {
+      this.svgChart.select('.x-axis-legend').text('Time (m:s.ms)');
+      return timeFormat(upperDate);
+    }
+
+    this.svgChart.select('.x-axis-legend').text('Time (:s.ms.µs)');
+    return fineTimeFormat(upperDate) + '.' + Math.floor(time % 1000);
   }
 
   /**
