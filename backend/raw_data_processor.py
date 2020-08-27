@@ -42,6 +42,13 @@ class RawDataProcessor:
     def read_next_slice(self):
         """Reads raw data for a single slice.
 
+        Download next chuck of size (SIZE_ONE_LINE * number_per_slice) bytes
+        and update the self._file_pointer to the end of the chunk.
+        if number of lines is equal or greater than self._number_per_slice,
+        return self._number_per_slice slices and keep the rest. If less than
+        self._number_per_slice, download again.
+        Repeat this process until the whole data is downloaded.
+
         Returns:
             A list of records.
         """

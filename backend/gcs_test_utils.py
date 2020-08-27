@@ -30,7 +30,7 @@ def upload(filename, records):
         records: A list of records.
 
     Returns:
-        GSC bucket object.
+        GCS bucket object.
     """
     client = storage.Client()
     bucket = client.bucket(TEST_BUCKET)

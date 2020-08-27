@@ -30,9 +30,6 @@ class LevelSlice:
         Args:
             filename: A string of the path to the slice.
             bucket: An bucket object.
-
-        Raises:
-            TypeError: Both arguments are None.
         """
         self._filename = filename
         self._bucket = bucket
@@ -41,10 +38,12 @@ class LevelSlice:
         self._records = defaultdict(list)
         self._start = -1
 
+        assert self._filename is not None
+        assert self._bucket is not None
+
     def read(self):
         """Reads records from slice file."""
-        if self._filename is None:
-            return
+
         lines = []
 
         blob = self._bucket.blob(self._filename)

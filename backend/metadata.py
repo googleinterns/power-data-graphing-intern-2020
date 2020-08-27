@@ -29,11 +29,10 @@ class Metadata:
 
         Args:
             root_dir: A string that represents the directory of preprocesse files.
-            strategy (optional): A string of downsampling strategy. None if it is a file metadata
-                or level0 metadata.
-            level (optional): A string of level name. None if it is a file metadata..
-            bucket (optional): The gcp bucket object for preprocessed files. None if files
-                are stored locally on disk.
+            bucket: The gcp bucket object for preprocessed files.
+            strategy (optional): A string of downsampling strategy. None if it's an overall metadata
+            or level 0 metadata.
+            level (optional): A string of level name. None if it is an overall metadata..
         """
         path = ''
         if root_dir is not None:
