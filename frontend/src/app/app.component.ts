@@ -26,6 +26,6 @@ export class AppComponent implements OnInit {
   ngOnInit() {}
 
   openMsgBar(message: string) {
-    this.msgBar.open(message, 'close', { duration: 2000 });
+    this.msgBar.open(message, 'close', { duration: 4000 });
   }
 }

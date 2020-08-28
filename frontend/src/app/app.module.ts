@@ -29,9 +29,20 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { RawPreprocessTableComponent } from './raw-preprocess-table/raw-preprocess-table.component';
+import { LegendTableComponent } from './legend-table/legend-table.component';
+import { MatTableModule } from '@angular/material/table';
+import { MatSortModule } from '@angular/material/sort';
+import { MatPaginatorModule } from '@angular/material/paginator';
 
 @NgModule({
-  declarations: [AppComponent, ChartComponent, LegendTableEntryComponent],
+  declarations: [
+    AppComponent,
+    ChartComponent,
+    LegendTableEntryComponent,
+    RawPreprocessTableComponent,
+    LegendTableComponent,
+  ],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -46,6 +57,9 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatInputModule,
     ReactiveFormsModule,
     MatSnackBarModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
   ],
   exports: [],
   providers: [],

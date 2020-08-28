@@ -24,53 +24,39 @@ from utils import parse_csv_line
 class LevelSlice:
     """A class for processing slice and its records."""
 
-    def __init__(self, filename=None, filenames=None):
+    def __init__(self, filename, bucket):
         """Initialises slice object.
 
-        filname and filenames cannot be None at the same time.
-        filename is used to load and save for single slice, and filenames is used to
-        read multiple slices at the same time.
-
         Args:
-            filename: (optional) A string of the path to the slice.
-            filenames: (optional) A list of string that represent the path to slices.
-
-        Raises:
-            TypeError: Both arguments are None.
+            filename: A string of the path to the slice.
+            bucket: An bucket object.
         """
-        if filename is None and filenames is None:
-            raise TypeError
         self._filename = filename
-        self._filenames = filenames
+        self._bucket = bucket
 
         # key: channel name, value: list of records.
         self._records = defaultdict(list)
         self._start = -1
 
+        assert self._filename is not None
+        assert self._bucket is not None
+
     def read(self):
         """Reads records from slice file."""
-        if self._filename is None:
-            return
-        with open(self._filename, 'r') as filereader:
-            for line in filereader:
-                record = parse_csv_line(line)
+
+        lines = []
+
+        blob = self._bucket.blob(self._filename)
+        lines = blob.download_as_string().decode().split('\n')
+        for line in lines:
+            record = parse_csv_line(line)
+            if record:
                 if self._start == -1:
                     self._start = record[0]
                 self._records[record[2]].append(record)
 
-    def read_slices(self, start, end):
-        for slice_path in self._filenames:
-            with open(slice_path, 'r') as filereader:
-                for line in filereader.readlines():
-                    record = parse_csv_line(line)
-                    if record and (start is None or start <=
-                                   record[0]) and (end is None or record[0] <= end):
-                        self._records[record[2]].append(record)
-                        if self._start == -1:
-                            self._start = record[0]
-
     def get_first_timestamp(self):
-        """Gets the earliest time of record in this slice, or all slices from _filenames."""
+        """Gets the earliest time of record in this slice."""
         assert self._start != -1
         return self._start
 
@@ -85,10 +71,10 @@ class LevelSlice:
             for channeled_records in self._records.values():
                 records_list.extend(channeled_records)
             records_list = sorted(records_list, key=lambda record: record[0])
-        with open(self._filename, 'w') as filewriter:
-            data_csv = convert_to_csv(records_list)
-            filewriter.write(data_csv)
-            filewriter.flush()
+
+        data_csv = convert_to_csv(records_list)
+        blob = self._bucket.blob(self._filename)
+        blob.upload_from_string(data_csv)
 
     def get_records_count(self):
         """Gets number of records in this slice."""
@@ -121,19 +107,10 @@ class LevelSlice:
         Args:
             records: A dict of records.
         """
+        if self._start == -1:
+            start = min([records[channel][0][0]
+                         for channel in records.keys() if records[channel]])
+
+            self._start = start
         for channel in records.keys():
             self._records[channel].extend(records[channel])
-
-    def format_response(self):
-        """Gets current data in dict type for http response.
-
-        Returns:
-            A dict of data indicating the name of channel and its data.
-        """
-        response = list()
-        for channel in self._records.keys():
-            response.append({
-                'name': channel,
-                'data': [[record[0], record[1]] for record in self._records[channel]]
-            })
-        return response

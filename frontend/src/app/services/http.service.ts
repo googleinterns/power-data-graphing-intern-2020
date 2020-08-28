@@ -26,6 +26,11 @@ export interface ResponseData {
   data: [number, number][];
   name: string;
 }
+
+export interface ResponseFileInfo {
+  name: string;
+  preprocessed: boolean;
+}
 @Injectable({
   providedIn: 'root',
 })
@@ -59,17 +64,30 @@ export class HttpService {
     });
   }
   /**
-   * Requests the server to do first-level downsampling.
+   * Gets all test file names.
    * @param path The http endpoint.
-   * @param filename The file name for the experiment.
-   * @param rate The frequency for downsampling.
    */
-  preprocess(path: string, filename: string, rate: number) {
+  getFileInfo(path: string) {
     return this.http.get(environment.apiUrl + path, {
-      params: new HttpParams()
-        .set('name', filename)
-        .set('rate', rate.toString()),
+      params: new HttpParams(),
       withCredentials: true,
     });
+  }
+
+  /**
+   * Triggers preprocess.
+   * @param path The http endpoint.
+   * @param filename The filename to be preprocessed.
+   */
+  preprocess(path: string, filename: string) {
+    return this.http.post(
+      environment.apiUrl + path,
+      // { name: filename },
+      JSON.stringify({ name: filename }),
+      {
+        withCredentials: true,
+        responseType: 'text',
+      }
+    );
   }
 }

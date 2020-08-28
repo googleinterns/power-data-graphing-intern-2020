@@ -14,16 +14,20 @@
  =============================================================================
 -->
 
-<div class="app-title">
-  <h1>PRD Dashboard</h1>
-</div>
-
-<mat-card class="container">
-  <h2 class="header">Viewer</h2>
-  <main-chart (message)="openMsgBar($event)"></main-chart>
-</mat-card>
-
-<mat-card class="container">
-  <h2 class="header">Preprocess</h2>
-  <raw-preprocess-table (message)="openMsgBar($event)"></raw-preprocess-table>
+<mat-card class="legends-container">
+  <table>
+    <tr>
+      <th>Channel</th>
+      <th>Maximum</th>
+      <th>Minimum</th>
+      <th>Average</th>
+    </tr>
+    <tr
+      legend-table-entry
+      class="legend-card"
+      *ngFor="let recordsOneChannel of records"
+      [recordsOneChannel]="recordsOneChannel"
+      (showChange)="showLine($event)"
+    ></tr>
+  </table>
 </mat-card>

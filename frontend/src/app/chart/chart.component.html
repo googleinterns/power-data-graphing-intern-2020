@@ -18,27 +18,21 @@
   <div class="chart-header-left">
     <mat-card class="card-container">
       <mat-form-field class="selector">
-        <mat-label>Select a downsample strategy</mat-label>
-        <mat-select [(value)]="strategy" (selectionChange)="strategySwitch()">
-          <mat-option
-            *ngFor="let s of strategyType | keyvalue"
-            [value]="s.value"
-            >{{ s.key }}
-          </mat-option>
+        <mat-label>Select a file to view</mat-label>
+        <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
+          <ng-container *ngFor="let file of fileinfo">
+            <mat-option [value]="file.name">{{file.name}}</mat-option>
+          </ng-container>
         </mat-select>
       </mat-form-field>
 
       <mat-form-field class="selector">
-        <mat-label>Select a file to view</mat-label>
-        <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
-          <mat-option value="rand.csv">
-            rand.csv
-          </mat-option>
-          <mat-option value="DMM_result_single_channel.csv">
-            DMM_result_single_channel.csv
-          </mat-option>
-          <mat-option value="DMM_result_multiple_channel.csv">
-            DMM_result_multiple_channel.csv
+        <mat-label>Select a downsample strategy</mat-label>
+        <mat-select [(value)]="strategy" (selectionChange)="configSwitch()">
+          <mat-option
+            *ngFor="let s of strategyType | keyvalue"
+            [value]="s.value"
+            >{{ s.key }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -51,10 +45,18 @@
           matInput
           type="number"
           [formControl]="number"
-          (change)="strategySwitch()"
+          (change)="configSwitch()"
         />
       </mat-form-field>
     </mat-card>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="lockLegend()"
+      matTooltip="Lock in-chart legend and values"
+    >
+      {{isLockLegend ? "Lock" : "Unlock"}}
+    </button>
   </div>
   <div class="chart-header-right">
     <mat-spinner
@@ -69,27 +71,13 @@
       mat-raised-button
       matTooltip="Percentage of Raw Data Frequency (100% = Raw)"
     >
-      Frequency: {{ frequency_ratio }}
+      Sample Rate: {{frequency_ratio}}
     </button>
   </div>
 </div>
 
 <div id="chart-component"></div>
-
-<mat-card class="legends-container">
-  <table>
-    <tr>
-      <th>Channel</th>
-      <th>Maximum</th>
-      <th>Minimum</th>
-      <th>Average</th>
-    </tr>
-    <tr
-      legend-table-entry
-      class="legend-card"
-      *ngFor="let recordsOneChannel of records"
-      [recordsOneChannel]="recordsOneChannel"
-      (showChange)="showLine($event)"
-    ></tr>
-  </table>
-</mat-card>
+<legend-table
+  [records]="records"
+  (showChange)="showLine($event)"
+></legend-table>

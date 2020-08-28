@@ -19,8 +19,6 @@ import logging
 import os
 
 FLOAT_PRECISION = 4
-PREPROCESS_DIR = 'preprocess'
-METADATA = 'metadata.json'
 
 
 def parse_csv_line(line):
@@ -67,27 +65,6 @@ def convert_to_csv(records):
     return '\n'.join(csv_lines)
 
 
-def generate_filename_on_strategy(original_filename, strategy):
-    """Generates filename of preprocessed result based on the strategy.
-
-    Args:
-        original_filename: A string filename of the file (e.g. tmp/DMM_single_channel.csv)
-        strategy: One of STRATEGIES in string.
-
-    Returns:
-        A string representing the filename for the preprocessed results.
-    """
-    original_path_no_postfix = original_filename.strip(' ').strip(
-        '\n').strip('.csv')
-    file_name = original_path_no_postfix.split('/')[-1]
-    target_parent_path = os.path.join(PREPROCESS_DIR, original_path_no_postfix)
-    if not os.path.isdir(target_parent_path):
-        os.makedirs(target_parent_path)
-    file_path = os.path.join(
-        target_parent_path, file_name + '_' + strategy + '.csv')
-    return file_path
-
-
 def get_file_name(path):
     """Get the file name without .csv postfix.
 
@@ -97,10 +74,8 @@ def get_file_name(path):
     Returns:
         A string for the path without .csv postfix
     """
-    parent_path = path.strip(' ').strip(
-        '\n').strip('.csv')
-    file_name = parent_path.split('/')[-1]
-    return file_name
+    filename = path.strip('\n').strip('.csv')
+    return filename
 
 
 def warning(message, *args):

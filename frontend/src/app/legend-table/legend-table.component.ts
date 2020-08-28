@@ -12,40 +12,21 @@
 // limitations under the License.
 // =============================================================================
 
-/**
- * Power data interface
- */
-export interface Record {
-  time: number;
-  value: number;
-}
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { RecordsOneChannel } from '../chart/record';
 
-export interface RecordsOneChannel {
-  id: number;
-  color: string;
-  show: boolean;
-  data: Record[];
-  name: string;
-  focusPower: string;
-}
+@Component({
+  selector: 'legend-table',
+  templateUrl: './legend-table.component.html',
+  styleUrls: ['./legend-table.component.scss'],
+})
+export class LegendTableComponent {
+  @Input() records: RecordsOneChannel[] = [];
+  @Output() showChange = new EventEmitter<[number, boolean]>();
 
-export const COLORS = [
-  'orange',
-  'red',
-  'blue',
-  'cyan',
-  'black',
-  'green',
-  'purple',
-  'pink',
-  'yellow',
-  'cadetBlue',
-  'Chartreuse',
-  'DarkSalmon',
-];
+  constructor() {}
 
-export enum STRATEGY {
-  AVG = 'avg',
-  MAX = 'max',
-  MIN = 'min',
+  showLine(event: [number, boolean]) {
+    this.showChange.emit(event);
+  }
 }

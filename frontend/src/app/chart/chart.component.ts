@@ -28,6 +28,7 @@ import {
   HttpService,
   RecordsResponse,
   ResponseData,
+  ResponseFileInfo,
 } from '../services/http.service';
 
 import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
@@ -46,33 +47,37 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   // Component binding
   @Output() message = new EventEmitter<string>();
-  filename = 'DMM_result_multiple_channel.csv';
-  frequency_ratio: string;
-  strategyType = STRATEGY;
-  subscription: Subscription;
-  number = new FormControl(600);
 
+  filename!: string;
+  frequency_ratio!: string;
+  subscription!: Subscription;
+
+  strategyType = STRATEGY;
+  number = new FormControl(600);
   loading = false;
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
   zoomIn = false;
+  fileinfo: ResponseFileInfo[];
 
   mouseDate = '';
   mouseTime = '';
 
   // Chart d3 SVG Elements
-  private brush: d3.BrushBehavior<unknown>;
   private lines: object = {};
-  private svg: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private svgChart: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private svgLine: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private xAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private xScale: d3.ScaleLinear<number, number>;
-  private yAxis: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private yScale: d3.ScaleLinear<number, number>;
+
+  private brush!: d3.BrushBehavior<unknown>;
+  private svg!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private svgChart!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private svgLine!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private xAxis!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private xScale!: d3.ScaleLinear<number, number>;
+  private yAxis!: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private yScale!: d3.ScaleLinear<number, number>;
 
   // Chart size constants
   isLeft = true;
+  isLockLegend = false;
   animationDuration = 500;
   chartHeight = 500;
   chartMargin = 70;
@@ -81,31 +86,37 @@ export class ChartComponent implements OnInit, OnDestroy {
   labelSize = 10;
   labelPadding = 5;
   svgPadding = 10;
-  timeFormat = (time: number) => {
-    const timeParse = d3.timeParse('%Q');
-    const timeFormat = d3.timeFormat('%M:%S.%L');
-    const fineTimeFormat = d3.timeFormat(':%S.%L');
-
-    const upperDate = timeParse(Math.floor(time / 1000).toString());
-    const xExtent = this.getTimeRange();
-
-    if (xExtent[1] - xExtent[0] >= 1e6) {
-      this.svgChart.select('.x-axis-legend').text('Time (m:s.ms)');
-      return timeFormat(upperDate);
-    }
-
-    this.svgChart.select('.x-axis-legend').text('Time (:s.ms.µs)');
-    return fineTimeFormat(upperDate) + '.' + Math.floor(time % 1000);
-  };
 
   constructor(private service: HttpService) {}
   ngOnInit(): void {
     this.initChart();
-    this.loadRecords();
+    this.loadFilenames();
   }
 
   ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    if (!this.subscription.closed) this.subscription.unsubscribe();
+  }
+
+  loadFilenames() {
+    if (this.loading) this.subscription.unsubscribe();
+    this.loading = true;
+    this.subscription = this.service
+      .getFileInfo('/fileinfo')
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          this.loading = false;
+          if (error.error instanceof ProgressEvent) {
+            this.message.emit(error.message);
+          } else {
+            this.message.emit(error.error);
+          }
+          return throwError(error);
+        })
+      )
+      .subscribe((response: ResponseFileInfo[]) => {
+        this.fileinfo = response;
+        this.loading = false;
+      });
   }
 
   loadRecords(timespan?: number[]) {
@@ -121,13 +132,18 @@ export class ChartComponent implements OnInit, OnDestroy {
       )
       .pipe(
         catchError((error: HttpErrorResponse) => {
-          this.message.emit(error.message);
-          console.log(error);
+          if (error.error instanceof ProgressEvent) {
+            this.message.emit(error.message);
+          } else {
+            this.message.emit(error.error);
+          }
           this.loading = false;
           return throwError(error);
         })
       )
       .subscribe((response: RecordsResponse) => {
+        // If loading for the first time, assign new object to this.records.
+        // If not the first time, then update the data in each channel of this.records.
         if (this.records.length === 0) {
           this.records = response.data.map(
             (channel: ResponseData, index: number) => {
@@ -142,6 +158,7 @@ export class ChartComponent implements OnInit, OnDestroy {
                 name: channel.name,
                 show: true,
                 focusPower: 'N/A',
+                id: index,
               };
               return recordsOneChannel;
             }
@@ -262,8 +279,8 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.svgChart.append('g').classed('labels', true);
 
     /**
-     * Sets time legend and value overlays as mouse hover on the chart.
-     * To be bind with brush event.
+     * Sets the legend and mouse focus text and circle, based on the position of
+     * the cursor.
      * @param container The container DOM element that contains the SVG area.
      */
     const setFocus = (container: d3.ContainerElement) => {
@@ -293,13 +310,13 @@ export class ChartComponent implements OnInit, OnDestroy {
 
         // Sets focus point.
         this.svgLine
-          .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
+          .select('.' + this.getChannelCircleClassName(recordsOneChannel.id))
           .style('opacity', 1)
           .attr('cx', this.xScale(selectedData.time))
           .attr('cy', this.yScale(selectedData.value));
 
         this.svg
-          .select('.' + this.getFocusTextClassName(recordsOneChannel.name))
+          .select('.' + this.getFocusTextClassName(recordsOneChannel.id))
           .attr('opacity', 1)
           .attr('x', this.xScale(selectedData.time))
           .attr('y', this.yScale(selectedData.value) - this.chartPadding)
@@ -311,43 +328,15 @@ export class ChartComponent implements OnInit, OnDestroy {
           timeFormat(upperDate) + '.' + Math.floor(mouseFocus % 1000);
       }
       const duration = this.xScale.domain()[1] - this.xScale.domain()[0];
-      if (mouseFocus < this.xScale.domain()[0] + duration / 4)
-        this.isLeft = true;
-      if (mouseFocus > this.xScale.domain()[0] + (duration * 3) / 4)
-        this.isLeft = false;
-      this.setLegend();
-    };
 
-    const removeFocus = () => {
-      for (const recordsOneChannel of this.records) {
-        this.svgLine
-          .select('.' + this.getChannelCircleClassName(recordsOneChannel.name))
-          .transition()
-          .style('opacity', 0);
-
-        this.svg
-          .select('.' + this.getFocusTextClassName(recordsOneChannel.name))
-          .transition()
-          .attr('opacity', 0);
-
-        this.mouseDate = '';
-        this.mouseTime = '';
+      // Set this.isLeft to true if the mouse is at left 1/4 portion of the chart, false otherwise.
+      if (!this.isLockLegend) {
+        if (mouseFocus < this.xScale.domain()[0] + duration / 4)
+          this.isLeft = true;
+        if (mouseFocus > this.xScale.domain()[0] + (duration * 3) / 4)
+          this.isLeft = false;
       }
-      this.svg
-        .select('.labels')
-        .selectAll('rect')
-        .transition()
-        .attr('opacity', 0);
-      this.svg
-        .select('.labels')
-        .selectAll('text')
-        .transition()
-        .attr('opacity', 0);
-      this.svg
-        .select('.labels-background')
-        .select('rect')
-        .transition()
-        .attr('opacity', 0);
+      this.setLegend();
     };
 
     // Brush functionality
@@ -363,7 +352,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 
       .on('end', () => {
         this.interactChart.bind(this)();
-        removeFocus();
+        this.removeFocus();
       })
 
       .on('brush', mousemove);
@@ -374,12 +363,56 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('class', 'brush')
       .call(this.brush)
       .on('mousemove', mousemove)
-      .on('mouseout', removeFocus);
+      .on('mouseout', () => {
+        if (this.isLockLegend) return;
+        this.removeFocus();
+      });
 
     function mousemove() {
       setFocus(this);
     }
   }
+
+  /**
+   * Removes the legend and mouse focus text and circle.
+   */
+  removeFocus() {
+    for (const recordsOneChannel of this.records) {
+      this.svgLine
+        .select('.' + this.getChannelCircleClassName(recordsOneChannel.id))
+        .transition()
+        .style('opacity', 0);
+
+      this.svg
+        .select('.' + this.getFocusTextClassName(recordsOneChannel.id))
+        .transition()
+        .attr('opacity', 0);
+
+      this.mouseDate = '';
+      this.mouseTime = '';
+    }
+
+    this.svg
+      .select('.labels')
+      .selectAll('rect')
+      .transition()
+      .attr('opacity', 0);
+    this.svg
+      .select('.labels')
+      .selectAll('text')
+      .transition()
+      .attr('opacity', 0);
+    this.svg
+      .select('.labels-background')
+      .select('rect')
+      .transition()
+      .attr('opacity', 0);
+  }
+
+  lockLegend() {
+    this.isLockLegend = !this.isLockLegend;
+  }
+
   /**
    * Loads data and rescale chart when zoom-in/out
    */
@@ -398,7 +431,10 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.zoomIn = true;
 
     if (selectedTimeSpan[0] >= selectedTimeSpan[1]) return;
-
+    if (this.filename === undefined) {
+      this.message.emit('Please select a file.');
+      return;
+    }
     this.loadRecords(selectedTimeSpan);
 
     this.svgChart.on('dblclick', () => {
@@ -414,6 +450,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   setLegend() {
     const legendText: string[] = [];
     const legendLabels: string[] = [];
+    // The list of legend text to show.
     for (const recordsOnechannel of this.records) {
       if (recordsOnechannel.show) {
         legendText.push(
@@ -434,6 +471,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       legendText.length * (this.labelSize + this.labelPadding) +
       this.labelPadding * 2;
 
+    // Calculate positions of the legend.
     const backgroundX = this.isLeft
       ? this.chartWidth - this.chartMargin - backgroundWidth
       : this.chartMargin + this.chartPadding;
@@ -454,6 +492,8 @@ export class ChartComponent implements OnInit, OnDestroy {
         this.chartPadding * 2 +
         this.labelSize +
         this.labelPadding * 2;
+
+    // The background of the legend.
     this.svgChart
       .select('.labels-background')
       .select('rect')
@@ -465,6 +505,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('opacity', 1)
       .attr('rx', 15);
 
+    // The colored rectanglar label of the legend.
     const labels: any = this.svgChart
       .select('.labels')
       .selectAll('rect')
@@ -483,6 +524,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('opacity', 1)
       .style('fill', (d: string) => d);
 
+    // The name text of the legend.
     const labelNames: any = this.svgChart
       .select('.labels')
       .selectAll('text')
@@ -510,6 +552,8 @@ export class ChartComponent implements OnInit, OnDestroy {
    * Scales or rescales the chart wrt lines to be shown.
    */
   updateChartDomain() {
+    this.removeFocus();
+
     const xExtent = this.getTimeRange();
     const yExtent = this.getValueRange();
 
@@ -531,42 +575,45 @@ export class ChartComponent implements OnInit, OnDestroy {
           .line()
           .x((d: any) => this.xScale(d.time))
           .y((d: any) => this.yScale(d.value));
+
+        // Assigns line genrerator for current channel.
         this.lines[recordsOneChannel.name] = line;
 
+        // Creates lines svg component for current channel.
         this.svgLine
           .append('path')
-          .classed(this.getChannelLineClassName(recordsOneChannel.name), true)
+          .classed(this.getChannelLineClassName(recordsOneChannel.id), true)
           .attr('fill', 'none')
           .attr('stroke', recordsOneChannel.color)
           .attr('stroke-width', 2)
-
           .datum(recordsOneChannel.data as any)
           .attr('d', line)
-
           .attr('opacity', 0.6);
 
+        // Creates focus circle svg component for current channel.
         this.svgLine
           .append('g')
           .append('circle')
-          .classed(this.getChannelCircleClassName(recordsOneChannel.name), true)
+          .classed(this.getChannelCircleClassName(recordsOneChannel.id), true)
           .style('fill', recordsOneChannel.color)
           .attr('stroke', recordsOneChannel.color)
           .attr('r', 2)
           .attr('opacity', 0);
 
+        // Creates focus power value text svg component for current channel.
         this.svg
           .append('g')
           .append('text')
-          .classed(this.getFocusTextClassName(recordsOneChannel.name), true)
+          .classed(this.getFocusTextClassName(recordsOneChannel.id), true)
           .attr('text-anchor', 'right')
           .attr('alignment-baseline', 'right')
           .attr('font-size', '10px')
           .attr('pointer-events', 'none')
           .attr('opacity', 0);
       } else {
-        // Bind the data to lines.
+        // Update the data associated with this channel
         this.svgLine
-          .select('.' + this.getChannelLineClassName(recordsOneChannel.name))
+          .select('.' + this.getChannelLineClassName(recordsOneChannel.id))
           .datum(recordsOneChannel.data as any)
           .transition()
           .duration(this.animationDuration)
@@ -576,9 +623,38 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Reloads data when downsample strategy is switched, keeping original zoom-in level.
+   * Converts Unix Timestamp to string format, based on the range of x axis.
+   * If range of x axis is greater than 1e6 microseconds, then the format would
+   * be minute:second.millicecond, else the format would be
+   * :second.millisecond.microsecond.
+   *
+   * @param time Unix Timestamp in microsecond.
    */
-  strategySwitch() {
+  timeFormat(time: number) {
+    const timeParse = d3.timeParse('%Q');
+    const timeFormat = d3.timeFormat('%M:%S.%L');
+    const fineTimeFormat = d3.timeFormat(':%S.%L');
+
+    const upperDate = timeParse(Math.floor(time / 1000).toString());
+    const xExtent = this.getTimeRange();
+
+    if (xExtent[1] - xExtent[0] >= 1e6) {
+      this.svgChart.select('.x-axis-legend').text('Time (m:s.ms)');
+      return timeFormat(upperDate);
+    }
+
+    this.svgChart.select('.x-axis-legend').text('Time (:s.ms.µs)');
+    return fineTimeFormat(upperDate) + '.' + Math.floor(time % 1000);
+  }
+
+  /**
+   * Download data based on the current configuration, and update the chart accordingly.
+   */
+  configSwitch() {
+    if (this.filename === undefined) {
+      this.message.emit('Please select a file.');
+      return;
+    }
     this.loadRecords(this.zoomIn ? this.getTimeRange() : null);
   }
 
@@ -598,28 +674,28 @@ export class ChartComponent implements OnInit, OnDestroy {
    * Get the class name for the lines.
    * @param channel The name of the channel.
    */
-  getChannelLineClassName(channel: string) {
-    return 'line' + '-' + channel;
+  getChannelLineClassName(id: number) {
+    return 'line' + '-' + id;
   }
 
   /**
    * Get the class name for the focus circle.
    * @param channel The name of the channel.
    */
-  getChannelCircleClassName(channel: string) {
-    return 'circle' + '-' + channel;
+  getChannelCircleClassName(id: number) {
+    return 'circle' + '-' + id;
   }
 
   /**
    * Get the class name for the focus text.
    * @param channel The name of the channel.
    */
-  getFocusTextClassName(channel: string) {
-    return 'focus-text' + '-' + channel;
+  getFocusTextClassName(id: number) {
+    return 'focus-text' + '-' + id;
   }
 
   /**
-   * Get the global max and min time for all channels
+   * Get the max of min of x axis.
    */
   getTimeRange() {
     let min, max;
@@ -634,7 +710,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Get the global max and min value for all channels
+   * Get the max of min of y axis.
    */
   getValueRange() {
     let min, max;
@@ -650,9 +726,9 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   /**
    * Shows or hides the channel when toggle the checkbox.
-   * @param event The channel name and to show or to hide.
+   * @param event The channel id and whether to show or to hide.
    */
-  showLine(event: [string, boolean]) {
+  showLine(event: [number, boolean]) {
     if (event[1]) {
       this.svgLine
         .selectAll('.' + this.getChannelLineClassName(event[0]))

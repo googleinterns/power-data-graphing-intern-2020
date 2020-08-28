@@ -16,12 +16,8 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { from, empty } from 'rxjs';
 
 import { ChartComponent } from './chart.component';
-import {
-  HttpService,
-  STRATEGY,
-  RecordsResponse,
-} from '../services/http.service';
-import { Record } from './record';
+import { HttpService, ResponseData } from '../services/http.service';
+import { Record, STRATEGY } from './record';
 
 const TEST_START_TIME = 1573149236356988;
 
@@ -46,7 +42,7 @@ const generateRandomRecords = (length: number) => {
 };
 
 const generateTestData = (channels: string[], length: number) => {
-  const channelData: RecordsResponse[] = [];
+  const channelData: ResponseData[] = [];
   for (const channel of channels) {
     const recordsData = generateRandomRecords(length);
     channelData.push({ name: channel, data: recordsData });
@@ -66,7 +62,10 @@ describe('ChartComponent', () => {
   );
 
   beforeEach(async(() => {
-    httpServiceSpy = jasmine.createSpyObj('HttpService', ['getRecords']);
+    httpServiceSpy = jasmine.createSpyObj('HttpService', [
+      'getRecords',
+      'getFileInfo',
+    ]);
 
     TestBed.configureTestingModule({
       declarations: [ChartComponent],
@@ -77,6 +76,9 @@ describe('ChartComponent', () => {
   beforeEach(() => {
     httpServiceSpy.getRecords.and.callFake(() => {
       return from([testRecordsSingleChannel]);
+    });
+    httpServiceSpy.getFileInfo.and.callFake(() => {
+      return from([[{ name: 'file.csv', preprocessed: true }]]);
     });
 
     fixture = TestBed.createComponent(ChartComponent);
@@ -131,7 +133,7 @@ describe('ChartComponent', () => {
 
     // Load data
     httpServiceSpy.getRecords.and.callFake(() => {
-      return from([newTestRecords]);
+      return from([{ frequency_ratio: 0.3, data: newTestRecords }]);
     });
     component.loadRecords();
     expect(httpServiceSpy.getRecords).toHaveBeenCalled();
@@ -160,6 +162,7 @@ describe('ChartComponent', () => {
         path: string,
         filename: string,
         strategy: string,
+        number: number,
         timespan: number[]
       ) => {
         expect(path).toEqual('/data');
@@ -169,20 +172,20 @@ describe('ChartComponent', () => {
       }
     );
     component.strategy = newStategy;
-    component.strategySwitch();
+    component.configSwitch();
     expect(httpServiceSpy.getRecords).toHaveBeenCalled();
   });
 
   it('showLine method should set line opacity', () => {
-    component.showLine(['sys', false]);
-    expect(
-      +component['svgLine'].selectAll('.line-sys').attr('opacity')
-    ).toEqual(0);
+    component.showLine([0, false]);
+    expect(+component['svgLine'].selectAll('.line-0').attr('opacity')).toEqual(
+      0
+    );
 
-    component.showLine(['sys', true]);
-    expect(
-      +component['svgLine'].selectAll('.line-sys').attr('opacity')
-    ).toEqual(0.6);
+    component.showLine([0, true]);
+    expect(+component['svgLine'].selectAll('.line-0').attr('opacity')).toEqual(
+      0.6
+    );
   });
 
   it('getValueRange should get max and min value on data with attribute show of true', () => {

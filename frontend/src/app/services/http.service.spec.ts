@@ -14,9 +14,10 @@
 
 import { TestBed } from '@angular/core/testing';
 
-import { HttpService, STRATEGY } from './http.service';
+import { HttpService } from './http.service';
 import { HttpClient } from '@angular/common/http';
 import { from } from 'rxjs';
+import { STRATEGY } from '../chart/record';
 
 describe('HttpService', () => {
   let service: HttpService;
@@ -45,8 +46,10 @@ describe('HttpService', () => {
     ];
     httpClientSpy.get.and.returnValue(from([expectedRecords]));
 
-    service.getRecords('data', '', STRATEGY.MAX, null).subscribe((records) => {
-      expect(records).toEqual(expectedRecords);
-    });
+    service
+      .getRecords('data', '', STRATEGY.MAX, 600, null)
+      .subscribe((records) => {
+        expect(records).toEqual(expectedRecords);
+      });
   });
 });

@@ -43,41 +43,6 @@ class TestMlpClass:
             tmpfilewriter.write(data_csv)
         return tmpfile
 
-    @pytest.mark.parametrize('numbers,value,expected', [
-        ([0, 2, 4, 6, 8, 10, 12], -1, 0),
-        ([0, 2, 4, 6, 8, 10, 12], 0, 0),
-        ([0, 2, 4, 6, 8, 10, 12], 1, 0),
-        ([0, 2, 4, 6, 8, 10, 12], 2, 0),
-        ([0, 2, 4, 6, 8, 10, 12], 3, 1),
-        ([0, 2, 4, 6, 8, 10, 12], 4, 1),
-        ([0, 2, 4, 6, 8, 10, 12], 5, 2),
-        ([0, 2, 4, 6, 8, 10, 12], 6, 2),
-        ([0, 2, 4, 6, 8, 10, 12], 12, 5),
-        ([0, 2, 4, 6, 8, 10, 12], 13, 6),
-        ([0, 2, 4, 6, 8, 10, 12], 100, 6),
-    ])
-    def test__binary_search_increasing(self, numbers, value, expected):
-        """Tests binary search with list of numbers in increasing order."""
-        preprocess = MultipleLevelPreprocess('dummy')
-        assert preprocess._binary_search(numbers, value, False) == expected
-
-    @pytest.mark.parametrize('numbers,value,expected', [
-        ([10, 8, 6, 4, 2, 0], 100, 0),
-        ([10, 8, 6, 4, 2, 0], 10, 0),
-        ([10, 8, 6, 4, 2, 0], 9, 0),
-        ([10, 8, 6, 4, 2, 0], 8, 1),
-        ([10, 8, 6, 4, 2, 0], 7, 1),
-        ([10, 8, 6, 4, 2, 0], 4, 3),
-        ([10, 8, 6, 4, 2, 0], 3, 3),
-        ([10, 8, 6, 4, 2, 0], 1, 4),
-        ([10, 8, 6, 4, 2, 0], 0, 5),
-        ([10, 8, 6, 4, 2, 0], -1, 5),
-    ])
-    def test__binary_search_decreasing(self, numbers, value, expected):
-        """Tests binary search with list of numbers in decreasing order."""
-        preprocess = MultipleLevelPreprocess('dummy')
-        assert preprocess._binary_search(numbers, value, True) == expected
-
     @pytest.mark.parametrize('raw_number,number_per_slice,downsample_factor,min_num_level',
                              [
                                  (100, 2, 10, 10),

@@ -12,40 +12,27 @@
 // limitations under the License.
 // =============================================================================
 
-/**
- * Power data interface
- */
-export interface Record {
-  time: number;
-  value: number;
-}
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-export interface RecordsOneChannel {
-  id: number;
-  color: string;
-  show: boolean;
-  data: Record[];
-  name: string;
-  focusPower: string;
-}
+import { LegendTableComponent } from './legend-table.component';
 
-export const COLORS = [
-  'orange',
-  'red',
-  'blue',
-  'cyan',
-  'black',
-  'green',
-  'purple',
-  'pink',
-  'yellow',
-  'cadetBlue',
-  'Chartreuse',
-  'DarkSalmon',
-];
+describe('LegendTableComponent', () => {
+  let component: LegendTableComponent;
+  let fixture: ComponentFixture<LegendTableComponent>;
 
-export enum STRATEGY {
-  AVG = 'avg',
-  MAX = 'max',
-  MIN = 'min',
-}
+  beforeEach(async(() => {
+    TestBed.configureTestingModule({
+      declarations: [LegendTableComponent],
+    }).compileComponents();
+  }));
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(LegendTableComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});

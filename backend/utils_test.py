@@ -17,7 +17,6 @@
 import pytest
 
 from utils import convert_to_csv
-from utils import generate_filename_on_strategy
 from utils import get_file_name
 from utils import get_slice_path
 from utils import parse_csv_line
@@ -70,20 +69,6 @@ class TestUtilsClass:
                 csv_single_line) for csv_single_line in test_csv_records[index].split('\n')]
             assert parsed_records == test_records[:index+1]
 
-    def test_generate_filename_on_strategy(self):
-        """Tests on generate_filename_on_strategy."""
-        filename = 'path/to/a/some_experiment.csv'
-
-        filename_max = 'preprocess/path/to/a/some_experiment/some_experiment_max.csv'
-        filename_min = 'preprocess/path/to/a/some_experiment/some_experiment_min.csv'
-        filename_avg = 'preprocess/path/to/a/some_experiment/some_experiment_avg.csv'
-        filename_lttb = 'preprocess/path/to/a/some_experiment/some_experiment_lttb.csv'
-
-        assert generate_filename_on_strategy(filename, 'max') == filename_max
-        assert generate_filename_on_strategy(filename, 'min') == filename_min
-        assert generate_filename_on_strategy(filename, 'avg') == filename_avg
-        assert generate_filename_on_strategy(filename, 'lttb') == filename_lttb
-
     @pytest.mark.parametrize('root_dir,level,level_slice,strategy,exp',
                              [
                                  ('tmp', 'level0', 's1.csv',
@@ -97,9 +82,9 @@ class TestUtilsClass:
         assert result == exp
 
     @pytest.mark.parametrize('filename,experiment', [
-        ('tmp/1.csv', '1'),
-        ('bin/tmp/1.csv', '1'),
-        ('tmp/name', 'name'),
+        ('tmp/1.csv', 'tmp/1'),
+        ('bin/tmp/1.csv', 'bin/tmp/1'),
+        ('tmp/name', 'tmp/name'),
         ('name.csv', 'name'),
     ])
     def test_get_file_name(self, filename, experiment):
