@@ -1,6 +1,21 @@
+// Copyright 2020 Google LLC
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// =============================================================================
+
 import {
   Component,
   OnInit,
+  OnDestroy,
   Output,
   EventEmitter,
   ViewChild,
@@ -29,7 +44,7 @@ export interface FileInfo {
   templateUrl: './raw-preprocess-table.component.html',
   styleUrls: ['./raw-preprocess-table.component.scss'],
 })
-export class RawPreprocessTableComponent implements OnInit {
+export class RawPreprocessTableComponent implements OnInit, OnDestroy {
   @Output() message = new EventEmitter<string>();
   subscription: Subscription;
   fileinfo: FileInfo[];
@@ -43,6 +58,10 @@ export class RawPreprocessTableComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFilenames();
+  }
+
+  ngOnDestroy(): void {
+    if (!this.subscription.closed) this.subscription.unsubscribe();
   }
 
   loadFilenames() {
@@ -77,7 +96,7 @@ export class RawPreprocessTableComponent implements OnInit {
     }
 
     file.loading = true;
-    this.service
+    this.subscription = this.service
       .preprocess('/data', file.name)
       .pipe(
         catchError((error: HttpErrorResponse) => {

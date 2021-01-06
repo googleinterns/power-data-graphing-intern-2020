@@ -480,6 +480,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   setLegend() {
     const legendText: string[] = [];
     const legendLabels: string[] = [];
+    // The list of legend text to show.
     for (const recordsOnechannel of this.records) {
       if (recordsOnechannel.show) {
         legendText.push(
@@ -500,6 +501,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       legendText.length * (this.labelSize + this.labelPadding) +
       this.labelPadding * 2;
 
+    // Calculate positions of the legend.
     const backgroundX = this.isLeft
       ? this.chartWidth - this.chartMargin - backgroundWidth
       : this.chartMargin + this.chartPadding;
@@ -520,6 +522,8 @@ export class ChartComponent implements OnInit, OnDestroy {
         this.chartPadding * 2 +
         this.labelSize +
         this.labelPadding * 2;
+
+    // The background of the legend.
     this.svgChart
       .select('.labels-background')
       .select('rect')
@@ -531,6 +535,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('opacity', 1)
       .attr('rx', 15);
 
+    // The colored rectanglar label of the legend.
     const labels: any = this.svgChart
       .select('.labels')
       .selectAll('rect')
@@ -549,6 +554,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .attr('opacity', 1)
       .style('fill', (d: string) => d);
 
+    // The name text of the legend.
     const labelNames: any = this.svgChart
       .select('.labels')
       .selectAll('text')
@@ -599,20 +605,22 @@ export class ChartComponent implements OnInit, OnDestroy {
           .line()
           .x((d: any) => this.xScale(d.time))
           .y((d: any) => this.yScale(d.value));
+
+        // Assigns line genrerator for current channel.
         this.lines[recordsOneChannel.name] = line;
 
+        // Creates lines svg component for current channel.
         this.svgLine
           .append('path')
           .classed(this.getChannelLineClassName(recordsOneChannel.id), true)
           .attr('fill', 'none')
           .attr('stroke', recordsOneChannel.color)
           .attr('stroke-width', 2)
-
           .datum(recordsOneChannel.data as any)
           .attr('d', line)
-
           .attr('opacity', 0.6);
 
+        // Creates focus circle svg component for current channel.
         this.svgLine
           .append('g')
           .append('circle')
@@ -622,6 +630,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('r', 2)
           .attr('opacity', 0);
 
+        // Creates focus power value text svg component for current channel.
         this.svg
           .append('g')
           .append('text')
@@ -632,7 +641,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           .attr('pointer-events', 'none')
           .attr('opacity', 0);
       } else {
-        // Bind the data to lines.
+        // Update the data associated with this channel
         this.svgLine
           .select('.' + this.getChannelLineClassName(recordsOneChannel.id))
           .datum(recordsOneChannel.data as any)
