@@ -1,0 +1,50 @@
+name: python-test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: set up python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install pip
+        run: sudo python -m pip install --upgrade pip
+
+      - name: install python3-pip
+        run: sudo apt-get install python3-pip
+
+      # Install python3-venv
+      - name: install python3-venv
+        run: sudo apt-get install python3-venv
+
+      # Create virtual env
+      - name: create virtual env
+        run: python3 -m venv venv
+
+      # Activate virtual env
+      - name: activate virtual env
+        run: source venv/bin/activate
+
+      - name: install wheel
+        run: pip3 install wheel
+
+      # Install package-name
+      - name: install package-name
+        run: pip3 install 'package-name'
+
+      # Install backebd/requirements.txt
+      - name: install requirement
+        run: pip3 install -r backend/requirements.txt
+
+      - name: run test
+        run: pytest backend

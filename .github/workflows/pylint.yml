@@ -1,0 +1,65 @@
+# This is a basic workflow to help you get started with Actions
+
+name: lint
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "pylint"
+  pylint:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Setup pytho
+      - name: set up python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      # Install pip
+      - name: Install pip
+        run: sudo python -m pip install --upgrade pip
+
+      # Install python3-pip
+      - name: install python3-pip
+        run: sudo apt-get install python3-pip
+
+      # Install python3-venv
+      - name: install python3-venv
+        run: sudo apt-get install python3-venv
+
+      # Create virtual env
+      - name: create virtual env
+        run: python3 -m venv venv
+
+      # Activate virtual env
+      - name: activate virtual env
+        run: source venv/bin/activate
+
+      # Install wheel
+      - name: install wheel
+        run: pip3 install wheel
+
+      # Install package-name
+      - name: install package-name
+        run: pip3 install 'package-name'
+
+      # Install backebd/requirements.txt
+      - name: install requirement
+        run: pip3 install -r backend/requirements.txt
+
+      # Runs lint
+      - name: run lint
+        run: ./lint.sh all
