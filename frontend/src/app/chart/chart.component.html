@@ -1,0 +1,83 @@
+<!--
+ Copyright 2020 Google LLC
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+     https://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ =============================================================================
+-->
+
+<div class="chart-header">
+  <div class="chart-header-left">
+    <mat-card class="card-container">
+      <!-- <mat-form-field class="selector">
+        <mat-label>Select a file to view</mat-label>
+        <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
+          <ng-container *ngFor="let file of fileinfo">
+            <mat-option [value]="file.name">{{ file.name }} </mat-option>
+          </ng-container>
+        </mat-select>
+      </mat-form-field> -->
+
+      <mat-form-field class="selector">
+        <mat-label>Select a downsample strategy</mat-label>
+        <mat-select [(value)]="strategy" (selectionChange)="configSwitch()">
+          <mat-option
+            *ngFor="let s of strategyType | keyvalue"
+            [value]="s.value"
+            >{{ s.key }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="selector">
+        <mat-label>
+          Max number of records on chart.
+        </mat-label>
+        <input
+          matInput
+          type="number"
+          [formControl]="number"
+          (change)="configSwitch()"
+        />
+      </mat-form-field>
+    </mat-card>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="lockLegend()"
+      matTooltip="Lock in-chart legend and values"
+    >
+      {{ isLockLegend ? "Lock" : "Unlock" }}
+    </button>
+  </div>
+  <div class="chart-header-right">
+    <mat-spinner
+      *ngIf="loading"
+      diameter="30"
+      mode="indeterminate"
+      class="spinner"
+    >
+    </mat-spinner>
+
+    <button
+      mat-raised-button
+      matTooltip="Percentage of Raw Data Frequency (100% = Raw)"
+    >
+      Sample Rate: {{ frequency_ratio }}
+    </button>
+  </div>
+</div>
+
+<div id="chart-component"></div>
+<legend-table
+  [records]="records"
+  (showChange)="showLine($event)"
+></legend-table>

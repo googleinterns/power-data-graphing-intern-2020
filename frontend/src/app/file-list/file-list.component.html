@@ -1,0 +1,5 @@
+<mat-selection-list #files [multiple]="false" class="mat-filelist">
+  <mat-list-option *ngFor="let file of fileList" [value]="file" (click)="selectFile(file)">
+    {{file}}
+  </mat-list-option>
+</mat-selection-list>

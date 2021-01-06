@@ -1,0 +1,7 @@
+dispatch:
+  # Default service serves for get data requests.
+  - url: "*/data"
+    service: api
+
+  - url: "*/fileinfo"
+    service: api

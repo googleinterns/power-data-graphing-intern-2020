@@ -1,0 +1,17 @@
+<mat-card class="legends-container">
+  <table>
+    <tr>
+      <th>Channel</th>
+      <th>Maximum</th>
+      <th>Minimum</th>
+      <th>Average</th>
+    </tr>
+    <tr
+      legend-table-entry
+      class="legend-card"
+      *ngFor="let recordsOneChannel of records"
+      [recordsOneChannel]="recordsOneChannel"
+      (showChange)="showLine($event)"
+    ></tr>
+  </table>
+</mat-card>
