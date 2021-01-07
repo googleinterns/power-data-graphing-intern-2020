@@ -21,8 +21,8 @@ import {
   EventEmitter,
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import {Router} from '@angular/router';
-import {Location} from '@angular/common';
+import { Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { Subscription, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import * as d3 from 'd3';
@@ -32,9 +32,10 @@ import {
   ResponseData,
   ResponseFileInfo,
 } from '../services/http.service';
-import {FileServiceService} from '../services/file-service.service';
+import { FileServiceService } from '../services/file-service.service';
 import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
 import { HttpErrorResponse } from '@angular/common/http';
+import { url } from 'inspector';
 
 @Component({
   selector: 'main-chart',
@@ -54,7 +55,9 @@ export class ChartComponent implements OnInit, OnDestroy {
   strategyType = STRATEGY;
   subscription: Subscription;
   number = new FormControl(600);
-
+  inactiveChannels = [];
+  startTime = 0;
+  endTime = 0;
   loading = false;
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
@@ -90,7 +93,6 @@ export class ChartComponent implements OnInit, OnDestroy {
     const timeParse = d3.timeParse('%Q');
     const timeFormat = d3.timeFormat('%M:%S.%L');
     const fineTimeFormat = d3.timeFormat(':%S.%L');
-
     const upperDate = timeParse(Math.floor(time / 1000).toString());
     const xExtent = this.getTimeRange();
 
@@ -105,16 +107,27 @@ export class ChartComponent implements OnInit, OnDestroy {
 
   constructor(private service: HttpService, private readonly router: Router, private readonly location: Location, private readonly fileService: FileServiceService) {
     const urlParams = new URLSearchParams(window.location.search);
-    const fileFromUrl = urlParams.get("filename");
     const strategy = urlParams.get("strategy");
     const number = urlParams.get("number");
-    // if(fileFromUrl){
-    //   this.filename = fileFromUrl;
-    // }
-    if(strategy && (<any>Object).values(STRATEGY).includes(strategy)){
+    const channel = urlParams.get("inactiveChannels");
+    const stTime = urlParams.get("startTime");
+    const endTime = urlParams.get("endTime");
+    console.log(stTime);
+    if (!isNaN(stTime)) {
+      this.startTime = Number.parseFloat(stTime);
+    }
+    if (!isNaN(endTime)) {
+      this.endTime = Number.parseFloat(endTime);
+    }
+    if (channel && typeof channel === "string") {
+      if (channel !== "null") {
+        this.inactiveChannels = channel.split(",");
+      }
+    }
+    if (strategy && (<any>Object).values(STRATEGY).includes(strategy)) {
       this.strategy = strategy as STRATEGY;
     }
-    if(number && !isNaN(Number(number))){
+    if (number && !isNaN(Number(number))) {
       this.number = new FormControl(Number(number));
     }
   }
@@ -123,7 +136,6 @@ export class ChartComponent implements OnInit, OnDestroy {
     //this.loadFilenames();
     this.fileService.filename.subscribe(file => {
       this.filename = file;
-      console.log("fdasfdsaf");
       this.fileSwitch();
     });
   }
@@ -156,6 +168,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   loadRecords(timespan?: number[]) {
+    console.log("this method is triggered");
     if (this.loading) this.subscription.unsubscribe();
     this.loading = true;
     this.subscription = this.service
@@ -197,6 +210,15 @@ export class ChartComponent implements OnInit, OnDestroy {
               return recordsOneChannel;
             }
           );
+          for (let [index, channel] of this.inactiveChannels.entries()) {
+            if (channel > this.records.length || isNaN(channel)) {
+              this.inactiveChannels.splice(index, 1);
+              this.updateUrl();
+              console.error("Unable to set channels, active channel index is bigger than the maximum channel number");
+            } else {
+              this.records[channel].show = false;
+            }
+          }
         } else {
           for (const recordsOneChannel of this.records) {
             let newDataArrived = false;
@@ -332,7 +354,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         for (const record of recordsOneChannel.data) {
           selectedData =
             Math.abs(selectedData.time - mouseFocus) <
-            Math.abs(record.time - mouseFocus)
+              Math.abs(record.time - mouseFocus)
               ? selectedData
               : record;
         }
@@ -454,6 +476,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       this.xScale.invert(extent[0]),
       this.xScale.invert(extent[1]),
     ];
+
     // This remove the grey brush area as soon as the selection has been done
     this.svgChart.select('.brush').call(this.brush.move, null);
 
@@ -465,13 +488,23 @@ export class ChartComponent implements OnInit, OnDestroy {
       this.message.emit('Please select a file.');
       return;
     }
+    this.startTime = selectedTimeSpan[0];
+    this.endTime = selectedTimeSpan[1];
     this.loadRecords(selectedTimeSpan);
+    this.updateUrl();
 
     this.svgChart.on('dblclick', () => {
-      // // Reset scale domain
-      this.zoomIn = false;
-      this.loadRecords();
+      // Reset scale domain
+      this.resetChart();
     });
+  }
+
+  resetChart(){
+    this.zoomIn = false;
+    this.loadRecords();
+    this.startTime = 0;
+    this.endTime = 0;
+    this.updateUrl();
   }
 
   /**
@@ -509,19 +542,19 @@ export class ChartComponent implements OnInit, OnDestroy {
 
     const labelX = this.isLeft
       ? this.chartWidth -
-        this.chartMargin -
-        this.chartPadding -
-        this.labelPadding
+      this.chartMargin -
+      this.chartPadding -
+      this.labelPadding
       : this.chartMargin + this.chartPadding + this.labelPadding * 2;
     const labelTextX = this.isLeft
       ? this.chartWidth -
-        this.chartMargin -
-        this.chartPadding -
-        this.labelPadding * 2
+      this.chartMargin -
+      this.chartPadding -
+      this.labelPadding * 2
       : this.chartMargin +
-        this.chartPadding * 2 +
-        this.labelSize +
-        this.labelPadding * 2;
+      this.chartPadding * 2 +
+      this.labelSize +
+      this.labelPadding * 2;
 
     // The background of the legend.
     this.svgChart
@@ -674,14 +707,27 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.zoomIn = false;
     d3.select('#chart-component').selectAll('*').remove();
     this.initChart();
-    this.loadRecords();
+    if (this.startTime < this.endTime && this.endTime != 0) {
+      this.zoomIn = true;
+      this.loadRecords([this.startTime, this.endTime]);
+    } else {
+      this.loadRecords();
+    }
+
   }
 
-  updateUrl(){
+  updateUrl() {
     const url = this.router
-    .createUrlTree([window.location.pathname], {
-      queryParams: {'filename': this.filename, 'strategy': this.strategy, 'number': this.number.value}
-    }).toString();
+      .createUrlTree([window.location.pathname], {
+        queryParams: {
+          'filename': this.filename,
+          'strategy': this.strategy,
+          'number': this.number.value,
+          'inactiveChannels': this.inactiveChannels.toString() || "null",
+          'startTime': this.startTime || 0,
+          'endTime': this.endTime || 0,
+        }
+      }).toString();
     this.location.go(url);
   }
 
@@ -748,10 +794,18 @@ export class ChartComponent implements OnInit, OnDestroy {
       this.svgLine
         .selectAll('.' + this.getChannelLineClassName(event[0]))
         .attr('opacity', 0.6);
+      if (this.inactiveChannels.includes(event[0].toString())) {
+        this.inactiveChannels.splice(this.inactiveChannels.indexOf(event[0].toString()), 1);
+        this.updateUrl();
+      }
     } else {
       this.svgLine
         .selectAll('.' + this.getChannelLineClassName(event[0]))
         .attr('opacity', 0);
+      if (!this.inactiveChannels.includes(event[0].toString())) {
+        this.inactiveChannels.push(event[0].toString());
+        this.updateUrl();
+      }
     }
     this.updateChartDomain();
   }
