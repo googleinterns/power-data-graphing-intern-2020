@@ -36,6 +36,8 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { FileListComponent } from './file-list/file-list.component';
 import { MatListModule } from '@angular/material/list';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatIconModule } from '@angular/material/icon';
 
 @NgModule({
   declarations: [
@@ -64,9 +66,11 @@ import { MatListModule } from '@angular/material/list';
     MatSortModule,
     MatPaginatorModule,
     MatListModule,
+    MatProgressBarModule,
+    MatIconModule,
   ],
   exports: [],
   providers: [],
   bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule { }

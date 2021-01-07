@@ -15,24 +15,48 @@ import {FileServiceService} from '../services/file-service.service';
   styleUrls: ['./file-list.component.scss']
 })
 export class FileListComponent implements OnInit {
-  fileList: string[] = ['ClockworkMapTests-testMapWear-__J4015_J4002_J1630_J1622_J1633_J4007_J3909_J1623_J3911_J3912_J3901_J1617_J3907_J1607__2020-11-30T19:15:36.525Z.csv'];
+  fileList: string[] = [];
+  displayList: string[] = [];
   selectedFilename = "";
+  loading = false;
+  loadingError = false;
   constructor(private service: HttpService, private readonly fileService: FileServiceService) { }
 
   selectFile(file: string){
     this.selectedFilename = file;
-    console.log(file);
     this.fileService.updateFilename(file);
+  }
+
+  searchFile(event: any){
+    const keyword = event.target.value.toLowerCase();
+    const keywords = keyword.split(" ");
+    this.displayList = [];
+    for(let file of this.fileList){
+      for(let i=0;i<keywords.length;i++){
+        if(!file.toLowerCase().includes(keywords[i])){
+          break;
+        }
+        if(i===keywords.length-1){
+          this.displayList.push(file);
+        }
+      }
+    }
+    if(this.displayList.length === 0){
+      this.displayList.push("No record found")
+    }
   }
 
   ngOnInit(): void {
     this.fileService.filename.subscribe(filename => {
       this.selectedFilename = filename;
-    })
+    });
+    this.loading = true;
+    this.loadingError = false;
     this.service
       .getFileInfo('/fileinfo')
       .pipe(
         catchError((error: HttpErrorResponse) => {
+          this.loadingError = true;
           if (error.error instanceof ProgressEvent) {
             console.error(error.message)
           } else {
@@ -43,8 +67,10 @@ export class FileListComponent implements OnInit {
       )
       .subscribe((response: ResponseFileInfo[]) => {
         for(let fileInfo of response){
-          this.fileList.push(fileInfo.name)
+          this.fileList.push(fileInfo.name);
         }
+        this.displayList = this.fileList;
+        this.loading = false;
       });
   }
 

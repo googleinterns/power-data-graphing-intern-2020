@@ -1,5 +1,19 @@
-<mat-selection-list #files [multiple]="false" class="mat-filelist">
-  <mat-list-option *ngFor="let file of fileList" [value]="file" (click)="selectFile(file)">
+<div class="tank-app-title">
+  <img
+    src="https://services.google.com/fh/files/misc/solvay-logo-material.png"
+    alt="tank-logo"
+  />
+  <span class="mat-headline">TAnK - BDP</span>
+</div>
+<mat-divider></mat-divider>
+<mat-progress-bar mode="indeterminate" *ngIf="loading"></mat-progress-bar>
+<div class="search-container">
+  <mat-icon aria-hidden="false" aria-label="search">search</mat-icon>
+  <input type="text" name="search" (keyup)="searchFile($event)"><br><br>
+</div>
+<mat-selection-list #files [multiple]="false" class="mat-filelist" *ngIf="!loading&&!loadingError">
+  <mat-list-option *ngFor="let file of displayList" [value]="file" (click)="selectFile(file)">
     {{file}}
   </mat-list-option>
 </mat-selection-list>
+<div class="place-holder"></div>

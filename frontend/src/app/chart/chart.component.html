@@ -13,19 +13,11 @@
  limitations under the License.
  =============================================================================
 -->
+<h2 class="header">{{filename}}</h2>
 
 <div class="chart-header">
   <div class="chart-header-left">
     <mat-card class="card-container">
-      <!-- <mat-form-field class="selector">
-        <mat-label>Select a file to view</mat-label>
-        <mat-select [(value)]="filename" (selectionChange)="fileSwitch()">
-          <ng-container *ngFor="let file of fileinfo">
-            <mat-option [value]="file.name">{{ file.name }} </mat-option>
-          </ng-container>
-        </mat-select>
-      </mat-form-field> -->
-
       <mat-form-field class="selector">
         <mat-label>Select a downsample strategy</mat-label>
         <mat-select [(value)]="strategy" (selectionChange)="configSwitch()">
@@ -49,14 +41,6 @@
         />
       </mat-form-field>
     </mat-card>
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="lockLegend()"
-      matTooltip="Lock in-chart legend and values"
-    >
-      {{ isLockLegend ? "Lock" : "Unlock" }}
-    </button>
   </div>
   <div class="chart-header-right">
     <mat-spinner
@@ -68,7 +52,7 @@
     </mat-spinner>
 
     <button
-      mat-raised-button
+      mat-flat-button
       matTooltip="Percentage of Raw Data Frequency (100% = Raw)"
     >
       Sample Rate: {{ frequency_ratio }}

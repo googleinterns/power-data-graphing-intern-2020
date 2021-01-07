@@ -11,15 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // =============================================================================
+.header{
+  margin-bottom: 32px !important;
+}
 
 .chart-header {
   align-items: center;
   display: flex;
   flex-direction: row;
-  text-align: center;
-  height: 60px;
-  margin: 10px auto;
-  width: auto;
 }
 
 .chart-header-left {
@@ -33,7 +32,8 @@
 .chart-header-left .card-container {
   display: flex;
   flex-direction: row;
-  margin-right: 10px;
+  margin-left: 30px;
+  box-shadow: none;
 }
 
 .chart-header-right {

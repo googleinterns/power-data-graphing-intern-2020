@@ -12,7 +12,7 @@ export class FileServiceService {
         if(fileFromUrl){
           this.filename = new BehaviorSubject(fileFromUrl);
         }else{
-          this.filename = new BehaviorSubject("testMapWear__2020-12-07T03:00:20.471Z.csv");
+          this.filename = new BehaviorSubject("ClockworkMapTests-testMapWear__2020-12-07T03:00:20.471Z.csv");
         }
 
   }
