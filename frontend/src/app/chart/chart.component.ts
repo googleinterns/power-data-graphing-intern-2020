@@ -35,7 +35,6 @@ import {
 import { FileServiceService } from '../services/file-service.service';
 import { Record, COLORS, RecordsOneChannel, STRATEGY } from './record';
 import { HttpErrorResponse } from '@angular/common/http';
-import { url } from 'inspector';
 
 @Component({
   selector: 'main-chart',
@@ -106,17 +105,20 @@ export class ChartComponent implements OnInit, OnDestroy {
   };
 
   constructor(private service: HttpService, private readonly router: Router, private readonly location: Location, private readonly fileService: FileServiceService) {
+   // this.getParamsFromUrl();
+  }
+
+  getParamsFromUrl(){
     const urlParams = new URLSearchParams(window.location.search);
     const strategy = urlParams.get("strategy");
     const number = urlParams.get("number");
     const channel = urlParams.get("inactiveChannels");
     const stTime = urlParams.get("startTime");
     const endTime = urlParams.get("endTime");
-    console.log(stTime);
-    if (!isNaN(stTime)) {
+    if (!isNaN(Number(stTime))) {
       this.startTime = Number.parseFloat(stTime);
     }
-    if (!isNaN(endTime)) {
+    if (!isNaN(Number(endTime))) {
       this.endTime = Number.parseFloat(endTime);
     }
     if (channel && typeof channel === "string") {
@@ -131,11 +133,17 @@ export class ChartComponent implements OnInit, OnDestroy {
       this.number = new FormControl(Number(number));
     }
   }
+
   ngOnInit(): void {
     this.initChart();
-    //this.loadFilenames();
     this.fileService.filename.subscribe(file => {
       this.filename = file;
+      this.inactiveChannels = [];
+      this.strategy = STRATEGY.AVG;
+      this.number =new FormControl(600);
+      this.startTime = 0;
+      this.endTime = 0;
+      this.getParamsFromUrl();
       this.fileSwitch();
     });
   }
@@ -168,7 +176,6 @@ export class ChartComponent implements OnInit, OnDestroy {
   }
 
   loadRecords(timespan?: number[]) {
-    console.log("this method is triggered");
     if (this.loading) this.subscription.unsubscribe();
     this.loading = true;
     this.subscription = this.service

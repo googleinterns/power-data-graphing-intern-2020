@@ -8,6 +8,8 @@ import { catchError } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription, throwError } from 'rxjs';
 import {FileServiceService} from '../services/file-service.service';
+import { Router } from '@angular/router';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-file-list',
@@ -20,10 +22,12 @@ export class FileListComponent implements OnInit {
   selectedFilename = "";
   loading = false;
   loadingError = false;
-  constructor(private service: HttpService, private readonly fileService: FileServiceService) { }
+  constructor(private service: HttpService, private readonly fileService: FileServiceService,private readonly location: Location, private readonly router: Router) {
+   }
 
   selectFile(file: string){
     this.selectedFilename = file;
+    this.updateUrl();
     this.fileService.updateFilename(file);
   }
 
@@ -44,6 +48,16 @@ export class FileListComponent implements OnInit {
     if(this.displayList.length === 0){
       this.displayList.push("No record found")
     }
+  }
+
+  updateUrl() {
+    const url = this.router
+      .createUrlTree([window.location.pathname], {
+        queryParams: {
+          'filename':this.selectedFilename,
+        }
+      }).toString();
+    this.location.go(url);
   }
 
   ngOnInit(): void {

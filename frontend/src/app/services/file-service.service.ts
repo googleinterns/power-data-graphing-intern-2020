@@ -18,7 +18,6 @@ export class FileServiceService {
   }
 
   updateFilename(newFilename: string):void{
-    console.log("updating services");
     if(newFilename){
       this.filename.next(newFilename);
     }
