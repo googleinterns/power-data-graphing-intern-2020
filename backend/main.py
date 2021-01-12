@@ -154,11 +154,31 @@ def get_file_info():
     print("finishing generated file info")
     return response
 
+@app.route('/test')
+def test():
+    response = make_response('OK')
+    return response
 
 @app.route('/authenticate')
 def authenticate():
     """HTTP endpoint to authenticate and load cookies for client access."""
-    return redirect('https://tank-big-data-plotting-285623.googleplex.com/')
+    url = request.args.get('originUrl', default=None, type=str)
+    strategy = request.args.get('strategy', default=None, type=str)
+    number = request.args.get('number', default=None, type=str)
+    inactiveChannels = request.args.get('inactiveChannels', default=None, type=str)
+    startTime = request.args.get('startTime', default=None, type=str)
+    endTime = request.args.get('endTime', default=None, type=str)
+    print(url)
+    print(strategy)
+    print(number)
+    print(inactiveChannels)
+    print(startTime)
+    print(endTime)
+    print(url)
+    if url:
+      return redirect(url+'&strategy='+strategy+"&number="+number+"&inactiveChannels="+inactiveChannels+"&startTime="+startTime+"&endTime="+endTime, code=302)
+    else:
+      return redirect('https://tank-big-data-plotting-285623.googleplex.com/', 302)
 
 
 def make_response(response_body):
@@ -168,7 +188,6 @@ def make_response(response_body):
     
 @app.route('/downsample')
 def scanFiles():
-  print("I am scaning files now")
   client = storage.Client()
   raw_bucket = client.bucket(RAW_BUCKET)
   preprocess_bucket = client.bucket(PREPROCESS_BUCKET)

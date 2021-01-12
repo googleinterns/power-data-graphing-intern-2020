@@ -14,7 +14,7 @@
 
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
+import {HttpService} from './services/http.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -22,9 +22,16 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   encapsulation: ViewEncapsulation.None,
 })
 export class AppComponent implements OnInit {
-  constructor(private msgBar: MatSnackBar) {}
+  constructor(private msgBar: MatSnackBar, private readonly http: HttpService) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.http.testAuthCredentials('/test').subscribe((res) => {
+    }, (err) => {
+      if(err.status === 0){
+        this.http.corsAuthRedirect(window.location.href);
+      }
+    });
+  }
 
   openMsgBar(message: string) {
     this.msgBar.open(message, 'close', { duration: 4000 });

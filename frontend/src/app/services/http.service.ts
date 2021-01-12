@@ -16,6 +16,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { STRATEGY } from '../chart/record';
+import { windowCount } from 'rxjs/operators';
 
 export interface RecordsResponse {
   frequency_ratio: number;
@@ -89,5 +90,14 @@ export class HttpService {
         responseType: 'text',
       }
     );
+  }
+
+  corsAuthRedirect(originUrl: string) {
+    const redirectUrl = `${environment.apiUrl}/authenticate`;
+    document.location.href = `${redirectUrl}?originUrl=${window.location.href}`;
+  }
+
+  testAuthCredentials(path: string = '/test'){
+    return this.http.get(environment.apiUrl + path, {withCredentials: true});
   }
 }

@@ -105,10 +105,10 @@ export class ChartComponent implements OnInit, OnDestroy {
   };
 
   constructor(private service: HttpService, private readonly router: Router, private readonly location: Location, private readonly fileService: FileServiceService) {
-   // this.getParamsFromUrl();
+    // this.getParamsFromUrl();
   }
 
-  getParamsFromUrl(){
+  getParamsFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const strategy = urlParams.get("strategy");
     const number = urlParams.get("number");
@@ -140,7 +140,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       this.filename = file;
       this.inactiveChannels = [];
       this.strategy = STRATEGY.AVG;
-      this.number =new FormControl(600);
+      this.number = new FormControl(600);
       this.startTime = 0;
       this.endTime = 0;
       this.getParamsFromUrl();
@@ -199,6 +199,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       )
       .subscribe((response: RecordsResponse) => {
         if (this.records.length === 0) {
+          response.data.sort((a,b) =>  a.name > b.name ? 1: -1);
           this.records = response.data.map(
             (channel: ResponseData, index: number) => {
               const recordsOneChannel = {
@@ -506,7 +507,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     });
   }
 
-  resetChart(){
+  resetChart() {
     this.zoomIn = false;
     this.loadRecords();
     this.startTime = 0;
@@ -637,8 +638,7 @@ export class ChartComponent implements OnInit, OnDestroy {
       .transition()
       .duration(this.animationDuration)
       .call(d3.axisLeft(this.yScale).tickFormat(d3.format('.3')));
-
-    for (const recordsOneChannel of this.records) {
+    for (const [index, recordsOneChannel] of this.records.entries()) {
       if (!this.lines[recordsOneChannel.name]) {
         // Initialize focus line.
         const line = d3
@@ -649,16 +649,29 @@ export class ChartComponent implements OnInit, OnDestroy {
         // Assigns line genrerator for current channel.
         this.lines[recordsOneChannel.name] = line;
 
-        // Creates lines svg component for current channel.
-        this.svgLine
-          .append('path')
-          .classed(this.getChannelLineClassName(recordsOneChannel.id), true)
-          .attr('fill', 'none')
-          .attr('stroke', recordsOneChannel.color)
-          .attr('stroke-width', 2)
-          .datum(recordsOneChannel.data as any)
-          .attr('d', line)
-          .attr('opacity', 0.6);
+        if (this.inactiveChannels.includes(index.toString())) {
+          // Creates lines svg component for current channel.
+          this.svgLine
+            .append('path')
+            .classed(this.getChannelLineClassName(recordsOneChannel.id), true)
+            .attr('fill', 'none')
+            .attr('stroke', recordsOneChannel.color)
+            .attr('stroke-width', 2)
+            .datum(recordsOneChannel.data as any)
+            .attr('d', line)
+            .attr('opacity', 0);
+        } else {
+          // Creates lines svg component for current channel.
+          this.svgLine
+            .append('path')
+            .classed(this.getChannelLineClassName(recordsOneChannel.id), true)
+            .attr('fill', 'none')
+            .attr('stroke', recordsOneChannel.color)
+            .attr('stroke-width', 2)
+            .datum(recordsOneChannel.data as any)
+            .attr('d', line)
+            .attr('opacity', 0.6);
+        }
 
         // Creates focus circle svg component for current channel.
         this.svgLine
@@ -720,7 +733,6 @@ export class ChartComponent implements OnInit, OnDestroy {
     } else {
       this.loadRecords();
     }
-
   }
 
   updateUrl() {
