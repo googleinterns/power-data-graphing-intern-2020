@@ -147,9 +147,11 @@ class MultipleLevelPreprocess:
         while raw_data.readable():
             slice_name = utils.get_slice_path(
                 self._preprocess_dir, RAW_LEVEL_DIR, utils.get_slice_name(slice_index))
+            print("Slice name: " + slice_name)
             level_slice = LevelSlice(
                 slice_name, bucket=self._preprocess_bucket)
             raw_slice = raw_data.read_next_slice()
+            print(raw_slice)
             if isinstance(raw_slice, str):
                 return raw_slice
             level_slice.save(raw_slice)

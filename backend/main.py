@@ -56,8 +56,6 @@ def get_data():
         end: An int representing the end of time span user wish to view.
     """
 
-    print("Trying to retrieve the data")
-
     name = request.args.get('name', type=str)
     strategy = request.args.get('strategy', default='avg', type=str)
     start = request.args.get('start', default=None, type=int)
@@ -133,7 +131,6 @@ def mlp_preprocess():
 @app.route('/fileinfo')
 def get_file_info():
     """HTTP endpoint to get all file names stored in bucket."""
-    print("Received get request")
     client = storage.Client()
     raw_bucket = client.bucket(RAW_BUCKET)
     preprocess_bucket = client.bucket(PREPROCESS_BUCKET)
@@ -168,13 +165,6 @@ def authenticate():
     inactiveChannels = request.args.get('inactiveChannels', default=None, type=str)
     startTime = request.args.get('startTime', default=None, type=str)
     endTime = request.args.get('endTime', default=None, type=str)
-    print(url)
-    print(strategy)
-    print(number)
-    print(inactiveChannels)
-    print(startTime)
-    print(endTime)
-    print(url)
     if url:
       return redirect(url+'&strategy='+strategy+"&number="+number+"&inactiveChannels="+inactiveChannels+"&startTime="+startTime+"&endTime="+endTime, code=302)
     else:
@@ -184,6 +174,7 @@ def authenticate():
 def make_response(response_body):
     response = app.make_response(response_body)
     response.headers['Access-Control-Allow-Credentials'] = 'true'
+    # response.headers['Access-Control-Allow-Origin'] = 'https://api-dot-tank-big-data-plotting-285623.googleplex.com'
     return response
     
 @app.route('/downsample')
