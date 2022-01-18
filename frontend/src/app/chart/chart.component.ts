@@ -57,6 +57,8 @@ export class ChartComponent implements OnInit, OnDestroy {
   inactiveChannels = [];
   startTime = 0;
   endTime = 0;
+  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  timeZoneDeltaSeconds = 0;
   loading = false;
   records: RecordsOneChannel[] = [];
   strategy = STRATEGY.AVG;
@@ -93,6 +95,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     const timeFormat = d3.timeFormat('%M:%S.%L');
     const fineTimeFormat = d3.timeFormat(':%S.%L');
     const upperDate = timeParse(Math.floor(time / 1000).toString());
+    upperDate.setSeconds(upperDate.getSeconds() + this.timeZoneDeltaSeconds);
     const xExtent = this.getTimeRange();
 
     if (xExtent[1] - xExtent[0] >= 1e6) {
@@ -115,6 +118,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     const channel = urlParams.get("inactiveChannels");
     const stTime = urlParams.get("startTime");
     const endTime = urlParams.get("endTime");
+    const timeZone = urlParams.get("timeZone");
     if (!isNaN(Number(stTime))) {
       this.startTime = Number.parseFloat(stTime);
     }
@@ -131,6 +135,14 @@ export class ChartComponent implements OnInit, OnDestroy {
     }
     if (number && !isNaN(Number(number))) {
       this.number = new FormControl(Number(number));
+    }
+    if (timeZone && typeof timeZone === "string") {
+      const localDate = new Date(1970, 0, 0);
+      const timeZoneDate = new Date(localDate.toLocaleString('en-US', {timeZone:
+                                                             timeZone}));
+      this.timeZone = timeZone;
+      this.timeZoneDeltaSeconds =
+        (timeZoneDate.getTime() - localDate.getTime()) / 1000;
     }
   }
 
@@ -371,6 +383,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         const upperDate = timeParse(
           Math.floor(selectedData.time / 1000).toString()
         );
+        upperDate.setSeconds(upperDate.getSeconds() + this.timeZoneDeltaSeconds);
 
         // Sets focus point.
         this.svgLine
@@ -745,6 +758,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           'inactiveChannels': this.inactiveChannels.toString() || "null",
           'startTime': this.startTime || 0,
           'endTime': this.endTime || 0,
+          'timeZone': this.timeZone,
         }
       }).toString();
     this.location.go(url);
