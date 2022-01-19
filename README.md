@@ -95,7 +95,7 @@ Make sure you have python3.7+, pip3, python3-venv installed on your machine
 
 #### Build and run the backend
 1. Make sure you have a python virtual environment on your local machine and install all dependencies in the virtual environment.
-    * Create a virtual environment by running `python3 -m venv venv`. (Recommend to put the environment folder at project's root folder)
+    * Create a virtual environment by running `python3 -m venv venv` or `virtualenv venv`. (Recommend to put the environment folder at project's root folder)
     * Activate the environment by running `source venv/bin/activate`
     * `pip3 install wheel`
     * install packages in the environment by running `pip3 install 'package-name'`
