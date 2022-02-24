@@ -27,9 +27,9 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.http.testAuthCredentials('/test').subscribe((res) => {
     }, (err) => {
-      // if(err.status === 0){
-      //   this.http.corsAuthRedirect(window.location.href);
-      // }
+      if(err.status === 0){
+        this.http.corsAuthRedirect(window.location.href);
+      }
     });
   }
 
