@@ -11,9 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
-
 """String and downsample utility functions."""
-
 
 import logging
 import os
@@ -31,15 +29,22 @@ def parse_csv_line(line):
         line: A string representing single line record in csv format.
 
     Returns:
-        A list of power data records each of which contains timestamp, power value, and channel,
-            e.g. [[12345678, 80, "SYSTEM"],[23456789, 60, "SENSOR"]]. Returns None if the
+        A list of power data records each of which contains timestamp, power
+        value, and channel,
+            e.g. [[12345678, 80, "SYSTEM"],[23456789, 60, "SENSOR"]]. Returns
+            None if the
             given file is empty.
     """
     if not line:
         return None
     data_point = line.strip('\n').split(',')
-    data_point[0] = float(data_point[0])
-    data_point[1] = round(float(data_point[1]), FLOAT_PRECISION)
+    if len(data_point) != 3:
+        return None
+    try:
+        data_point[0] = float(data_point[0])
+        data_point[1] = round(float(data_point[1]), FLOAT_PRECISION)
+    except ValueError:
+        return None
     return data_point
 
 
@@ -47,8 +52,9 @@ def convert_to_csv(records):
     """Convert records in list type to csv string.
 
     Args:
-        records: A list of power data records each of which contains timestamp, power value,
-        and channel. e.g. [[12345678, 80, "SYSTEM"],[23456789, 60, "SENSOR"]].
+        records: A list of power data records each of which contains timestamp,
+          power value, and channel. e.g. [[12345678, 80, "SYSTEM"],[23456789,
+          60, "SENSOR"]].
 
     Returns:
         A string that contains all CSV records, None if the given list if empty.
@@ -74,8 +80,7 @@ def get_file_name(path):
     Returns:
         A string for the path without .csv postfix
     """
-    filename = path.strip(' ').strip(
-        '\n').strip('.csv')
+    filename = path.strip(' ').strip('\n').strip('.csv')
     return filename
 
 
@@ -109,7 +114,9 @@ def get_slice_name(index):
 
 
 def get_slice_path(root_dir, level, level_slice, strategy=None):
-    """Gets the path of the slice from level and strategy. If strategy is None for
+    """Gets the path of the slice from level and strategy.
+
+    If strategy is None for
         level0.
     Args:
         root_dir: A string that represents the directory of preprocesse files.

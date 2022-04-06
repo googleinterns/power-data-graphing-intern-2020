@@ -11,11 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
-
 """A Module for processing raw data."""
 from google.api_core.exceptions import RequestRangeNotSatisfiable
 from google.api_core.exceptions import NotFound
 from utils import parse_csv_line
+
 SIZE_ONE_LINE = 50
 
 
@@ -41,7 +41,7 @@ class RawDataProcessor:
         """Reads raw data for a single slice.
 
         Returns:
-            A list of records.
+            A list of records or a string representing the error if it applies.
         """
         raw_records = []
         records = []
@@ -56,19 +56,23 @@ class RawDataProcessor:
                     break
                 records.append(parse_csv_line(line))
                 counter += 1
-            return records
+            return records if records else 'Empty file'
 
         if len(self._loaded_records) - 1 >= self._number_per_slice:
-            records = [parse_csv_line(
-                line) for line in self._loaded_records[:self._number_per_slice]]
+            records = [
+                parse_csv_line(line)
+                for line in self._loaded_records[:self._number_per_slice]
+            ]
             self._loaded_records = self._loaded_records[self._number_per_slice:]
             return records
 
-        while len(self._loaded_records) + len(raw_records) - 2 < self._number_per_slice:
+        while len(self._loaded_records) + len(
+                raw_records) - 2 < self._number_per_slice:
             try:
                 end = self._file_pointer + self._number_per_slice * SIZE_ONE_LINE
-                raw_records.extend(self._blob.download_as_string(
-                    start=self._file_pointer, end=end).decode().split('\n'))
+                raw_records.extend(
+                    self._blob.download_as_string(
+                        start=self._file_pointer, end=end).decode().split('\n'))
                 self._file_pointer = end + 1
             except RequestRangeNotSatisfiable:
                 self._eof = True
