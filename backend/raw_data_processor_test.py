@@ -94,6 +94,6 @@ class TestRawDataProcessor:
 
         records = raw_data.read_next_slice()
 
-        assert isinstance(records, str)
+        assert records == [None, None, None]
 
         bad_data.close()
