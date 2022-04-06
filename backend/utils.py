@@ -38,8 +38,13 @@ def parse_csv_line(line):
     if not line:
         return None
     data_point = line.strip('\n').split(',')
-    data_point[0] = float(data_point[0])
-    data_point[1] = round(float(data_point[1]), FLOAT_PRECISION)
+    if len(data_point) != 3:
+        return None
+    try:
+        data_point[0] = float(data_point[0])
+        data_point[1] = round(float(data_point[1]), FLOAT_PRECISION)
+    except ValueError:
+        return None
     return data_point
 
 

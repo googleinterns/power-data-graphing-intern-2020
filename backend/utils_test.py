@@ -69,6 +69,19 @@ class TestUtilsClass:
                 csv_single_line) for csv_single_line in test_csv_records[index].split('\n')]
             assert parsed_records == test_records[:index+1]
 
+    @pytest.mark.parametrize('input_line',
+                             [
+                                 'this,line,has,5,columns',
+                                 '2,columns',
+                                 'not_a_number,254.02,rail_name',
+                                 '5214567426,not_a_number,rail_name'
+                             ])
+    def test_parse_csv_line_error_cases(self,input_line):
+        actual = parse_csv_line(input_line)
+
+        assert actual == None
+
+
     @pytest.mark.parametrize('root_dir,level,level_slice,strategy,exp',
                              [
                                  ('tmp', 'level0', 's1.csv',
