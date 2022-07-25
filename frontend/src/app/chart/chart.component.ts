@@ -53,7 +53,7 @@ export class ChartComponent implements OnInit, OnDestroy {
   frequency_ratio: string;
   strategyType = STRATEGY;
   subscription: Subscription;
-  number = new FormControl(600);
+  number = new FormControl(6000);
   inactiveChannels = [];
   startTime = 0;
   endTime = 0;
