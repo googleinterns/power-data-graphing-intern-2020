@@ -54,17 +54,20 @@ class RawDataProcessor:
                     self._file.close()
                     self._eof = True
                     break
-                records.append(parse_csv_line(line))
+                record = parse_csv_line(raw_record)
+                if record:
+                    records.append(record)
                 counter += 1
             return records if records else 'Empty file'
 
         if len(self._loaded_records) - 1 >= self._number_per_slice:
-            records = [
-                parse_csv_line(line)
-                for line in self._loaded_records[:self._number_per_slice]
-            ]
+            records = filter(
+                None,
+                map(
+                    parse_csv_line(line),
+                    self._loaded_records[:self._number_per_slice]))
             self._loaded_records = self._loaded_records[self._number_per_slice:]
-            return records
+            return records if records else 'Empty file'
 
         while len(self._loaded_records) + len(
                 raw_records) - 2 < self._number_per_slice:
@@ -94,7 +97,7 @@ class RawDataProcessor:
             record = parse_csv_line(raw_record)
             if record:
                 records.append(record)
-        return records
+        return records if records else 'Empty file'
 
     def readable(self):
         """Checks if the raw file is readable.

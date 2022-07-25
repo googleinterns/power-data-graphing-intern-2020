@@ -97,3 +97,18 @@ class TestRawDataProcessor:
         assert records == [None, None, None]
 
         bad_data.close()
+
+    def test_read_next_slice_returns_error_message_for_bad_data(self):
+        """Tests to ensure it returns an error message files with bad data."""
+        bad_data = NamedTemporaryFile()
+        with open(bad_data.name, 'w') as tmpfilewriter:
+            tmpfilewriter.write('1,2,has,many,columns\n')
+            tmpfilewriter.write('not_a_number,2,rail_name\n')
+            tmpfilewriter.write('1,not_a_number,rail_name\n')
+        raw_data = RawDataProcessor(bad_data.name, 10)
+
+        records = raw_data.read_next_slice()
+
+        assert records == [None, None, None]
+
+        bad_data.close()
