@@ -73,7 +73,11 @@ def get_data():
     client = storage.Client()
     fetcher = DataFetcher(name, PREPROCESS_DIR,
                           client.bucket(PREPROCESS_BUCKET))
-
+    bucket = client.bucket(RAW_BUCKET)
+    file =  bucket.blob(name)
+    if not file.exists():
+        response = make_response('Target file does not exist, please check file name')
+        return response, 404
     if not fetcher.is_preprocessed():
         response = make_response('Preprocessing incomplete.')
         return response, 404
