@@ -14,9 +14,9 @@
  =============================================================================
 -->
 
-<mat-card class="legends-container">
+<div class="legends-container mat-body">
   <table>
-    <tr>
+    <tr class="mat-h4" *ngIf="records.length>0">
       <th>Channel</th>
       <th>Maximum</th>
       <th>Minimum</th>
@@ -30,4 +30,4 @@
       (showChange)="showLine($event)"
     ></tr>
   </table>
-</mat-card>
+</div>

@@ -26,6 +26,8 @@ export interface RecordsOneChannel {
   show: boolean;
   data: Record[];
   name: string;
+  min: number;
+  max: number;
   focusPower: string;
 }
 

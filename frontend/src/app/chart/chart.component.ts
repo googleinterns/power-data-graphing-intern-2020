@@ -214,7 +214,7 @@ export class ChartComponent implements OnInit, OnDestroy {
           response.data.sort((a,b) =>  a.name > b.name ? 1: -1);
           this.records = response.data.map(
             (channel: ResponseData, index: number) => {
-              const recordsOneChannel = {
+              return {
                 color: COLORS[index],
                 data: channel.data.map((d: [number, number]) => {
                   return {
@@ -223,11 +223,12 @@ export class ChartComponent implements OnInit, OnDestroy {
                   } as Record;
                 }),
                 name: channel.name,
+                min: channel.min,
+                max: channel.max,
                 show: true,
                 focusPower: 'N/A',
                 id: index,
               };
-              return recordsOneChannel;
             }
           );
           for (let [index, channel] of this.inactiveChannels.entries()) {
@@ -254,6 +255,8 @@ export class ChartComponent implements OnInit, OnDestroy {
                   } as Record;
                 }
               );
+              recordsOneChannel.max = channel.max;
+              recordsOneChannel.min = channel.min;
             }
             if (!newDataArrived) {
               recordsOneChannel.data = [];
@@ -276,8 +279,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     this.svg = d3
       .select('#chart-component')
       .append('svg')
-      .attr('width', this.chartWidth)
-      .attr('height', this.chartHeight);
+      .attr('viewBox', `0 0 ${this.chartWidth} ${this.chartHeight}`);
 
     // Add a clipPath: everything out of this area won't be drawn.
     this.svg

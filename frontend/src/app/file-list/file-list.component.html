@@ -1,16 +1,15 @@
 <div class="tank-app-title">
-  <img
-    src="https://services.google.com/fh/files/misc/solvay-logo-material.png"
-    alt="tank-logo"
-  />
+  <img src="https://services.google.com/fh/files/misc/solvay-logo-material.png" alt="tank-logo" />
   <span class="mat-headline">TAnK - BDP</span>
 </div>
-<mat-divider></mat-divider>
-<p class="mat-h3">Instructions</p>
-<mat-list role="list" dense>
-  <mat-list-item role="listitem">Select a range on the chart to zoom in</mat-list-item>
-  <mat-list-item role="listitem">Double click to return to the top level</mat-list-item>
-  <mat-list-item role="listitem">Hover on the chart to check metric values</mat-list-item>
-  <mat-list-item role="listitem">Click on the selectable legend to display/hide channel</mat-list-item>
-</mat-list>
+<mat-divider [vertical]="true"></mat-divider>
+<button mat-button [matMenuTriggerFor]="menu">Instructions</button>
+<mat-menu #menu="matMenu">
+  <mat-list role="list" dense>
+    <mat-list-item role="listitem">Select a range on the chart to zoom in</mat-list-item>
+    <mat-list-item role="listitem">Double click to return to the top level</mat-list-item>
+    <mat-list-item role="listitem">Hover on the chart to check metric values</mat-list-item>
+    <mat-list-item role="listitem">Click on the selectable legend to display/hide channel</mat-list-item>
+  </mat-list>
+</mat-menu>
 <div class="place-holder"></div>

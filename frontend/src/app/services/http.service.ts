@@ -26,6 +26,8 @@ export interface RecordsResponse {
 export interface ResponseData {
   data: [number, number][];
   name: string;
+  min: number;
+  max: number;
 }
 
 export interface ResponseFileInfo {
@@ -80,11 +82,12 @@ export class HttpService {
    * @param path The http endpoint.
    * @param filename The filename to be preprocessed.
    */
-  preprocess(path: string, filename: string) {
-    return this.http.post(
+  preprocess(path = "/downsample", filename: string = "") {
+    console.log("downsample");
+    return this.http.get(
       environment.apiUrl + path,
       // { name: filename },
-      JSON.stringify({ name: filename }),
+      // JSON.stringify({ name: filename }),
       {
         withCredentials: true,
         responseType: 'text',

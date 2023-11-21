@@ -12,7 +12,7 @@
 // limitations under the License.
 // =============================================================================
 .header{
-  margin-bottom: 32px !important;
+  margin: 0  0 32px 32px !important;
 }
 
 .chart-header {
@@ -41,23 +41,23 @@
   flex-direction: row;
   justify-content: flex-end;
   width: 100%;
+  margin-right: 32px;
 }
 
-.spinner {
-  margin: auto 10px;
-}
-.x-axis {
-  font-family: sans-serif;
-  font-size: 16px;
-}
-.x-axis path .x-axis line {
-  shape-rendering: crispEdges;
+.content-container{
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.y-axis {
-  font-family: sans-serif;
-  font-size: 16px;
+.chart-content-container{
+  width: 100%;
+  max-width: 1200px;
+  min-width: 800px;
 }
-.y-axis path .y-axis line {
-  shape-rendering: crispEdges;
+
+legend-table{
+  width: 100%;
+  min-width: 300px;
+  max-width: 1200px;
 }

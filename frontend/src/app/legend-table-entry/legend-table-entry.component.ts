@@ -12,7 +12,7 @@
 // limitations under the License.
 // =============================================================================
 
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter} from '@angular/core';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { RecordsOneChannel } from '../chart/record';
 
@@ -21,13 +21,10 @@ import { RecordsOneChannel } from '../chart/record';
   templateUrl: './legend-table-entry.component.html',
   styleUrls: ['./legend-table-entry.component.scss'],
 })
-export class LegendTableEntryComponent {
+export class LegendTableEntryComponent{
   @Input() recordsOneChannel: RecordsOneChannel;
   @Output() showChange = new EventEmitter<[number, boolean]>();
-
   checked = true;
-
-  constructor() {}
 
   getAvg() {
     if (this.recordsOneChannel?.data.length == 0) return 'N/A';
@@ -36,25 +33,17 @@ export class LegendTableEntryComponent {
       sum += record.value;
     }
 
-    return (sum / this.recordsOneChannel.data.length).toPrecision(3).toString();
+    return (sum / this.recordsOneChannel.data.length).toFixed(3).toString();
   }
 
   getMax() {
-    if (this.recordsOneChannel.data.length == 0) return 'N/A';
-    let max = this.recordsOneChannel.data[0].value;
-    for (const record of this.recordsOneChannel.data) {
-      if (record.value > max) max = record.value;
-    }
-    return max.toPrecision(3).toString();
+    if (isNaN(this.recordsOneChannel.max)) return 'N/A';
+    return this.recordsOneChannel.max.toFixed(3).toString();
   }
 
   getMin() {
-    if (this.recordsOneChannel.data.length == 0) return 'N/A';
-    let min = this.recordsOneChannel.data[0].value;
-    for (const record of this.recordsOneChannel.data) {
-      if (record.value < min) min = record.value;
-    }
-    return min.toPrecision(3).toString();
+    if (isNaN(this.recordsOneChannel.min)) return 'N/A';
+    return this.recordsOneChannel.min.toFixed(3).toString();
   }
 
   toggled(event: MatSlideToggleChange) {

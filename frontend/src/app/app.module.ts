@@ -38,6 +38,9 @@ import { FileListComponent } from './file-list/file-list.component';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
+
 
 @NgModule({
   declarations: [
@@ -68,6 +71,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatListModule,
     MatProgressBarModule,
     MatIconModule,
+    MatDialogModule,
+    MatMenuModule,
   ],
   exports: [],
   providers: [],

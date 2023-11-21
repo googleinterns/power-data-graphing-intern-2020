@@ -38,6 +38,9 @@ describe('LegendCardComponent', () => {
     show: true,
     name: 'sys',
     focusPower: '',
+    min: 0,
+    max: 1,
+    id: 1,
   };
 
   beforeEach(async(() => {
@@ -58,12 +61,6 @@ describe('LegendCardComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('test max', () => {
-    expect(component.getMax()).toEqual((200).toPrecision(3));
-  });
-  it('test min', () => {
-    expect(component.getMin()).toEqual((0).toPrecision(3));
-  });
   it('test avg', () => {
     expect(component.getAvg()).toEqual((100).toPrecision(3));
   });

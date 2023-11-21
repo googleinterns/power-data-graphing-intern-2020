@@ -151,18 +151,22 @@ class MultipleLevelPreprocess:
             level_slice = LevelSlice(
                 slice_name, bucket=self._preprocess_bucket)
             raw_slice = raw_data.read_next_slice()
-            print(raw_slice)
-            if isinstance(raw_slice, str):
-                return raw_slice
-            level_slice.save(raw_slice)
-            raw_start_times.append(raw_slice[0][0])
+            if len(raw_slice) > 0 and len(raw_slice[0]) > 0:
+                print(raw_slice)
+                if isinstance(raw_slice, str):
+                    return raw_slice
+                level_slice.save(raw_slice)
+                raw_start_times.append(raw_slice[0][0])
 
-            slice_index += 1
-            record_count += len(raw_slice)
-            if timespan_start == -1:
-                timespan_start = raw_slice[0][0]
-            timespan_end = raw_slice[-1][0]
-
+                slice_index += 1
+                record_count += len(raw_slice)
+                if timespan_start == -1:
+                    timespan_start = raw_slice[0][0]
+                timespan_end = raw_slice[-1][0]
+            else:
+                print('Invalid Slice: ', raw_slice)
+                slice_index += 1
+                record_count += len(raw_slice)
         self._metadata['raw_number'] = record_count
         self._metadata['start'] = timespan_start
         self._metadata['end'] = timespan_end

@@ -18,9 +18,9 @@ import { from, empty } from 'rxjs';
 import { ChartComponent } from './chart.component';
 import {
   HttpService,
-  STRATEGY,
   RecordsResponse,
 } from '../services/http.service';
+import { STRATEGY } from  '../chart/record';
 import { Record } from './record';
 
 const TEST_START_TIME = 1573149236356988;
