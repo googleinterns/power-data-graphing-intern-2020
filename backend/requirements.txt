@@ -7,7 +7,7 @@ cffi==1.14.1
 chardet==3.0.4
 click==7.1.2
 coverage==5.1
-Flask==1.1.2
+Flask==2.2.5
 Flask-Cors==3.0.8
 google-api-core==1.22.0
 google-auth==1.20.0
