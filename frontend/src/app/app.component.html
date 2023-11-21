@@ -15,15 +15,11 @@
 -->
 
 <div class="container">
-  <div class="file-container">
     <app-file-list></app-file-list>
-  </div>
-  
-  <div class="main-container">
+    <mat-divider></mat-divider>
     <mat-card class="chart-container">
       <main-chart (message)="openMsgBar($event)"></main-chart>
     </mat-card>
-  </div>
 </div>
 
 

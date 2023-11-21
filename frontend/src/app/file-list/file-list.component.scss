@@ -36,9 +36,18 @@ mat-list-option{
 
 .mat-list-base[dense] .mat-list-item {
   font-size: 14px !important;
+  white-space: nowrap;
 }
 
 p{
   padding: 0 16px;
   margin: 16px 0 0;
+}
+
+button{
+  font-size: 16px;
+}
+
+::ng-deep .mat-menu-panel{
+  min-width: 400px !important;
 }

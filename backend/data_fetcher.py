@@ -15,7 +15,7 @@
 """A module for fetching from multiple-level preprocessing."""
 
 import utils
-
+import time
 from level_slices_reader import LevelSlices
 from metadata import Metadata
 
@@ -77,9 +77,17 @@ class DataFetcher:
                     }
                 ]
         """
+
+        prevTime = time.time()
+        print("fetch data starts", prevTime)
+
         self._metadata = Metadata(
             self._preprocess_dir, bucket=self._preprocess_bucket)
         self._metadata.load()
+        
+        diff = time.time() - prevTime
+        prevTime = time.time()
+        print("meta data done", diff)
 
         if timespan_start is None:
             timespan_start = self._metadata['start']
@@ -100,6 +108,10 @@ class DataFetcher:
         target_level = self._metadata['levels'][self._metadata['levels']
                                                 ['names'][target_level_index]]
 
+        diff = time.time() - prevTime
+        prevTime = time.time()
+        print("target level located",diff)
+
         level_metadata = Metadata(
             self._preprocess_dir, strategy, utils.get_level_name(
                 target_level_index), bucket=self._preprocess_bucket)
@@ -115,15 +127,62 @@ class DataFetcher:
             self._preprocess_dir,
             utils.get_level_name(target_level_index),
             single_slice, strategy) for single_slice in target_slices_names]
+        
+        diff = time.time() - prevTime
+        prevTime = time.time()
+        print("all slice found", diff)
+
+        target_slice_paths_min = [utils.get_slice_path(
+            self._preprocess_dir,
+            utils.get_level_name(target_level_index),
+            single_slice, 'min') for single_slice in target_slices_names]
+
+        target_slice_paths_max = [utils.get_slice_path(
+            self._preprocess_dir,
+            utils.get_level_name(target_level_index),
+            single_slice, 'max') for single_slice in target_slices_names]
+
+        diff = time.time() - prevTime
+        prevTime = time.time()
+        print("min max slice found", diff)
 
         # Reads records and downsamples.
         target_slices = LevelSlices(
             target_slice_paths, self._preprocess_bucket)
-        target_slices.read(timespan_start, timespan_end)
-        number_target_records = target_slices.get_records_count()
+        
 
+
+        target_slices.read(timespan_start, timespan_end)
+
+        diff = time.time() - prevTime
+        prevTime = time.time()
+        print("main file read", diff)
+
+        target_slices_min = LevelSlices(
+            target_slice_paths_min, self._preprocess_bucket)
+
+        target_slices_max = LevelSlices(
+            target_slice_paths_max, self._preprocess_bucket)
+        target_slices_min.read(timespan_start, timespan_end)
+        target_slices_max.read(timespan_start, timespan_end)
+
+        diff = time.time() - prevTime
+        prevTime = time.time()
+        print("min max file read", diff)
+
+        minList = target_slices_min.get_min()
+        maxList = target_slices_max.get_max()
+
+        diff = time.time() - prevTime
+        prevTime = time.time()
+        print("min max get", diff)
+        number_target_records = target_slices.get_records_count()
         target_slices.downsample(strategy, max_records=number_records)
-        downsampled_data = target_slices.format_response()
+        downsampled_data = target_slices.format_response(minList, maxList)
+
+        diff = time.time() - prevTime
+        prevTime = time.time()
+        print("dowmsample finished", diff)
         number_result_records = target_slices.get_records_count()
 
         if number_target_records == 0:
@@ -146,6 +205,8 @@ class DataFetcher:
         Returns:
             An int of index for the result.
         """
+        print(data_list)
+
         if not data_list:
             return -1
 

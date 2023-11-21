@@ -27,6 +27,8 @@ class LevelSlices:
         self._filenames = filenames
         self._bucket = bucket
         self._records = defaultdict(list)
+        self._minList = defaultdict(float)
+        self._maxList = defaultdict(float)
 
     def read(self, start, end):
         """Reads and loads records from a set of slices, only records in the range
@@ -75,7 +77,7 @@ class LevelSlices:
                 self._records[channel], strategy, downsample_factor)
         return self._records
 
-    def format_response(self):
+    def format_response(self, minList: defaultdict(float), maxList: defaultdict(float)):
         """Gets current data in dict type for http response.
 
         Returns:
@@ -85,6 +87,30 @@ class LevelSlices:
         for channel in self._records.keys():
             response.append({
                 'name': channel,
-                'data': [[record[0], record[1]] for record in self._records[channel]]
+                'data': [[record[0], record[1]] for record in self._records[channel]],
+                'min': minList[channel],
+                'max': maxList[channel],
             })
         return response
+
+    def get_min(self):
+        if self._records is not None:
+            for channel in self._records.keys():
+                channelData = self._records[channel]
+                min = channelData[0][1]
+                for data in channelData:
+                    if data[1] < min:
+                        min = data[1]
+                self._minList[channel] = min
+        return self._minList
+
+    def get_max(self):
+        if self._records is not None:
+            for channel in self._records.keys():
+                channelData = self._records[channel]
+                max = channelData[0][1]
+                for data in channelData:
+                    if data[1] > max:
+                        max = data[1]
+                self._minList[channel] = max
+        return self._minList

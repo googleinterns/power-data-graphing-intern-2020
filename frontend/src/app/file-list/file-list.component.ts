@@ -1,13 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {
-  HttpService,  RecordsResponse,
-  ResponseData,
-  ResponseFileInfo,
+  HttpService
 } from '../services/http.service';
-import { catchError } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Subscription, throwError } from 'rxjs';
-import {FileServiceService} from '../services/file-service.service';
+import { FileServiceService } from '../services/file-service.service';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 
@@ -22,14 +17,14 @@ export class FileListComponent implements OnInit {
   selectedFilename = "";
   loading = false;
   loadingError = false;
-  constructor(private service: HttpService, private readonly fileService: FileServiceService,private readonly location: Location, private readonly router: Router) {
-   }
+  constructor(private service: HttpService, private readonly fileService: FileServiceService, private readonly location: Location, private readonly router: Router) {
+  }
 
   updateUrl() {
     const url = this.router
       .createUrlTree([window.location.pathname], {
         queryParams: {
-          'filename':this.selectedFilename,
+          'filename': this.selectedFilename,
         }
       }).toString();
     this.location.go(url);

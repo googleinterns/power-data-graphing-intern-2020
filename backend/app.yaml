@@ -9,7 +9,7 @@ runtime: python37
 env: standard
 
 manual_scaling:
-  instances: 1
+  instances: 10
 
 # Set App Engine instance class (defaults to F1)
 # See https://cloud.google.com/appengine/docs/standard/#instance_classes

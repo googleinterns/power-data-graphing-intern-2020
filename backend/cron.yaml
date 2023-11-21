@@ -2,4 +2,4 @@ cron:
 - description: "Scan new files to downsample"
   url: /downsample
   target: api
-  schedule: every 10 mins
+  schedule: every 5 mins
