@@ -65,17 +65,12 @@ https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
       `node -v`
 
       `npm -v`
+    
+    Note: If you met compatbility issue, please consider install Node to v18.12.0 and Angular Cli to 14.2.13
 2. Install [Angular-cli](https://cli.angular.io/) by running `npm install -g @angular/cli`
     * Check version by running
     
       `ng version`
-    * Below are the hello world project's Angular version
-        * @angular-devkit/architect    0.901.6
-        * @angular-devkit/core         9.1.6
-        * @angular-devkit/schematics   9.1.6
-        * @schematics/angular          9.1.6
-        * @schematics/update           0.901.6
-        * rxjs                         6.5.4
 
 3. go to fronend folder, and run following commands to build the frontend
 
@@ -151,3 +146,13 @@ After finishing set up the frontend and backend, open the browser(recommend chro
 3. Go to the /frontend folder, build the prod version of the frontend by entering `ng build --prod`. Then go to the generated /dist folder, run `gcloud app deploy`. Make sure if your gcloud project setup is correctly, and the target service is set as default
 4. Go to the /backend folder, run `gcloud app deploy`, and make sure the target service is set as api.
 5. Go to the gcp console and make sure the latest frontend and backend have been uploaded.
+
+Note: If you meet into permission issue, please send requests to longzhao@google.com to ask for GCP project permission.
+
+
+## Debug and monitor from the cloud
+If you need to debug the project, please go to the following links to check for debugging info
+
+Frontend real time logs: https://pantheon.corp.google.com/logs/query;query=resource.type%3D%22gae_app%22%0Aresource.labels.module_id%3D%22default%22;cursorTimestamp=2023-11-21T21:04:29.604806Z;duration=PT1H?serviceId=default&project=google.com:tank-big-data-plotting-285623
+
+Backend real time logs: https://pantheon.corp.google.com/logs/query;query=resource.type%3D%22gae_app%22%0Aresource.labels.module_id%3D%22api%22;duration=PT1H?serviceId=api&versionId=20221101t190352&project=google.com:tank-big-data-plotting-285623
