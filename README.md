@@ -35,7 +35,7 @@ Apache header:
 
     git remote add origin git@github.com:googleinterns/power-data-graphing-intern-2020.git
 
-    git checkout master
+    git checkout main
 
     git pull
 
@@ -49,7 +49,7 @@ Apache header:
 
     git commit -m "Changes description"
 
-    git push -u origin master
+    git push -u origin main
 
 ## Adding a new SSH key to your GitHub account for first-time user.
 
@@ -126,9 +126,9 @@ After finishing set up the frontend and backend, open the browser(recommend chro
          * upstream	git@github.com:googleinterns/power-data-graphing-intern-2020.git (push)
 
 ### When I am going to work on a new feature:
-1. sync my fork's master branch to upstream's master branch
-    * git checkout master; git fetch upstream; git rebase upstream/master
-2. create a new branch from master
+1. sync my fork's main branch to upstream's main branch
+    * git checkout main; git fetch upstream; git rebase upstream/main
+2. create a new branch from main
     * git checkout -b cool_feature
 3. do my coding
 4. add and commit my changes
