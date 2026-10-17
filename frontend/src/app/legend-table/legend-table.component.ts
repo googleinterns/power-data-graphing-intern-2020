@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { MatCheckboxChange } from '@angular/material/checkbox';
 import { RecordsOneChannel } from '../chart/record';
 
 @Component({
@@ -23,10 +24,35 @@ import { RecordsOneChannel } from '../chart/record';
 export class LegendTableComponent {
   @Input() records: RecordsOneChannel[] = [];
   @Output() showChange = new EventEmitter<[number, boolean]>();
+  @Output() showAllChange = new EventEmitter<boolean>();
 
   constructor() {}
 
   showLine(event: [number, boolean]) {
     this.showChange.emit(event);
+  }
+
+  isAllSelected(): boolean {
+    return (
+      this.records.length > 0 &&
+      this.records.every((record) => record.show)
+    );
+  }
+
+  isPartiallySelected(): boolean {
+    return (
+      this.records.some((record) => record.show) && !this.isAllSelected()
+    );
+  }
+
+  toggleAll(event: MatCheckboxChange) {
+    this.setAll(event.checked);
+  }
+
+  setAll(show: boolean) {
+    for (const record of this.records) {
+      record.show = show;
+    }
+    this.showAllChange.emit(show);
   }
 }
