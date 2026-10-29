@@ -185,6 +185,18 @@ describe('ChartComponent', () => {
     ).toEqual(0.6);
   });
 
+  it('showAllLines should toggle all channels and update inactiveChannels', () => {
+    component.showAllLines(false);
+    expect(component.records.every((r) => !r.show)).toBe(true);
+    expect(component.inactiveChannels).toEqual(
+      component.records.map((r) => r.id.toString())
+    );
+
+    component.showAllLines(true);
+    expect(component.records.every((r) => r.show)).toBe(true);
+    expect(component.inactiveChannels).toEqual([]);
+  });
+
   it('getValueRange should get max and min value on data with attribute show of true', () => {
     const valueRange = component.getValueRange();
 

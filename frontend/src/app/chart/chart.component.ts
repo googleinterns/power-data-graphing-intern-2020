@@ -95,6 +95,7 @@ export class ChartComponent implements OnInit, OnDestroy {
     const timeFormat = d3.timeFormat('%M:%S.%L');
     const fineTimeFormat = d3.timeFormat(':%S.%L');
     const upperDate = timeParse(Math.floor(time / 1000).toString());
+    if (!upperDate) return '';
     upperDate.setSeconds(upperDate.getSeconds() + this.timeZoneDeltaSeconds);
     const xExtent = this.getTimeRange();
 
@@ -802,7 +803,15 @@ export class ChartComponent implements OnInit, OnDestroy {
         if (max === undefined || record.time > max) max = record.time;
       }
     }
-    return [min, max] as number[];
+    if (min === undefined || max === undefined) {
+      for (const recordsOneChannel of this.records) {
+        for (const record of recordsOneChannel.data) {
+          if (min === undefined || record.time < min) min = record.time;
+          if (max === undefined || record.time > max) max = record.time;
+        }
+      }
+    }
+    return [min ?? 0, max ?? 0] as number[];
   }
 
   /**
@@ -817,7 +826,7 @@ export class ChartComponent implements OnInit, OnDestroy {
         if (max === undefined || record.value > max) max = record.value;
       }
     }
-    return [min, max] as number[];
+    return [min ?? 0, max ?? 0] as number[];
   }
 
   /**
@@ -842,6 +851,28 @@ export class ChartComponent implements OnInit, OnDestroy {
         this.updateUrl();
       }
     }
+    this.updateChartDomain();
+  }
+
+  /**
+   * Shows or hides all channels when toggling the master checkbox.
+   * @param show True to select/show all channels, false to unselect/hide all.
+   */
+  showAllLines(show: boolean) {
+    for (const record of this.records) {
+      record.show = show;
+      this.svgLine
+        .selectAll('.' + this.getChannelLineClassName(record.id))
+        .attr('opacity', show ? 0.6 : 0);
+    }
+    if (show) {
+      this.inactiveChannels = [];
+    } else {
+      this.inactiveChannels = this.records.map((record) =>
+        record.id.toString()
+      );
+    }
+    this.updateUrl();
     this.updateChartDomain();
   }
 }

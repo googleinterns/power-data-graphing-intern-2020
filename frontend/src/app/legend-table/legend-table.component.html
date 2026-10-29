@@ -17,7 +17,17 @@
 <div class="legends-container mat-body">
   <table>
     <tr class="mat-h4" *ngIf="records.length>0">
-      <th>Channel</th>
+      <th>
+        <mat-checkbox
+          class="legend-checkbox"
+          color="primary"
+          [checked]="isAllSelected()"
+          [indeterminate]="isPartiallySelected()"
+          (change)="toggleAll($event)"
+        >
+          Channel
+        </mat-checkbox>
+      </th>
       <th>Maximum</th>
       <th>Minimum</th>
       <th>Average</th>
